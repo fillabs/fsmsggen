@@ -1,0 +1,6 @@
+[submodule "cshared"]
+	path = cshared
+	url = https://github.com/fillabs/cshared.git
+[submodule "fitsec2"]
+	path = fitsec2
+	url = https://github.com/fillabs/fitsec2-lib.git

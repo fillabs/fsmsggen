@@ -1,0 +1,596 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CAM.c" />
+    <ClCompile Include="CoopAwareness.c" />
+    <ClCompile Include="CamParameters.c" />
+    <ClCompile Include="HighFrequencyContainer.c" />
+    <ClCompile Include="LowFrequencyContainer.c" />
+    <ClCompile Include="SpecialVehicleContainer.c" />
+    <ClCompile Include="BasicContainer.c" />
+    <ClCompile Include="BasicVehicleContainerHighFrequency.c" />
+    <ClCompile Include="BasicVehicleContainerLowFrequency.c" />
+    <ClCompile Include="PublicTransportContainer.c" />
+    <ClCompile Include="SpecialTransportContainer.c" />
+    <ClCompile Include="DangerousGoodsContainer.c" />
+    <ClCompile Include="RoadWorksContainerBasic.c" />
+    <ClCompile Include="RescueContainer.c" />
+    <ClCompile Include="EmergencyContainer.c" />
+    <ClCompile Include="SafetyCarContainer.c" />
+    <ClCompile Include="RSUContainerHighFrequency.c" />
+    <ClCompile Include="GenerationDeltaTime.c" />
+    <ClCompile Include="DENM.c" />
+    <ClCompile Include="DecentralizedEnvironmentalNotificationMessage.c" />
+    <ClCompile Include="ManagementContainer.c" />
+    <ClCompile Include="SituationContainer.c" />
+    <ClCompile Include="LocationContainer.c" />
+    <ClCompile Include="ImpactReductionContainer.c" />
+    <ClCompile Include="RoadWorksContainerExtended.c" />
+    <ClCompile Include="StationaryVehicleContainer.c" />
+    <ClCompile Include="AlacarteContainer.c" />
+    <ClCompile Include="Termination.c" />
+    <ClCompile Include="ReferenceDenms.c" />
+    <ClCompile Include="ItsPduHeader.c" />
+    <ClCompile Include="StationID.c" />
+    <ClCompile Include="ReferencePosition.c" />
+    <ClCompile Include="DeltaReferencePosition.c" />
+    <ClCompile Include="Longitude.c" />
+    <ClCompile Include="Latitude.c" />
+    <ClCompile Include="Altitude.c" />
+    <ClCompile Include="AltitudeValue.c" />
+    <ClCompile Include="AltitudeConfidence.c" />
+    <ClCompile Include="DeltaLongitude.c" />
+    <ClCompile Include="DeltaLatitude.c" />
+    <ClCompile Include="DeltaAltitude.c" />
+    <ClCompile Include="PosConfidenceEllipse.c" />
+    <ClCompile Include="PathPoint.c" />
+    <ClCompile Include="PathDeltaTime.c" />
+    <ClCompile Include="PtActivation.c" />
+    <ClCompile Include="PtActivationType.c" />
+    <ClCompile Include="PtActivationData.c" />
+    <ClCompile Include="AccelerationControl.c" />
+    <ClCompile Include="SemiAxisLength.c" />
+    <ClCompile Include="CauseCode.c" />
+    <ClCompile Include="CauseCodeType.c" />
+    <ClCompile Include="SubCauseCodeType.c" />
+    <ClCompile Include="TrafficConditionSubCauseCode.c" />
+    <ClCompile Include="AccidentSubCauseCode.c" />
+    <ClCompile Include="RoadworksSubCauseCode.c" />
+    <ClCompile Include="HumanPresenceOnTheRoadSubCauseCode.c" />
+    <ClCompile Include="WrongWayDrivingSubCauseCode.c" />
+    <ClCompile Include="AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.c" />
+    <ClCompile Include="AdverseWeatherCondition-AdhesionSubCauseCode.c" />
+    <ClCompile Include="AdverseWeatherCondition-VisibilitySubCauseCode.c" />
+    <ClCompile Include="AdverseWeatherCondition-PrecipitationSubCauseCode.c" />
+    <ClCompile Include="SlowVehicleSubCauseCode.c" />
+    <ClCompile Include="StationaryVehicleSubCauseCode.c" />
+    <ClCompile Include="HumanProblemSubCauseCode.c" />
+    <ClCompile Include="EmergencyVehicleApproachingSubCauseCode.c" />
+    <ClCompile Include="HazardousLocation-DangerousCurveSubCauseCode.c" />
+    <ClCompile Include="HazardousLocation-SurfaceConditionSubCauseCode.c" />
+    <ClCompile Include="HazardousLocation-ObstacleOnTheRoadSubCauseCode.c" />
+    <ClCompile Include="HazardousLocation-AnimalOnTheRoadSubCauseCode.c" />
+    <ClCompile Include="CollisionRiskSubCauseCode.c" />
+    <ClCompile Include="SignalViolationSubCauseCode.c" />
+    <ClCompile Include="RescueAndRecoveryWorkInProgressSubCauseCode.c" />
+    <ClCompile Include="DangerousEndOfQueueSubCauseCode.c" />
+    <ClCompile Include="DangerousSituationSubCauseCode.c" />
+    <ClCompile Include="VehicleBreakdownSubCauseCode.c" />
+    <ClCompile Include="PostCrashSubCauseCode.c" />
+    <ClCompile Include="Curvature.c" />
+    <ClCompile Include="CurvatureValue.c" />
+    <ClCompile Include="CurvatureConfidence.c" />
+    <ClCompile Include="CurvatureCalculationMode.c" />
+    <ClCompile Include="Heading.c" />
+    <ClCompile Include="HeadingValue.c" />
+    <ClCompile Include="HeadingConfidence.c" />
+    <ClCompile Include="LanePosition.c" />
+    <ClCompile Include="ClosedLanes.c" />
+    <ClCompile Include="HardShoulderStatus.c" />
+    <ClCompile Include="DrivingLaneStatus.c" />
+    <ClCompile Include="PerformanceClass.c" />
+    <ClCompile Include="SpeedValue.c" />
+    <ClCompile Include="SpeedConfidence.c" />
+    <ClCompile Include="VehicleMass.c" />
+    <ClCompile Include="Speed.c" />
+    <ClCompile Include="DriveDirection.c" />
+    <ClCompile Include="EmbarkationStatus.c" />
+    <ClCompile Include="LongitudinalAcceleration.c" />
+    <ClCompile Include="LongitudinalAccelerationValue.c" />
+    <ClCompile Include="AccelerationConfidence.c" />
+    <ClCompile Include="LateralAcceleration.c" />
+    <ClCompile Include="LateralAccelerationValue.c" />
+    <ClCompile Include="VerticalAcceleration.c" />
+    <ClCompile Include="VerticalAccelerationValue.c" />
+    <ClCompile Include="StationType.c" />
+    <ClCompile Include="ExteriorLights.c" />
+    <ClCompile Include="DangerousGoodsBasic.c" />
+    <ClCompile Include="DangerousGoodsExtended.c" />
+    <ClCompile Include="SpecialTransportType.c" />
+    <ClCompile Include="LightBarSirenInUse.c" />
+    <ClCompile Include="HeightLonCarr.c" />
+    <ClCompile Include="PosLonCarr.c" />
+    <ClCompile Include="PosPillar.c" />
+    <ClCompile Include="PosCentMass.c" />
+    <ClCompile Include="RequestResponseIndication.c" />
+    <ClCompile Include="SpeedLimit.c" />
+    <ClCompile Include="StationarySince.c" />
+    <ClCompile Include="Temperature.c" />
+    <ClCompile Include="TrafficRule.c" />
+    <ClCompile Include="WheelBaseVehicle.c" />
+    <ClCompile Include="TurningRadius.c" />
+    <ClCompile Include="PosFrontAx.c" />
+    <ClCompile Include="PositionOfOccupants.c" />
+    <ClCompile Include="PositioningSolutionType.c" />
+    <ClCompile Include="VehicleIdentification.c" />
+    <ClCompile Include="WMInumber.c" />
+    <ClCompile Include="VDS.c" />
+    <ClCompile Include="EnergyStorageType.c" />
+    <ClCompile Include="VehicleLength.c" />
+    <ClCompile Include="VehicleLengthValue.c" />
+    <ClCompile Include="VehicleLengthConfidenceIndication.c" />
+    <ClCompile Include="VehicleWidth.c" />
+    <ClCompile Include="PathHistory.c" />
+    <ClCompile Include="EmergencyPriority.c" />
+    <ClCompile Include="InformationQuality.c" />
+    <ClCompile Include="RoadType.c" />
+    <ClCompile Include="SteeringWheelAngle.c" />
+    <ClCompile Include="SteeringWheelAngleValue.c" />
+    <ClCompile Include="SteeringWheelAngleConfidence.c" />
+    <ClCompile Include="TimestampIts.c" />
+    <ClCompile Include="VehicleRole.c" />
+    <ClCompile Include="YawRate.c" />
+    <ClCompile Include="YawRateValue.c" />
+    <ClCompile Include="YawRateConfidence.c" />
+    <ClCompile Include="ProtectedZoneType.c" />
+    <ClCompile Include="RelevanceDistance.c" />
+    <ClCompile Include="RelevanceTrafficDirection.c" />
+    <ClCompile Include="TransmissionInterval.c" />
+    <ClCompile Include="ValidityDuration.c" />
+    <ClCompile Include="ActionID.c" />
+    <ClCompile Include="ItineraryPath.c" />
+    <ClCompile Include="ProtectedCommunicationZone.c" />
+    <ClCompile Include="Traces.c" />
+    <ClCompile Include="NumberOfOccupants.c" />
+    <ClCompile Include="SequenceNumber.c" />
+    <ClCompile Include="PositionOfPillars.c" />
+    <ClCompile Include="RestrictedTypes.c" />
+    <ClCompile Include="EventHistory.c" />
+    <ClCompile Include="EventPoint.c" />
+    <ClCompile Include="ProtectedCommunicationZonesRSU.c" />
+    <ClCompile Include="CenDsrcTollingZone.c" />
+    <ClCompile Include="ProtectedZoneRadius.c" />
+    <ClCompile Include="ProtectedZoneID.c" />
+    <ClCompile Include="CenDsrcTollingZoneID.c" />
+    <ClCompile Include="DigitalMap.c" />
+    <ClCompile Include="OpeningDaysHours.c" />
+    <ClCompile Include="PhoneNumber.c" />
+    <ClCompile Include="EXTERNAL.c" />
+    <ClCompile Include="ANY.c" />
+    <ClCompile Include="OPEN_TYPE.c" />
+    <ClCompile Include="BOOLEAN.c" />
+    <ClCompile Include="GraphicString.c" />
+    <ClCompile Include="IA5String.c" />
+    <ClCompile Include="INTEGER.c" />
+    <ClCompile Include="NativeEnumerated.c" />
+    <ClCompile Include="NativeInteger.c" />
+    <ClCompile Include="NumericString.c" />
+    <ClCompile Include="OBJECT_IDENTIFIER.c" />
+    <ClCompile Include="ObjectDescriptor.c" />
+    <ClCompile Include="UTF8String.c" />
+    <ClCompile Include="asn_SEQUENCE_OF.c" />
+    <ClCompile Include="asn_SET_OF.c" />
+    <ClCompile Include="constr_CHOICE.c" />
+    <ClCompile Include="constr_SEQUENCE.c" />
+    <ClCompile Include="constr_SEQUENCE_OF.c" />
+    <ClCompile Include="constr_SET_OF.c" />
+    <ClCompile Include="asn_application.c" />
+    <ClCompile Include="asn_internal.c" />
+    <ClCompile Include="asn_random_fill.c" />
+    <ClCompile Include="asn_bit_data.c" />
+    <ClCompile Include="OCTET_STRING.c" />
+    <ClCompile Include="BIT_STRING.c" />
+    <ClCompile Include="asn_codecs_prim.c" />
+    <ClCompile Include="ber_tlv_length.c" />
+    <ClCompile Include="ber_tlv_tag.c" />
+    <ClCompile Include="ber_decoder.c" />
+    <ClCompile Include="der_encoder.c" />
+    <ClCompile Include="constr_TYPE.c" />
+    <ClCompile Include="constraints.c" />
+    <ClCompile Include="xer_support.c" />
+    <ClCompile Include="xer_decoder.c" />
+    <ClCompile Include="xer_encoder.c" />
+    <ClCompile Include="per_support.c" />
+    <ClCompile Include="per_decoder.c" />
+    <ClCompile Include="per_encoder.c" />
+    <ClCompile Include="per_opentype.c" />
+    <ClCompile Include="oer_decoder.c" />
+    <ClCompile Include="oer_encoder.c" />
+    <ClCompile Include="oer_support.c" />
+    <ClCompile Include="OPEN_TYPE_oer.c" />
+    <ClCompile Include="INTEGER_oer.c" />
+    <ClCompile Include="BIT_STRING_oer.c" />
+    <ClCompile Include="OCTET_STRING_oer.c" />
+    <ClCompile Include="NativeInteger_oer.c" />
+    <ClCompile Include="NativeEnumerated_oer.c" />
+    <ClCompile Include="constr_CHOICE_oer.c" />
+    <ClCompile Include="constr_SEQUENCE_oer.c" />
+    <ClCompile Include="constr_SET_OF_oer.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CAM.h" />
+    <ClInclude Include="CoopAwareness.h" />
+    <ClInclude Include="CamParameters.h" />
+    <ClInclude Include="HighFrequencyContainer.h" />
+    <ClInclude Include="LowFrequencyContainer.h" />
+    <ClInclude Include="SpecialVehicleContainer.h" />
+    <ClInclude Include="BasicContainer.h" />
+    <ClInclude Include="BasicVehicleContainerHighFrequency.h" />
+    <ClInclude Include="BasicVehicleContainerLowFrequency.h" />
+    <ClInclude Include="PublicTransportContainer.h" />
+    <ClInclude Include="SpecialTransportContainer.h" />
+    <ClInclude Include="DangerousGoodsContainer.h" />
+    <ClInclude Include="RoadWorksContainerBasic.h" />
+    <ClInclude Include="RescueContainer.h" />
+    <ClInclude Include="EmergencyContainer.h" />
+    <ClInclude Include="SafetyCarContainer.h" />
+    <ClInclude Include="RSUContainerHighFrequency.h" />
+    <ClInclude Include="GenerationDeltaTime.h" />
+    <ClInclude Include="DENM.h" />
+    <ClInclude Include="DecentralizedEnvironmentalNotificationMessage.h" />
+    <ClInclude Include="ManagementContainer.h" />
+    <ClInclude Include="SituationContainer.h" />
+    <ClInclude Include="LocationContainer.h" />
+    <ClInclude Include="ImpactReductionContainer.h" />
+    <ClInclude Include="RoadWorksContainerExtended.h" />
+    <ClInclude Include="StationaryVehicleContainer.h" />
+    <ClInclude Include="AlacarteContainer.h" />
+    <ClInclude Include="Termination.h" />
+    <ClInclude Include="ReferenceDenms.h" />
+    <ClInclude Include="ItsPduHeader.h" />
+    <ClInclude Include="StationID.h" />
+    <ClInclude Include="ReferencePosition.h" />
+    <ClInclude Include="DeltaReferencePosition.h" />
+    <ClInclude Include="Longitude.h" />
+    <ClInclude Include="Latitude.h" />
+    <ClInclude Include="Altitude.h" />
+    <ClInclude Include="AltitudeValue.h" />
+    <ClInclude Include="AltitudeConfidence.h" />
+    <ClInclude Include="DeltaLongitude.h" />
+    <ClInclude Include="DeltaLatitude.h" />
+    <ClInclude Include="DeltaAltitude.h" />
+    <ClInclude Include="PosConfidenceEllipse.h" />
+    <ClInclude Include="PathPoint.h" />
+    <ClInclude Include="PathDeltaTime.h" />
+    <ClInclude Include="PtActivation.h" />
+    <ClInclude Include="PtActivationType.h" />
+    <ClInclude Include="PtActivationData.h" />
+    <ClInclude Include="AccelerationControl.h" />
+    <ClInclude Include="SemiAxisLength.h" />
+    <ClInclude Include="CauseCode.h" />
+    <ClInclude Include="CauseCodeType.h" />
+    <ClInclude Include="SubCauseCodeType.h" />
+    <ClInclude Include="TrafficConditionSubCauseCode.h" />
+    <ClInclude Include="AccidentSubCauseCode.h" />
+    <ClInclude Include="RoadworksSubCauseCode.h" />
+    <ClInclude Include="HumanPresenceOnTheRoadSubCauseCode.h" />
+    <ClInclude Include="WrongWayDrivingSubCauseCode.h" />
+    <ClInclude Include="AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.h" />
+    <ClInclude Include="AdverseWeatherCondition-AdhesionSubCauseCode.h" />
+    <ClInclude Include="AdverseWeatherCondition-VisibilitySubCauseCode.h" />
+    <ClInclude Include="AdverseWeatherCondition-PrecipitationSubCauseCode.h" />
+    <ClInclude Include="SlowVehicleSubCauseCode.h" />
+    <ClInclude Include="StationaryVehicleSubCauseCode.h" />
+    <ClInclude Include="HumanProblemSubCauseCode.h" />
+    <ClInclude Include="EmergencyVehicleApproachingSubCauseCode.h" />
+    <ClInclude Include="HazardousLocation-DangerousCurveSubCauseCode.h" />
+    <ClInclude Include="HazardousLocation-SurfaceConditionSubCauseCode.h" />
+    <ClInclude Include="HazardousLocation-ObstacleOnTheRoadSubCauseCode.h" />
+    <ClInclude Include="HazardousLocation-AnimalOnTheRoadSubCauseCode.h" />
+    <ClInclude Include="CollisionRiskSubCauseCode.h" />
+    <ClInclude Include="SignalViolationSubCauseCode.h" />
+    <ClInclude Include="RescueAndRecoveryWorkInProgressSubCauseCode.h" />
+    <ClInclude Include="DangerousEndOfQueueSubCauseCode.h" />
+    <ClInclude Include="DangerousSituationSubCauseCode.h" />
+    <ClInclude Include="VehicleBreakdownSubCauseCode.h" />
+    <ClInclude Include="PostCrashSubCauseCode.h" />
+    <ClInclude Include="Curvature.h" />
+    <ClInclude Include="CurvatureValue.h" />
+    <ClInclude Include="CurvatureConfidence.h" />
+    <ClInclude Include="CurvatureCalculationMode.h" />
+    <ClInclude Include="Heading.h" />
+    <ClInclude Include="HeadingValue.h" />
+    <ClInclude Include="HeadingConfidence.h" />
+    <ClInclude Include="LanePosition.h" />
+    <ClInclude Include="ClosedLanes.h" />
+    <ClInclude Include="HardShoulderStatus.h" />
+    <ClInclude Include="DrivingLaneStatus.h" />
+    <ClInclude Include="PerformanceClass.h" />
+    <ClInclude Include="SpeedValue.h" />
+    <ClInclude Include="SpeedConfidence.h" />
+    <ClInclude Include="VehicleMass.h" />
+    <ClInclude Include="Speed.h" />
+    <ClInclude Include="DriveDirection.h" />
+    <ClInclude Include="EmbarkationStatus.h" />
+    <ClInclude Include="LongitudinalAcceleration.h" />
+    <ClInclude Include="LongitudinalAccelerationValue.h" />
+    <ClInclude Include="AccelerationConfidence.h" />
+    <ClInclude Include="LateralAcceleration.h" />
+    <ClInclude Include="LateralAccelerationValue.h" />
+    <ClInclude Include="VerticalAcceleration.h" />
+    <ClInclude Include="VerticalAccelerationValue.h" />
+    <ClInclude Include="StationType.h" />
+    <ClInclude Include="ExteriorLights.h" />
+    <ClInclude Include="DangerousGoodsBasic.h" />
+    <ClInclude Include="DangerousGoodsExtended.h" />
+    <ClInclude Include="SpecialTransportType.h" />
+    <ClInclude Include="LightBarSirenInUse.h" />
+    <ClInclude Include="HeightLonCarr.h" />
+    <ClInclude Include="PosLonCarr.h" />
+    <ClInclude Include="PosPillar.h" />
+    <ClInclude Include="PosCentMass.h" />
+    <ClInclude Include="RequestResponseIndication.h" />
+    <ClInclude Include="SpeedLimit.h" />
+    <ClInclude Include="StationarySince.h" />
+    <ClInclude Include="Temperature.h" />
+    <ClInclude Include="TrafficRule.h" />
+    <ClInclude Include="WheelBaseVehicle.h" />
+    <ClInclude Include="TurningRadius.h" />
+    <ClInclude Include="PosFrontAx.h" />
+    <ClInclude Include="PositionOfOccupants.h" />
+    <ClInclude Include="PositioningSolutionType.h" />
+    <ClInclude Include="VehicleIdentification.h" />
+    <ClInclude Include="WMInumber.h" />
+    <ClInclude Include="VDS.h" />
+    <ClInclude Include="EnergyStorageType.h" />
+    <ClInclude Include="VehicleLength.h" />
+    <ClInclude Include="VehicleLengthValue.h" />
+    <ClInclude Include="VehicleLengthConfidenceIndication.h" />
+    <ClInclude Include="VehicleWidth.h" />
+    <ClInclude Include="PathHistory.h" />
+    <ClInclude Include="EmergencyPriority.h" />
+    <ClInclude Include="InformationQuality.h" />
+    <ClInclude Include="RoadType.h" />
+    <ClInclude Include="SteeringWheelAngle.h" />
+    <ClInclude Include="SteeringWheelAngleValue.h" />
+    <ClInclude Include="SteeringWheelAngleConfidence.h" />
+    <ClInclude Include="TimestampIts.h" />
+    <ClInclude Include="VehicleRole.h" />
+    <ClInclude Include="YawRate.h" />
+    <ClInclude Include="YawRateValue.h" />
+    <ClInclude Include="YawRateConfidence.h" />
+    <ClInclude Include="ProtectedZoneType.h" />
+    <ClInclude Include="RelevanceDistance.h" />
+    <ClInclude Include="RelevanceTrafficDirection.h" />
+    <ClInclude Include="TransmissionInterval.h" />
+    <ClInclude Include="ValidityDuration.h" />
+    <ClInclude Include="ActionID.h" />
+    <ClInclude Include="ItineraryPath.h" />
+    <ClInclude Include="ProtectedCommunicationZone.h" />
+    <ClInclude Include="Traces.h" />
+    <ClInclude Include="NumberOfOccupants.h" />
+    <ClInclude Include="SequenceNumber.h" />
+    <ClInclude Include="PositionOfPillars.h" />
+    <ClInclude Include="RestrictedTypes.h" />
+    <ClInclude Include="EventHistory.h" />
+    <ClInclude Include="EventPoint.h" />
+    <ClInclude Include="ProtectedCommunicationZonesRSU.h" />
+    <ClInclude Include="CenDsrcTollingZone.h" />
+    <ClInclude Include="ProtectedZoneRadius.h" />
+    <ClInclude Include="ProtectedZoneID.h" />
+    <ClInclude Include="CenDsrcTollingZoneID.h" />
+    <ClInclude Include="DigitalMap.h" />
+    <ClInclude Include="OpeningDaysHours.h" />
+    <ClInclude Include="PhoneNumber.h" />
+    <ClInclude Include="EXTERNAL.h" />
+    <ClInclude Include="ANY.h" />
+    <ClInclude Include="OCTET_STRING.h" />
+    <ClInclude Include="OPEN_TYPE.h" />
+    <ClInclude Include="constr_CHOICE.h" />
+    <ClInclude Include="BOOLEAN.h" />
+    <ClInclude Include="GraphicString.h" />
+    <ClInclude Include="IA5String.h" />
+    <ClInclude Include="INTEGER.h" />
+    <ClInclude Include="NativeEnumerated.h" />
+    <ClInclude Include="NativeInteger.h" />
+    <ClInclude Include="NumericString.h" />
+    <ClInclude Include="OBJECT_IDENTIFIER.h" />
+    <ClInclude Include="ObjectDescriptor.h" />
+    <ClInclude Include="UTF8String.h" />
+    <ClInclude Include="asn_SEQUENCE_OF.h" />
+    <ClInclude Include="asn_SET_OF.h" />
+    <ClInclude Include="constr_SEQUENCE.h" />
+    <ClInclude Include="constr_SEQUENCE_OF.h" />
+    <ClInclude Include="constr_SET_OF.h" />
+    <ClInclude Include="asn_application.h" />
+    <ClInclude Include="asn_ioc.h" />
+    <ClInclude Include="asn_system.h" />
+    <ClInclude Include="asn_codecs.h" />
+    <ClInclude Include="asn_internal.h" />
+    <ClInclude Include="asn_random_fill.h" />
+    <ClInclude Include="asn_bit_data.h" />
+    <ClInclude Include="BIT_STRING.h" />
+    <ClInclude Include="asn_codecs_prim.h" />
+    <ClInclude Include="ber_tlv_length.h" />
+    <ClInclude Include="ber_tlv_tag.h" />
+    <ClInclude Include="ber_decoder.h" />
+    <ClInclude Include="der_encoder.h" />
+    <ClInclude Include="constr_TYPE.h" />
+    <ClInclude Include="constraints.h" />
+    <ClInclude Include="xer_support.h" />
+    <ClInclude Include="xer_decoder.h" />
+    <ClInclude Include="xer_encoder.h" />
+    <ClInclude Include="per_support.h" />
+    <ClInclude Include="per_decoder.h" />
+    <ClInclude Include="per_encoder.h" />
+    <ClInclude Include="per_opentype.h" />
+    <ClInclude Include="oer_decoder.h" />
+    <ClInclude Include="oer_encoder.h" />
+    <ClInclude Include="oer_support.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="Makefile.am.libasncodec" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{92294CF2-3436-4F10-93B1-B4FA4977C253}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libItsPayload</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
