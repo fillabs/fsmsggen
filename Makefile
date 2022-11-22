@@ -1,10 +1,3 @@
-######################################################################
-##
-##  Created by: Denis Filatov
-##
-##  Copyleft (c) 2015
-##  This code is provided under the CeCill-C license agreement.
-######################################################################
 PROJECTROOT    = .
 BUILDROOT      = $(PROJECTROOT)/build
 CSHAREDDIR     = $(PROJECTROOT)/cshared
@@ -19,6 +12,13 @@ packages      += pcap cshared openssl thread
 includes      += fitsec2 cshared payload uppertester
 deps          += $(outdir)/libfitsec2.a $(outdir)/libuppertester.a $(outdir)/libitspayload.a
 libs          += -Wl,--whole-archive $(outdir)/libfitsec2.a -Wl,--no-whole-archive $(outdir)/libuppertester.a $(outdir)/libitspayload.a -lm 
-predirs       += payload cshared fitsec2 uppertester
+
+ifeq (,$(strip $(wildcard fitsec2/Makefile)))
+ FITSEC_SRC ?= fitsec2
+else
+ FITSEC_SRC ?= fitsec2-rel
+endif
+
+predirs   += payload cshared $(FITSEC_SRC) uppertester
 
 include $(CSHAREDDIR)/common.mk

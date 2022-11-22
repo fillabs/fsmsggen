@@ -4,3 +4,6 @@
 [submodule "fitsec2"]
 	path = fitsec2
 	url = https://github.com/fillabs/fitsec2-lib.git
+[submodule "fitsec2-rel"]
+	path = fitsec2-rel
+	url = https://github.com/fillabs/fitsec2-rel.git
