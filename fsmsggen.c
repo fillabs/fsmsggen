@@ -9,7 +9,6 @@
 #include "fitsec.h"
 #include "fitsec_error.h"
 #include "fitsec_time.h"
-//#include "../tests/mkgmtime.h"
 #include "uppertester.h"
 
 #include "msggen.h"
@@ -24,8 +23,12 @@
 
 #ifdef WIN32
 #define _MAC
-#include <windows.h>
-void usleep(__int64 usec);
+ #include <windows.h>
+ void usleep(__int64 usec);
+ #ifdef _MSC_VER
+  int gettimeofday(struct timeval* tp, struct timezone* tzp);
+  time_t mkgmtime(struct tm *tim_p);
+ #endif
 #else
 #include <unistd.h>
 #endif

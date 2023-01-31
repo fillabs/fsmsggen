@@ -69,23 +69,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -94,7 +94,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../cshared;../uppertester;../fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>cshared;uppertester;fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +111,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../cshared;../uppertester;../fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
@@ -131,7 +131,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../cshared;../uppertester;../fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,7 +152,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../cshared;../uppertester;../fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -166,25 +166,26 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="load_certs.c" />
-    <ClCompile Include="mkgmtime.c" />
     <ClCompile Include="fsmsggen.c" />
     <ClCompile Include="utils.c" />
     <ClCompile Include="msggen_beacon.c" />
     <ClCompile Include="msggen_cam.c" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\cshared\cshared.vcxproj">
+    <ProjectReference Include="cshared\cshared.vcxproj">
       <Project>{d5918b85-fa45-4f75-9b50-c2d3e34aba17}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\fitsec2\fitsec2.vcxproj">
+    <ProjectReference Include="fitsec2\fitsec2.vcxproj">
       <Project>{3b631b0d-6665-43d9-825b-f562cf8048f9}</Project>
     </ProjectReference>
     <ProjectReference Include="payload\libItsPayload.vcxproj">
       <Project>{92294cf2-3436-4f10-93b1-b4fa4977c253}</Project>
     </ProjectReference>
+    <ProjectReference Include="uppertester\uppertester.vcxproj">
+      <Project>{D5918B85-FA45-4F75-9B50-6783E34ABA17}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../tests/mkgmtime.h" />
     <ClInclude Include="gn_types.h" />
     <ClInclude Include="msggen.h" />
   </ItemGroup>

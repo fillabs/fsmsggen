@@ -19,11 +19,48 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="asn_codecs_prim_ber.c" />
+    <ClCompile Include="BIT_STRING_print.c" />
+    <ClCompile Include="BIT_STRING_rfill.c" />
+    <ClCompile Include="BIT_STRING_uper.c" />
+    <ClCompile Include="BOOLEAN_ber.c" />
+    <ClCompile Include="BOOLEAN_print.c" />
+    <ClCompile Include="BOOLEAN_rfill.c" />
+    <ClCompile Include="BOOLEAN_uper.c" />
     <ClCompile Include="CAM.c" />
+    <ClCompile Include="constr_CHOICE_ber.c" />
+    <ClCompile Include="constr_CHOICE_print.c" />
+    <ClCompile Include="constr_CHOICE_rfill.c" />
+    <ClCompile Include="constr_CHOICE_uper.c" />
+    <ClCompile Include="constr_SEQUENCE_ber.c" />
+    <ClCompile Include="constr_SEQUENCE_OF_ber.c" />
+    <ClCompile Include="constr_SEQUENCE_OF_uper.c" />
+    <ClCompile Include="constr_SEQUENCE_print.c" />
+    <ClCompile Include="constr_SEQUENCE_rfill.c" />
+    <ClCompile Include="constr_SEQUENCE_uper.c" />
+    <ClCompile Include="constr_SET_OF_ber.c" />
+    <ClCompile Include="constr_SET_OF_print.c" />
+    <ClCompile Include="constr_SET_OF_rfill.c" />
+    <ClCompile Include="constr_SET_OF_uper.c" />
     <ClCompile Include="CoopAwareness.c" />
     <ClCompile Include="CamParameters.c" />
     <ClCompile Include="HighFrequencyContainer.c" />
+    <ClCompile Include="INTEGER_ber.c" />
+    <ClCompile Include="INTEGER_print.c" />
+    <ClCompile Include="INTEGER_rfill.c" />
+    <ClCompile Include="INTEGER_uper.c" />
     <ClCompile Include="LowFrequencyContainer.c" />
+    <ClCompile Include="NativeEnumerated_uper.c" />
+    <ClCompile Include="NativeInteger_ber.c" />
+    <ClCompile Include="NativeInteger_print.c" />
+    <ClCompile Include="NativeInteger_rfill.c" />
+    <ClCompile Include="NativeInteger_uper.c" />
+    <ClCompile Include="OCTET_STRING_ber.c" />
+    <ClCompile Include="OCTET_STRING_print.c" />
+    <ClCompile Include="OCTET_STRING_rfill.c" />
+    <ClCompile Include="OCTET_STRING_uper.c" />
+    <ClCompile Include="OPEN_TYPE_ber.c" />
+    <ClCompile Include="OPEN_TYPE_uper.c" />
     <ClCompile Include="SpecialVehicleContainer.c" />
     <ClCompile Include="BasicContainer.c" />
     <ClCompile Include="BasicVehicleContainerHighFrequency.c" />
@@ -75,6 +112,10 @@
     <ClCompile Include="AccidentSubCauseCode.c" />
     <ClCompile Include="RoadworksSubCauseCode.c" />
     <ClCompile Include="HumanPresenceOnTheRoadSubCauseCode.c" />
+    <ClCompile Include="uper_decoder.c" />
+    <ClCompile Include="uper_encoder.c" />
+    <ClCompile Include="uper_opentype.c" />
+    <ClCompile Include="uper_support.c" />
     <ClCompile Include="WrongWayDrivingSubCauseCode.c" />
     <ClCompile Include="AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.c" />
     <ClCompile Include="AdverseWeatherCondition-AdhesionSubCauseCode.c" />
@@ -215,25 +256,10 @@
     <ClCompile Include="der_encoder.c" />
     <ClCompile Include="constr_TYPE.c" />
     <ClCompile Include="constraints.c" />
-    <ClCompile Include="xer_support.c" />
-    <ClCompile Include="xer_decoder.c" />
-    <ClCompile Include="xer_encoder.c" />
     <ClCompile Include="per_support.c" />
     <ClCompile Include="per_decoder.c" />
     <ClCompile Include="per_encoder.c" />
     <ClCompile Include="per_opentype.c" />
-    <ClCompile Include="oer_decoder.c" />
-    <ClCompile Include="oer_encoder.c" />
-    <ClCompile Include="oer_support.c" />
-    <ClCompile Include="OPEN_TYPE_oer.c" />
-    <ClCompile Include="INTEGER_oer.c" />
-    <ClCompile Include="BIT_STRING_oer.c" />
-    <ClCompile Include="OCTET_STRING_oer.c" />
-    <ClCompile Include="NativeInteger_oer.c" />
-    <ClCompile Include="NativeEnumerated_oer.c" />
-    <ClCompile Include="constr_CHOICE_oer.c" />
-    <ClCompile Include="constr_SEQUENCE_oer.c" />
-    <ClCompile Include="constr_SET_OF_oer.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CAM.h" />
@@ -292,6 +318,10 @@
     <ClInclude Include="AccidentSubCauseCode.h" />
     <ClInclude Include="RoadworksSubCauseCode.h" />
     <ClInclude Include="HumanPresenceOnTheRoadSubCauseCode.h" />
+    <ClInclude Include="uper_decoder.h" />
+    <ClInclude Include="uper_encoder.h" />
+    <ClInclude Include="uper_opentype.h" />
+    <ClInclude Include="uper_support.h" />
     <ClInclude Include="WrongWayDrivingSubCauseCode.h" />
     <ClInclude Include="AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.h" />
     <ClInclude Include="AdverseWeatherCondition-AdhesionSubCauseCode.h" />
@@ -435,16 +465,10 @@
     <ClInclude Include="der_encoder.h" />
     <ClInclude Include="constr_TYPE.h" />
     <ClInclude Include="constraints.h" />
-    <ClInclude Include="xer_support.h" />
-    <ClInclude Include="xer_decoder.h" />
-    <ClInclude Include="xer_encoder.h" />
     <ClInclude Include="per_support.h" />
     <ClInclude Include="per_decoder.h" />
     <ClInclude Include="per_encoder.h" />
     <ClInclude Include="per_opentype.h" />
-    <ClInclude Include="oer_decoder.h" />
-    <ClInclude Include="oer_encoder.h" />
-    <ClInclude Include="oer_support.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -504,23 +528,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\MSVC-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\MSVC-$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\MSVC-$(PlatformName)-$(Configuration)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -528,7 +552,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
     </ClCompile>
@@ -543,7 +567,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
     </ClCompile>
@@ -560,7 +584,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
     </ClCompile>
@@ -579,7 +603,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
     </ClCompile>

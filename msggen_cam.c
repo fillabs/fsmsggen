@@ -40,15 +40,13 @@ static const char* _o_stationTypes[] = {
     NULL
 };
 
-static const char * _o_btpTypes[] = {
-    "any", "btpA", "btpB", NULL
-};
 
 static int _o_secured = 1;
+static int _o_btpA = 0;
 
 static copt_t options[] = {
     { "T", "station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
-    { "B", "btp-type",      COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [any]" },
+    { "B", "btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB]" },
     { NULL, "no-sec-cam",   COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -161,7 +159,9 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     uint32_t * bh = (uint32_t*)&((&eh->shb)[1]);
     bh[0] = 0x0000d107; // port 2001
     len = ((char*)&bh[1]) - m->payload;
-    ch->nextHeader = (((const char **)options[1].vptr) - _o_btpTypes) * 0x10;
+    if (_o_btpA) {
+        ch->nextHeader = 0x10;
+    }
 
     cam->header.stationID = 0x10101010;//(unsigned long)FitSec_CertificateDigest(m->cert);
     cam->cam.camParameters.basicContainer.referencePosition.latitude = m->position.latitude;
@@ -180,7 +180,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         char* p = m->payload + len + rc.encoded;
         m->payloadSize = p - m->payload;
 
-        ch->plLength = cint16_hton(rc.encoded + 4); // plus BTP
+        ch->plLength = cint16_hton((unsigned short)(rc.encoded + 4)); // plus BTP
         if (_o_secured) {
             len = FitSec_FinalizeSignedMessage(e, m);
             if (len == 0) {
