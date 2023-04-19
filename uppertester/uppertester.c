@@ -178,10 +178,13 @@ int   FSUT_onUTMessage(FSUT* ut, const char* buf, size_t size)
 
 int   FSUT_SendIndication(FSUT* ut, uint8_t code, const char* buf, size_t size)
 {
-    struct FSUTMsg_Indication* m = struct_from_member(struct FSUTMsg_Indication, buf, pdu);
-    m->code = FS_UtGnEventInd;
-    m->pduLength = cint16_hton((uint16_t)size);
-    sendto(ut->s, (const char*)(m), (int)(size + 3), 0, (const struct sockaddr*)&ut->from, sizeof(struct sockaddr_in));
-    return 0;
+    if(ut) {
+        struct FSUTMsg_Indication* m = struct_from_member(struct FSUTMsg_Indication, buf, pdu);
+        m->code = FS_UtGnEventInd;
+        m->pduLength = cint16_hton((uint16_t)size);
+        sendto(ut->s, (const char*)(m), (int)(size + 3), 0, (const struct sockaddr*)&ut->from, sizeof(struct sockaddr_in));
+        return 0;
+    }
+    return -1;
 }
 

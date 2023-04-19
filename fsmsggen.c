@@ -48,6 +48,7 @@ static int _gn_src = 0;
 pchar_t* storage1 = "POOL_CAM";
 char* _curStrTime = NULL;
 pchar_t* _out = "out.pcap";
+pchar_t* _in = NULL;
 char* _iface = NULL;
 int _iface_list = 0;
 
@@ -58,6 +59,7 @@ static int   _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
 static int _changePseudonym = 0;
 static int _o_secured = 1;
 static int _o_verbose = 0;
+static int _o_allow_loopback = 0;
 
 typedef struct ether_header_t ether_header_t;
 __PACKED__(struct ether_header_t{
@@ -86,19 +88,21 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
     { "C",  "config",   COPT_CFGFILE,  &cfgfile,      "Config file"         },
-    { "t",  "type",      COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message Type"         },
+    { "m",  "type",     COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message type" },
     { "1",  "pool1",    COPT_PATH,     &storage1,     "Storage directory 1"   },
     { "n",  "count",    COPT_LONG,     &_msg_count,   "Message count" },
     { "i",  "iface",    COPT_STR,      &_iface,       "Network interface to send messages" },
     { "D",  "iface-list", COPT_BOOL,   &_iface_list,  "List network interfaces"},
-    { "o",  "out",      COPT_PATH,     &_out,         "Output PCAP file name" },
+    { "I",  "in",       COPT_PATH,     &_in,          "Input PCAP file name" },
+    { "O",  "out",      COPT_PATH,     &_out,         "Output PCAP file name, 'none' for disable" },
     { "r",  "rate",     COPT_FLOAT,    &_rate,        "Message rate in Hz" },
     { "t",  "time",     COPT_STR,      &_curStrTime,  "The ISO representation of starting time" },
     { "p",  "position", COPT_STR  | COPT_CALLBACK, copt_on_position,  "The position in form latitude:longitude" },
     { "s",  "srcaddr",  COPT_STR  | COPT_CALLBACK, copt_on_gn_src_addr,  "The GN source address" },
     { "u",  "ut",       COPT_BOOL | COPT_CALLBACK, copt_on_ut_addr, "Start UpperTester" },
-    { "N",  "no-sec",   COPT_IBOOL ,  &_o_secured, "Send non-secured packets" },
-    { "v",  "verbose",  COPT_BOOL ,  &_o_verbose, "Be verbose" },
+    { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
+    { "l",  "loopback", COPT_BOOL,     &_o_allow_loopback, "Receive packets sent by itself" },
+    { "v",  "verbose",  COPT_BOOL ,    &_o_verbose,   "Be verbose" },
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -197,11 +201,12 @@ typedef struct {
     pcap_dumper_t* dumper;
 }pcap_handler_t;
 typedef void (proto_handler_fn)(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
+static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
 static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
 static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
 static void _handler_read(u_char*, const struct pcap_pkthdr*,const u_char*);
 
-static proto_handler_fn* _packet_handler = _handler_file;
+static proto_handler_fn* _packet_handler = _handler_none;
 
 
 static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt_value_t* value)
@@ -261,8 +266,13 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    if(cstrequal(_out, "none")){
+        _out = NULL;
+    }
 
+    const char * dev_name;
     if (_iface) {
+        dev_name = _iface;
         h.device = pcap_open_live(_iface, 65535, PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_MAX_RESPONSIVENESS, 200, _error_buffer);
         _packet_handler = _handler_iface;
         _o_verbose = 1;
@@ -279,18 +289,25 @@ int main(int argc, char** argv)
 #endif
     }
     else {
-        h.device = pcap_open_dead(DLT_EN10MB, 65535);
-        if (h.device) {
+        if (_in){
+            h.device = pcap_open_offline(_in, _error_buffer);
+            dev_name = _in;
+        }else{
+            h.device = pcap_open_dead(DLT_EN10MB, 65535);
+            dev_name = _out;
+        }
+        if (h.device && _out) {
+            _packet_handler = _handler_file;
             h.dumper = pcap_dump_open(h.device, _out);
         }
     }
     if (h.device == NULL) {
-        fprintf(stderr, "%s: %s\n", _iface ? _iface : _out, _error_buffer);
+        fprintf(stderr, "%s: %s\n", dev_name, _error_buffer);
         return -1;
     }
     if(0 > pcap_setnonblock(h.device, 1, _error_buffer)){
-        fprintf(stderr, "%s: %s\n", _iface ? _iface : _out, _error_buffer);
-        return -1;
+        fprintf(stderr, "%s: %s\n", dev_name, _error_buffer);
+//        return -1;
     }
 
     if (_curStrTime) {
@@ -329,7 +346,7 @@ int main(int argc, char** argv)
         FSUT_Proceed(ut);
 
         if (h.dumper == NULL) {
-            pcap_dispatch(h.device, 0, _handler_read, (u_char*)e);
+            pcap_dispatch(h.device, 1, _handler_read, (u_char*)e);
         }
         if(_app)
             _sendAppMessage(e, _app);
@@ -387,6 +404,11 @@ static void _sendAppMessage(FitSec * e, MsgGenApp * a)
     }
 }
 
+static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data)
+{
+
+}
+
 static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data)
 {
     pcap_dump((u_char*)h->dumper, ph, data);
@@ -420,7 +442,10 @@ static void _handler_read(u_char* ptr, const struct pcap_pkthdr* ph, const u_cha
 {
     FitSec* e = (FitSec*)ptr;
     if (ph->len > 0) {
-        if (memcmp(&data[6], &buf[6], 6) && 0 == memcmp(&data[12], &buf[12], 2)) {
+        // check if GeoNetworking
+        if(*(uint16_t*)(&data[12]) != 0x4789)
+            return;
+        if (_o_allow_loopback || memcmp(&data[6], &buf[6], 6)) {
             FSMessageInfo m;
             struct timeval tv;
             gettimeofday(&tv, NULL);
