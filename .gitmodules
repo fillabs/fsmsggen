@@ -7,3 +7,6 @@
 [submodule "fitsec2-rel"]
 	path = fitsec2-rel
 	url = https://github.com/fillabs/fitsec2-rel.git
+[submodule "fscrypt"]
+	path = fscrypt
+	url = https://github.com/fillabs/fscrypt.git

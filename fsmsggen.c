@@ -52,14 +52,14 @@ pchar_t* _in = NULL;
 char* _iface = NULL;
 int _iface_list = 0;
 
-static int _uppertester = 0;
-static const char* _ut_addr = NULL;
-static uint16_t _ut_port = 12345;
 static int   _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
 static int _changePseudonym = 0;
 static int _o_secured = 1;
 static int _o_verbose = 0;
 static int _o_allow_loopback = 0;
+static int _o_uppertester = 0;
+static const char* _o_ut_addr = NULL;
+static uint16_t _o_ut_port = 12345;
 
 typedef struct ether_header_t ether_header_t;
 __PACKED__(struct ether_header_t{
@@ -137,25 +137,25 @@ static int copt_on_position(const copt_t* opt, const char* option, const copt_va
 static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_value_t* value)
 {
     if (value->v_boolean == 0) {
-        _uppertester = 0;
+        _o_uppertester = 0;
     }
     else {
-        _uppertester = 1;
+        _o_uppertester = 1;
         if (value->v_boolean != 1) {
             char* d = cstrrchr(value->v_str, ':');
             if (d) {
-                _ut_port = atoi(d + 1);
+                _o_ut_port = atoi(d + 1);
                 *d = 0;
                 if (d > value->v_str)
-                    _ut_addr = value->v_str;
+                    _o_ut_addr = value->v_str;
             }
             else {
                 if (*value->v_str) {
                     if (strchr(value->v_str, '.')) {
-                        _ut_addr = value->v_str;
+                        _o_ut_addr = value->v_str;
                     }
                     else {
-                        _ut_port = atoi(value->v_str);
+                        _o_ut_port = atoi(value->v_str);
                     }
                 }
             }
@@ -331,8 +331,8 @@ int main(int argc, char** argv)
         }
     }
     
-    if (_uppertester) {
-        ut = FSUT_New(_ut_addr, _ut_port);
+    if (_o_uppertester) {
+        ut = FSUT_New(_o_ut_addr, _o_ut_port);
         for (size_t i = 0; i < _applications_count; i++) {
             if(_applications[i]->utHandler){
                 FSUT_RegisterHandler(ut, _applications[i]->utHandler, e);
