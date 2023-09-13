@@ -1,6 +1,7 @@
 #ifndef msggen_h
 #define msggen_h
 #include "fitsec.h"
+#include "cstr.h"
 #include "../uppertester/uppertester.h"
 
 enum {
@@ -15,8 +16,13 @@ struct MsgGenApp {
     int (*options) (MsgGenApp * app, int argc, char* argv[]);
     size_t (*fill) (MsgGenApp * app, FitSec * e, FSMessageInfo * m);
     FSUT_Handler_fn  utHandler;
+    void * utPtr;
 };
 
 void  MsgGenApp_Register(MsgGenApp * app);
+void  MsgGenApp_Send(FitSec * e, MsgGenApp * a);
+
+int FitSec_LoadTrustData(FitSec * e, FSTime32 curTime, const pchar_t * _path);
+
 
 #endif

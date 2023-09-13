@@ -46,6 +46,12 @@ enum {
     FS_UtGnTrigger_shb = 0x53,
     FS_UtGnTrigger_tsb = 0x54,
     FS_UtGnEventInd = 0x55,
+
+    FS_UtGenerateInnerEcRequest = 0xD0,
+    FS_UtGenerateInnerAtRequest = 0xD1,
+    FS_UtGenerateInnerEcResult  = 0xD2,
+    FS_UtGenerateInnerAtResult  = 0xD2,
+    FS_UtPkiTriggerInd          = 0xD3,
 };
 
 __PACKED__(struct FSUTMsg_Initialize {
@@ -111,6 +117,11 @@ __PACKED__(struct FSUTMsg_Indication {
     uint8_t  pdu[0];
 });
 
+__PACKED__(struct FSUTMsg_PkiTriggerInd {
+    uint8_t  code;
+    uint8_t  state;
+});
+
 __PACKED__(union FSUT_Message {
     uint8_t                          code;
     struct FSUTMsg_Initialize        initialize;
@@ -126,6 +137,8 @@ __PACKED__(union FSUT_Message {
 
     struct FSUTMsg_Indication        indication;
     struct FSUTMsg_DenmTriggerResult denmTriggerResult;
+    
+    struct FSUTMsg_PkiTriggerInd     pkiState;
 });
 
 FSUT* FSUT_New(const char* bind_host, int bind_port);
@@ -142,10 +155,12 @@ int   FSUT_Start(FSUT* ut);
 void  FSUT_Stop(FSUT* ut);
 
 int   FSUT_Run(FSUT* ut);
-int   FSUT_Proceed(FSUT* ut);
+int   FSUT_Proceed(FSUT* ut, FSUT_Message * m);
 
 int   FSUT_onUTMessage(FSUT* ut, const char* buf, size_t size);
 int   FSUT_SendIndication(FSUT* ut, uint8_t code, const char* buf, size_t size);
+void  FSUT_EnqueueIndication(FSUT* ut, uint8_t code, const char* buf, size_t size);
 
+int   FSUT_CommandMessage(FSUT_Message ** pmsg, int argc, char ** argv);
 
 #endif

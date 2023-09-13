@@ -2,7 +2,7 @@
 #include "cmem.h"
 #include "copts.h"
 
-#include "CAM.h"
+#include "payload/CAM.h"
 #include "gn_types.h"
 #include "../uppertester/uppertester.h"
 
@@ -135,10 +135,10 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 
     if (_o_secured) {
         m->payloadType = FS_PAYLOAD_SIGNED;
-        m->ssp.aid = 36;
-        memset(m->ssp.sspData.opaque, 0, sizeof(m->ssp.sspData.opaque));
-        m->ssp.sspLen = 3;
-        m->ssp.sspData.bits.version = 1;
+        m->sign.ssp.aid = 36;
+        memset(m->sign.ssp.sspData.opaque, 0, sizeof(m->sign.ssp.sspData.opaque));
+        m->sign.ssp.sspLen = 3;
+        m->sign.ssp.sspData.bits.version = 1;
 
         len = FitSec_PrepareSignedMessage(e, m);
         if (len <= 0) {

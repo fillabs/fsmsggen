@@ -135,10 +135,10 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 
     if (_o_secured) {
         m->payloadType = FS_PAYLOAD_SIGNED;
-        m->ssp.aid = 37;
-        memset(m->ssp.sspData.opaque, 0, sizeof(m->ssp.sspData.opaque));
-        m->ssp.sspLen = 4;
-        m->ssp.sspData.bits.version = 1;
+        m->sign.ssp.aid = 37;
+        memset(m->sign.ssp.sspData.opaque, 0, sizeof(m->sign.ssp.sspData.opaque));
+        m->sign.ssp.sspLen = 4;
+        m->sign.ssp.sspData.bits.version = 1;
 
         len = FitSec_PrepareSignedMessage(e, m);
         if (len <= 0) {

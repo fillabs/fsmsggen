@@ -5,11 +5,12 @@
 #include "copts.h"
 #include "cstr.h"
 #include "cmem.h"
+#include "cring.h"
 #include "cbyteswap.h"
-#include "fitsec.h"
+#include "fitsec2/fitsec.h"
 #include "fitsec_error.h"
 #include "fitsec_time.h"
-#include "uppertester.h"
+#include "uppertester/uppertester.h"
 
 #include "msggen.h"
 #include "gn_types.h"
@@ -60,6 +61,7 @@ static int _o_allow_loopback = 0;
 static int _o_uppertester = 0;
 static const char* _o_ut_addr = NULL;
 static uint16_t _o_ut_port = 12345;
+static const char * _o_dc = NULL;
 
 typedef struct ether_header_t ether_header_t;
 __PACKED__(struct ether_header_t{
@@ -100,6 +102,7 @@ static copt_t options [] = {
     { "p",  "position", COPT_STR  | COPT_CALLBACK, copt_on_position,  "The position in form latitude:longitude" },
     { "s",  "srcaddr",  COPT_STR  | COPT_CALLBACK, copt_on_gn_src_addr,  "The GN source address" },
     { "u",  "ut",       COPT_BOOL | COPT_CALLBACK, copt_on_ut_addr, "Start UpperTester" },
+    { "d",  "dc",       COPT_STR ,     &_o_dc,        "Assign this DC to all CA certificates" },
     { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
     { "l",  "loopback", COPT_BOOL,     &_o_allow_loopback, "Receive packets sent by itself" },
     { "v",  "verbose",  COPT_BOOL ,    &_o_verbose,   "Be verbose" },
@@ -200,11 +203,11 @@ typedef struct {
     pcap_t* device;
     pcap_dumper_t* dumper;
 }pcap_handler_t;
-typedef void (proto_handler_fn)(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
-static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
-static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
-static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data);
-static void _handler_read(u_char*, const struct pcap_pkthdr*,const u_char*);
+typedef void (proto_handler_fn)(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
+static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
+static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
+static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
+static void _handler_read(uint8_t*, const struct pcap_pkthdr*,const uint8_t*);
 
 static proto_handler_fn* _packet_handler = _handler_none;
 
@@ -221,9 +224,19 @@ static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt
 
 static FSUT* ut = NULL;
 
-static void _sendAppMessage(FitSec * e, MsgGenApp * a); 
-
 static pcap_handler_t h = { NULL, NULL };
+
+static bool _onEvent(FitSec* e, void* user, FSEventId event, const FSEventParam* params)
+{
+    if (event == FSEvent_CertStatus) {
+        FSCertificate * c = params->certStateChange.certificate;
+        if(_o_dc){
+            printf("Assign %s to " cPrefixUint64 "x\n", _o_dc, cint64_hton(FitSec_CertificateDigest(c)));
+            FSCertificate_SetDC(c, _o_dc, strlen(_o_dc));
+        }
+    }
+    return true;
+}
 
 int main(int argc, char** argv)
 {
@@ -235,12 +248,18 @@ int main(int argc, char** argv)
 
     FitSecConfig_InitDefault(&cfg1);
     cfg1.flags |= FS_ALLOW_CERT_DUPLICATIONS;
+    cfg1.cbOnEvent = _onEvent;
+    cfg1.cbOnEventUser = NULL;
 
-    int rc = coptions(argc, argv, COPT_NOERR_UNKNOWN | COPT_NOAUTOHELP | COPT_NOREORDER | COPT_NOHELP_MSG, options);
+    int rc = coptions(argc, argv, COPT_NOERR_UNKNOWN | COPT_NOAUTOHELP | COPT_NOHELP_MSG, options);
     if (!COPT_ERC(rc)) {
         for (size_t i = 0; i < _applications_count; i++) {
-            rc = _applications[i]->options(_applications[i], argc, argv);
-            if (COPT_ERC(rc)) break;
+            int n = _applications[i]->options(_applications[i], argc, argv);
+            if (n < rc) {
+                rc = n;
+                if (COPT_ERC(rc))
+                    break;
+            }
         }
     }
     if (COPT_ERC(rc)) {
@@ -250,6 +269,7 @@ int main(int argc, char** argv)
         }
         return - 1;
     }
+    argc = rc;
     if (_iface_list) {
         pcap_if_t* alldevsp = NULL;
         char errbuf[PCAP_ERRBUF_SIZE];
@@ -326,32 +346,72 @@ int main(int argc, char** argv)
         e = NULL;
     }
     else {
-        if (0 >= loadCertificates(e, storage1)) {
+        if( 0 > FitSec_LoadTrustData(e, unix2itstime32(time(NULL) + _tdelta), storage1)){
             return -1;
         }
+        FitSec_RelinkCertificates(e);
     }
     
     if (_o_uppertester) {
+        printf("Start UpperTester Engine at %s:%u\n", _o_ut_addr, _o_ut_port);
         ut = FSUT_New(_o_ut_addr, _o_ut_port);
         for (size_t i = 0; i < _applications_count; i++) {
             if(_applications[i]->utHandler){
-                FSUT_RegisterHandler(ut, _applications[i]->utHandler, e);
+                printf("    register %s\n", _applications[i]->appName);
+                FSUT_RegisterHandler(ut, _applications[i]->utHandler, _applications[i]->utPtr ? _applications[i]->utPtr : e);
             }
         }
         FSUT_RegisterHandler(ut, _UTHandler, e);
         FSUT_Start(ut);
     }
 
+    size_t icmd = 1;
+    int arg = 1;
     for (size_t i = 0; i < _msg_count; i++) {
-        FSUT_Proceed(ut);
+        FSUT_Message * m = NULL;
+        if(arg < argc){ 
+            if(i == icmd){
+                if(0 == strcmp("skip", argv[arg])){
+                    arg++;
+                    if(arg < argc){
+                        char * end = argv[arg];
+                        uint32_t msec = strtoul(argv[arg], &end, 10);
+                        if(end > argv[arg])
+                            icmd += floor(_rate * msec ) - 1;
+                        arg++;
+                    }
+                }else if(0 == strcmp("load", argv[arg])){
+                    arg++;
+                    if(arg < argc){
+                        uint32_t t = unix2itstime32(time(NULL)) + _tdelta;
+                        FitSec_LoadTrustData(e, t, argv[arg]);
+                        FitSec_RelinkCertificates(e);
+                        arg++;
+                    }
+                }else{
+                    int r = FSUT_CommandMessage(&m, argc - arg, argv + arg);
+                    if(r <= 0){
+                        arg = argc;
+                    }else{
+                        arg += r;
+                    }
+                }
+                icmd++;
+            }
+        }
+
+        FSUT_Proceed(ut, m);
+        if(m){
+            free(m);
+        }
 
         if (h.dumper == NULL) {
-            pcap_dispatch(h.device, 1, _handler_read, (u_char*)e);
+            pcap_dispatch(h.device, 1, _handler_read, (uint8_t*)e);
         }
         if(_app)
-            _sendAppMessage(e, _app);
+            MsgGenApp_Send(e, _app);
         else{
-            usleep(100000);
+            usleep(1000000 / _rate);
         }
     }
 
@@ -366,7 +426,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
-static void _sendAppMessage(FitSec * e, MsgGenApp * a) 
+void MsgGenApp_Send(FitSec * e, MsgGenApp * a) 
 {
     struct pcap_pkthdr ph;
     FSMessageInfo m = {0};
@@ -374,7 +434,7 @@ static void _sendAppMessage(FitSec * e, MsgGenApp * a)
     ph.ts.tv_sec += _tdelta;
     m.message = (char*)&buf[SHIFT_SEC];
     m.messageSize = sizeof(buf) - SHIFT_SEC;
-    m.signerType = FS_SI_AUTO;
+    m.sign.signerType = FS_SI_AUTO;
     m.position = position;
     m.generationTime = timeval2itstime64(&ph.ts);
     if (_changePseudonym) {
@@ -383,8 +443,8 @@ static void _sendAppMessage(FitSec * e, MsgGenApp * a)
     size_t len = a->fill(a, e, &m);
     if (len > 0) {
         // fill the src addr
-        if (!_gn_src && m.cert) {
-            FSHashedId8 id = FitSec_CertificateDigest(m.cert);
+        if (!_gn_src && m.sign.cert) {
+            FSHashedId8 id = FitSec_CertificateDigest(m.sign.cert);
             memcpy(buf + 6, &id, 6);
         }
         if (m.payloadType == FS_PAYLOAD_UNSECURED) {
@@ -401,23 +461,25 @@ static void _sendAppMessage(FitSec * e, MsgGenApp * a)
                 a->appName, timeval2itstime64(&ph.ts), ph.len);
         }
         _packet_handler(&h, &ph, buf);
+    }else{
+        usleep(1000000 / _rate);
     }
 }
 
-static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data)
+static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
 
 }
 
-static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data)
+static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
-    pcap_dump((u_char*)h->dumper, ph, data);
+    pcap_dump((uint8_t*)h->dumper, ph, data);
     ph->ts.tv_usec += (long)(1000000.0 / _rate);
     ph->ts.tv_sec += ph->ts.tv_usec / 1000000;
     ph->ts.tv_usec %= 1000000;
 }
 
-static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_char* data)
+static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
     pcap_inject(h->device, data, ph->len);
 
@@ -438,7 +500,7 @@ static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const u_ch
         usleep(tv.tv_usec);
 }
 
-static void _handler_read(u_char* ptr, const struct pcap_pkthdr* ph, const u_char* data)
+static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint8_t* data)
 {
     FitSec* e = (FitSec*)ptr;
     if (ph->len > 0) {
@@ -454,13 +516,13 @@ static void _handler_read(u_char* ptr, const struct pcap_pkthdr* ph, const u_cha
             m.position = position;
             m.generationTime = timeval2itstime64(&tv);
             if (FitSec_ParseMessage(e, &m)) {
-                uint32_t flags = FSCertificate_GetState(m.cert);
+                uint32_t flags = FSCertificate_GetState(m.sign.cert);
                 const char * status = (flags & FSCERT_REVOKED) ? "revoked" : 
                                         (flags & FSCERT_INVALID) ? "invalid" :
                                             (flags & FSCERT_TRUSTED) ? "trusted" : "unknown";
                 fprintf(stderr, "%s Message received (gt=%s cert="cPrefixUint64"X %s)\n",
                     strlocaltime(tv.tv_sec, tv.tv_usec), 
-                    stritstime64(m.generationTime),cint64_hton(FitSec_CertificateDigest(m.cert)),
+                    stritstime64(m.generationTime),cint64_hton(FitSec_CertificateDigest(m.sign.cert)),
                     status);
                 if (m.payloadType == FS_PAYLOAD_SIGNED) {
                     if (FitSec_ValidateSignedMessage(e, &m)) {
@@ -526,7 +588,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
     case FS_UtInitialize: // utInitialize
         if (size >= sizeof(struct FSUTMsg_Initialize)) {
             fprintf(stderr, "%s UTInitialize (" cPrefixUint64 "X) - ", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
-            if (FitSec_Select(ptr, FITSEC_AID_ANY, m->initialize.digest)) {
+            if (m->initialize.digest == 0 || FitSec_Select(ptr, FITSEC_AID_ANY, m->initialize.digest)) {
                 fprintf(stderr, "OK\n");
                 rc= 1;
             }
@@ -573,7 +635,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
         return 1;
     case FS_UtDenmTrigger:
         // send already prepared denm
-        _sendAppMessage(ptr, MsgGenApp_Select("denm"));
+        MsgGenApp_Send(ptr, MsgGenApp_Select("denm"));
         m->denmTriggerResult.code = FS_UtDenmTriggerResult;
         m->denmTriggerResult.result = 1;
         *psize = sizeof(m->denmTriggerResult);

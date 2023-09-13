@@ -62,9 +62,9 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     size_t len;
     m->status = 0;
     if (_o_secured_beacon) {
-        m->ssp.aid = FITSEC_AID_GNMGMT;
-        memset(m->ssp.sspData.opaque, 0, sizeof(m->ssp.sspData.opaque));
-        m->ssp.sspLen = 0;
+        m->sign.ssp.aid = FITSEC_AID_GNMGMT;
+        memset(m->sign.ssp.sspData.opaque, 0, sizeof(m->sign.ssp.sspData.opaque));
+        m->sign.ssp.sspLen = 0;
         m->payloadType = FS_PAYLOAD_SIGNED;
 
         len = FitSec_PrepareSignedMessage(e, m);

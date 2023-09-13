@@ -16,11 +16,11 @@ ifeq (,$(FITSEC_SRC))
 endif
 
 bins           = fsmsggen
-sources       := fsmsggen.c load_certs.c msggen_cam.c msggen_denm.c msggen_beacon.c utils.c	
+sources       := fsmsggen.c load_data.c msggen_cam.c msggen_denm.c msggen_beacon.c msggen_pki.c utils.c	
 packages      += pcap cshared openssl thread
 includes      += $(FITSEC_SRC) $(FSCRYPTDIR) $(CSHAREDDIR) payload uppertester
-deps          += $(outdir)/libfitsec2.a $(outdir)/libfscrypt.a $(outdir)/libuppertester.a $(outdir)/libitspayload.a
-libs          += $(outdir)/libfitsec2.a -Wl,--whole-archive $(outdir)/libfscrypt.a -Wl,--no-whole-archive $(outdir)/libuppertester.a $(outdir)/libitspayload.a -lm 
-predirs       += payload $(FSCRYPTDIR) $(FITSEC_SRC) uppertester
+deps          += $(outdir)/libfitsec2.a $(outdir)/libfspki.a $(outdir)/libfscrypt.a $(outdir)/libuppertester.a $(outdir)/libitspayload.a
+libs          += $(outdir)/libfspki.a $(outdir)/libfitsec2.a -Wl,--whole-archive $(outdir)/libfscrypt.a -Wl,--no-whole-archive $(outdir)/libuppertester.a $(outdir)/libitspayload.a -lm -lcurl
+predirs       += payload $(FSCRYPTDIR) $(FITSEC_SRC) fspki uppertester
 
 include $(CSHAREDDIR)/common.mk
