@@ -7,7 +7,7 @@
 #include "cmem.h"
 #include "cring.h"
 #include "cbyteswap.h"
-#include "fitsec2/fitsec.h"
+#include "fitsec.h"
 #include "fitsec_error.h"
 #include "fitsec_time.h"
 #include "uppertester/uppertester.h"

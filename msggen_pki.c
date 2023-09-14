@@ -5,7 +5,7 @@
 
 #include <curl/curl.h>
 
-#include "../fspki/fitsec_pki.h"
+#include "fitsec_pki.h"
 
 static int _options (MsgGenApp* app, int argc, char* argv[]);
 static size_t _fill_none   (MsgGenApp* app, FitSec * e, FSMessageInfo* m)
