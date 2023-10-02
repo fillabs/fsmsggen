@@ -6,6 +6,7 @@
 #include "cstr.h"
 #include "cmem.h"
 #include "cring.h"
+#include "clog.h"
 #include "cbyteswap.h"
 #include "fitsec.h"
 #include "fitsec_error.h"
@@ -86,6 +87,7 @@ static int copt_on_position(const copt_t* opt, const char* option, const copt_va
 static int copt_on_msgType(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_value_t* value);
+static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value);
 
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
@@ -105,7 +107,7 @@ static copt_t options [] = {
     { "d",  "dc",       COPT_STR ,     &_o_dc,        "Assign this DC to all CA certificates" },
     { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
     { "l",  "loopback", COPT_BOOL,     &_o_allow_loopback, "Receive packets sent by itself" },
-    { "v",  "verbose",  COPT_BOOL ,    &_o_verbose,   "Be verbose" },
+    { "v",  "verbose",  COPT_BOOL | COPT_CALLBACK, copt_on_verbose,   "Be verbose (allow multiple -vvv)" },
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -136,6 +138,22 @@ static int copt_on_position(const copt_t* opt, const char* option, const copt_va
     if (e == p || *p != 0) return -1;
     return 0;
 }
+
+static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value)
+{
+    clog_level_t l = clog_level(0);
+    if (value->v_boolean == 0) {
+        if(l > 0){
+            clog_set_level(0, l-1);
+        }
+    }else{
+        if(l < CLOG_LASTLEVEL-1){
+            clog_set_level(0, l+1);
+        }
+    }
+    return 0;
+}
+
 
 static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_value_t* value)
 {
@@ -226,12 +244,21 @@ static FSUT* ut = NULL;
 
 static pcap_handler_t h = { NULL, NULL };
 
+static const char * _cctates[] = {
+    "UNKNOWN",
+    "TRUSTED",
+    "INVALID",
+    ""
+};
+
 static bool _onEvent(FitSec* e, void* user, FSEventId event, const FSEventParam* params)
 {
     if (event == FSEvent_CertStatus) {
         FSCertificate * c = params->certStateChange.certificate;
-        if(_o_dc){
-            printf("Assign %s to " cPrefixUint64 "x\n", _o_dc, cint64_hton(FitSec_CertificateDigest(c)));
+        FSHashedId8 digest = cint64_hton(FitSec_CertificateDigest(c));
+        printf("["cPrefixUint64"X](%s): %s => %s\n", digest, FitSec_CertificateName(c), _cctates[params->certStateChange.from&3], _cctates[params->certStateChange.to&3]);
+        if(_o_dc && (params->certStateChange.to & FSCERT_TRUSTED)) {
+            printf("["cPrefixUint64"X]: Assign DC %s\n", digest, _o_dc);
             FSCertificate_SetDC(c, _o_dc, strlen(_o_dc));
         }
     }
@@ -274,7 +301,7 @@ int main(int argc, char** argv)
         pcap_if_t* alldevsp = NULL;
         char errbuf[PCAP_ERRBUF_SIZE];
         if(0 > pcap_findalldevs(&alldevsp, errbuf)){
-            fprintf(stderr, "ERROR: %s\n", errbuf);
+            mclog_error(PCAP, "%s", errbuf);
             return -1;
         }
         for (pcap_if_t* i = alldevsp; i; i = i->next) {
@@ -322,18 +349,18 @@ int main(int argc, char** argv)
         }
     }
     if (h.device == NULL) {
-        fprintf(stderr, "%s: %s\n", dev_name, _error_buffer);
+        mclog_error(PCAP, "%s: %s", dev_name, _error_buffer);
         return -1;
     }
     if(0 > pcap_setnonblock(h.device, 1, _error_buffer)){
-        fprintf(stderr, "%s: %s\n", dev_name, _error_buffer);
+        mclog_error(PCAP, "%s: %s", dev_name, _error_buffer);
 //        return -1;
     }
 
     if (_curStrTime) {
         struct tm t;
         if (0 > _strpdate(_curStrTime, &t)) {
-            fprintf(stderr, "%s: Unknown time format\n", _curStrTime);
+            mclog_error(MAIN, "%s: Unknown time format\n", _curStrTime);
             return -1;
         }
         _tdelta = (long)((time_t)mkgmtime(&t) - time(NULL));
@@ -349,15 +376,15 @@ int main(int argc, char** argv)
         if( 0 > FitSec_LoadTrustData(e, unix2itstime32(time(NULL) + _tdelta), storage1)){
             return -1;
         }
-        FitSec_RelinkCertificates(e);
+//        FitSec_RevalidateCertificates(e);
     }
     
     if (_o_uppertester) {
-        printf("Start UpperTester Engine at %s:%u\n", _o_ut_addr, _o_ut_port);
+        mclog_info(UT, "Start UpperTester Engine at %s:%u\n", _o_ut_addr, _o_ut_port);
         ut = FSUT_New(_o_ut_addr, _o_ut_port);
         for (size_t i = 0; i < _applications_count; i++) {
             if(_applications[i]->utHandler){
-                printf("    register %s\n", _applications[i]->appName);
+                mclog_info(UT, "    register %s\n", _applications[i]->appName);
                 FSUT_RegisterHandler(ut, _applications[i]->utHandler, _applications[i]->utPtr ? _applications[i]->utPtr : e);
             }
         }
@@ -385,7 +412,7 @@ int main(int argc, char** argv)
                     if(arg < argc){
                         uint32_t t = unix2itstime32(time(NULL)) + _tdelta;
                         FitSec_LoadTrustData(e, t, argv[arg]);
-                        FitSec_RelinkCertificates(e);
+//                        FitSec_RevalidateCertificates(e);
                         arg++;
                     }
                 }else{
@@ -455,11 +482,10 @@ void MsgGenApp_Send(FitSec * e, MsgGenApp * a)
         
         // inject in pcap
         ph.caplen = ph.len = (uint32_t) (m.messageSize + SHIFT_SEC);
-        if(_o_verbose) {
-            fprintf(stderr, "%s Msg sent app=%s gt="cPrefixUint64"u (%u bytes)\n",
+        mclog_info(MAIN, "%s Msg sent app=%s gt="cPrefixUint64"u (%u bytes)\n",
                 strlocaltime(ph.ts.tv_sec, ph.ts.tv_usec),
                 a->appName, timeval2itstime64(&ph.ts), ph.len);
-        }
+
         _packet_handler(&h, &ph, buf);
     }else{
         usleep(1000000 / _rate);
@@ -520,7 +546,7 @@ static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint
                 const char * status = (flags & FSCERT_REVOKED) ? "revoked" : 
                                         (flags & FSCERT_INVALID) ? "invalid" :
                                             (flags & FSCERT_TRUSTED) ? "trusted" : "unknown";
-                fprintf(stderr, "%s Message received (gt=%s cert="cPrefixUint64"X %s)\n",
+                mclog_info(MAIN, "%s Message received (gt=%s cert="cPrefixUint64"X %s)\n",
                     strlocaltime(tv.tv_sec, tv.tv_usec), 
                     stritstime64(m.generationTime),cint64_hton(FitSec_CertificateDigest(m.sign.cert)),
                     status);
@@ -587,19 +613,18 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
     switch (m->code) {
     case FS_UtInitialize: // utInitialize
         if (size >= sizeof(struct FSUTMsg_Initialize)) {
-            fprintf(stderr, "%s UTInitialize (" cPrefixUint64 "X) - ", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
             if (m->initialize.digest == 0 || FitSec_Select(ptr, FITSEC_AID_ANY, m->initialize.digest)) {
-                fprintf(stderr, "OK\n");
+                mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - OK", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
                 rc= 1;
             }
             else {
                 const FSCertificate* c = FitSec_CurrentCertificate(ptr, FITSEC_AID_CAM);
                 if (c && m->initialize.digest == FitSec_CertificateDigest(c)) {
-                    fprintf(stderr, "ALREADY\n");
+                    mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - ALREADY", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
                     rc = 1;
                 }
                 else {
-                    fprintf(stderr, "NOT FOUND\n");
+                    mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - NOT FOUND", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
                 }
             }
         }
