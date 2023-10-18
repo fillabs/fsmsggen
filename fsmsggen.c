@@ -47,7 +47,7 @@ static float _rate = 10; // 10Hz
 
 static int _gn_src = 0;
 
-pchar_t* storage1 = "POOL_CAM";
+pchar_t* storage1 = "POOL_CAM"; // default storage
 char* _curStrTime = NULL;
 pchar_t* _out = "out.pcap";
 pchar_t* _in = NULL;
@@ -88,12 +88,14 @@ static int copt_on_msgType(const copt_t* opt, const char* option, const copt_val
 static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value);
+static int copt_on_load(const copt_t* opt, const char* option, const copt_value_t* value);
+static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_value_t* value);
 
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
     { "C",  "config",   COPT_CFGFILE,  &cfgfile,      "Config file"         },
     { "m",  "type",     COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message type" },
-    { "1",  "pool1",    COPT_PATH,     &storage1,     "Storage directory 1"   },
+    { "1",  "load",     COPT_PATH|COPT_CALLBACK, copt_on_load,     "Load certificates or CTL/CRL data from file or directory"   },
     { "n",  "count",    COPT_LONG,     &_msg_count,   "Message count" },
     { "i",  "iface",    COPT_STR,      &_iface,       "Network interface to send messages" },
     { "D",  "iface-list", COPT_BOOL,   &_iface_list,  "List network interfaces"},
@@ -104,7 +106,7 @@ static copt_t options [] = {
     { "p",  "position", COPT_STR  | COPT_CALLBACK, copt_on_position,  "The position in form latitude:longitude" },
     { "s",  "srcaddr",  COPT_STR  | COPT_CALLBACK, copt_on_gn_src_addr,  "The GN source address" },
     { "u",  "ut",       COPT_BOOL | COPT_CALLBACK, copt_on_ut_addr, "Start UpperTester" },
-    { "d",  "dc",       COPT_STR ,     &_o_dc,        "Assign this DC to all CA certificates" },
+    { "d",  "dc",       COPT_STR  | COPT_CALLBACK, copt_on_set_dc,  "Assign this DC to all CA certificates" },
     { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
     { "l",  "loopback", COPT_BOOL,     &_o_allow_loopback, "Receive packets sent by itself" },
     { "v",  "verbose",  COPT_BOOL | COPT_CALLBACK, copt_on_verbose,   "Be verbose (allow multiple -vvv)" },
@@ -181,6 +183,29 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
                 }
             }
         }
+    }
+    return 0;
+}
+
+typedef struct load_element_t {
+    cring_t ring;
+    const char * path;
+}load_element_t;
+static cring_t _o_load_elements = {&_o_load_elements, &_o_load_elements};
+static int copt_on_load(const copt_t* opt, const char* option, const copt_value_t* value)
+{
+    storage1 = NULL;
+    load_element_t * e = cnew(load_element_t);
+    e->path = value->v_str;
+    cring_enqueue(&_o_load_elements, &e->ring);
+    return 0;
+}
+static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_value_t* value)
+{
+    if(cstrequal(value->v_str, "-")){
+        _o_dc = NULL;
+    }else{
+        _o_dc = value->v_str;
     }
     return 0;
 }
@@ -373,10 +398,17 @@ int main(int argc, char** argv)
         e = NULL;
     }
     else {
-        if( 0 > FitSec_LoadTrustData(e, unix2itstime32(time(NULL) + _tdelta), storage1)){
-            return -1;
+        if(storage1){
+            copt_value_t v;
+            v.v_str = storage1;
+            copt_on_load(&options[3], "load", &v);
         }
-//        FitSec_RevalidateCertificates(e);
+        FSTime32 t = unix2itstime32(time(NULL) + _tdelta);
+        cring_foreach(load_element_t, l, _o_load_elements){
+            if( 0 > FitSec_LoadTrustData(e, t, l->path)){
+                return -1;
+            }
+        }
     }
     
     if (_o_uppertester) {
@@ -613,6 +645,15 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
     switch (m->code) {
     case FS_UtInitialize: // utInitialize
         if (size >= sizeof(struct FSUTMsg_Initialize)) {
+            FitSec_Clean(ptr);
+            // load necessary certificates
+            FSTime32 t = unix2itstime32(time(NULL) + _tdelta);
+            cring_foreach(load_element_t, l, _o_load_elements){
+                if( 0 > FitSec_LoadTrustData(ptr, t, l->path)){
+                    return -1;
+                }
+            }
+
             if (m->initialize.digest == 0 || FitSec_Select(ptr, FITSEC_AID_ANY, m->initialize.digest)) {
                 mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - OK", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
                 rc= 1;
