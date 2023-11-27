@@ -6,13 +6,14 @@
 #include "gn_types.h"
 #include "../uppertester/uppertester.h"
 
+static void cam_process (MsgGenApp * app, FitSec * e);
 static int cam_options (MsgGenApp* app, int argc, char* argv[]);
 static size_t cam_fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 
 static int   cam_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
 
 static MsgGenApp _cam = {
-    "cam", 0, cam_options, cam_fill, cam_ut_handler
+    "cam", 0, cam_process, cam_options, cam_fill, cam_ut_handler
 };
 
 __INITIALIZER__(initializer_cam) {
@@ -43,11 +44,13 @@ static const char* _o_stationTypes[] = {
 
 static int _o_secured = 1;
 static int _o_btpA = 0;
+static int _activated = 1;
 
 static copt_t options[] = {
-    { "T", "station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
-    { "B", "btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB]" },
-    { NULL, "no-sec-cam",   COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
+    { "T",  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
+    { "B",  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
+    { "C",  "cam-stop",          COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
+    { NULL, "cam-no-sec",        COPT_IBOOL ,   &_activated, "Do not start CAM by default" },
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
@@ -128,6 +131,13 @@ static GNExtendedHeader _def_eh = {
     }
 };
 
+static void cam_process (MsgGenApp * app, FitSec * e)
+{
+    if(_activated){
+        MsgGenApp_Send(e, app); 
+    }
+}
+
 static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {
     size_t len;
@@ -197,6 +207,10 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 static int  cam_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
 {
     switch (m->code){
+        case FS_UtCamTrigger:
+            _activated = m->camState.state;
+            break;
+
         case FS_UtCamTrigger_changeSpeed:
         {
             if(cam->cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue == SpeedValue_unavailable){

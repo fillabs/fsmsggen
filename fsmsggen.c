@@ -33,6 +33,7 @@
  #endif
 #else
 #include <unistd.h>
+#include <sys/time.h>
 #endif
 
 static FitSecConfig cfg1;
@@ -84,7 +85,7 @@ uint8_t buf[1024] = {
 #define SHIFT_SEC 18
 
 static int copt_on_position(const copt_t* opt, const char* option, const copt_value_t* value);
-static int copt_on_msgType(const copt_t* opt, const char* option, const copt_value_t* value);
+//static int copt_on_msgType(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value);
@@ -94,7 +95,7 @@ static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_valu
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
     { "C",  "config",   COPT_CFGFILE,  &cfgfile,      "Config file"         },
-    { "m",  "type",     COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message type" },
+//    { "m",  "type",     COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message type" },
     { "1",  "load",     COPT_PATH|COPT_CALLBACK, copt_on_load,     "Load certificates or CTL/CRL data from file or directory"   },
     { "n",  "count",    COPT_LONG,     &_msg_count,   "Message count" },
     { "i",  "iface",    COPT_STR,      &_iface,       "Network interface to send messages" },
@@ -190,6 +191,7 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
 typedef struct load_element_t {
     cring_t ring;
     const char * path;
+    const char * dc;
 }load_element_t;
 static cring_t _o_load_elements = {&_o_load_elements, &_o_load_elements};
 static int copt_on_load(const copt_t* opt, const char* option, const copt_value_t* value)
@@ -197,6 +199,7 @@ static int copt_on_load(const copt_t* opt, const char* option, const copt_value_
     storage1 = NULL;
     load_element_t * e = cnew(load_element_t);
     e->path = value->v_str;
+    e->dc = _o_dc;
     cring_enqueue(&_o_load_elements, &e->ring);
     return 0;
 }
@@ -213,12 +216,12 @@ static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_valu
 static MsgGenApp* _applications[10];
 static size_t _applications_count = 0;
 
-static MsgGenApp* _app = NULL;
+//static MsgGenApp* _app = NULL;
 void  MsgGenApp_Register(MsgGenApp* app)
 {
     _applications[_applications_count++] = app;
-    if (_app == NULL) _app = app;
-    if (app->flags & MsgGenApp_DefaultApp) _app = app;
+//    if (_app == NULL) _app = app;
+//    if (app->flags & MsgGenApp_DefaultApp) _app = app;
 }
 
 static MsgGenApp * MsgGenApp_Select(const char* appName)
@@ -231,14 +234,16 @@ static MsgGenApp * MsgGenApp_Select(const char* appName)
     return NULL;
 }
 
+/*
 static int copt_on_msgType(const copt_t* opt, const char* option, const copt_value_t* value)
-{
+{    
     MsgGenApp * a = MsgGenApp_Select(value->v_str);
     if(a){
         _app = a;
     }
     return 0;
 }
+*/
 
 static char _error_buffer[PCAP_ERRBUF_SIZE];
 
@@ -401,10 +406,11 @@ int main(int argc, char** argv)
         if(storage1){
             copt_value_t v;
             v.v_str = storage1;
-            copt_on_load(&options[3], "load", &v);
+            copt_on_load(&options[2], "load", &v);
         }
         FSTime32 t = unix2itstime32(time(NULL) + _tdelta);
         cring_foreach(load_element_t, l, _o_load_elements){
+            _o_dc = l->dc;
             if( 0 > FitSec_LoadTrustData(e, t, l->path)){
                 return -1;
             }
@@ -426,7 +432,10 @@ int main(int argc, char** argv)
 
     size_t icmd = 1;
     int arg = 1;
+    struct timeval t_next, t_add = {0, 1000000 / _rate};
+    gettimeofday(&t_next, NULL);
     for (size_t i = 0; i < _msg_count; i++) {
+        timeradd(&t_next, &t_add, &t_next);
         FSUT_Message * m = NULL;
         if(arg < argc){ 
             if(i == icmd){
@@ -467,10 +476,16 @@ int main(int argc, char** argv)
         if (h.dumper == NULL) {
             pcap_dispatch(h.device, 1, _handler_read, (uint8_t*)e);
         }
-        if(_app)
-            MsgGenApp_Send(e, _app);
-        else{
-            usleep(1000000 / _rate);
+
+        for (size_t i = 0; i < _applications_count; i++) {
+            _applications[i]->process(_applications[i], e);
+        }
+       
+        struct timeval t_now;
+        gettimeofday(&t_now, NULL);
+        timersub(&t_next, &t_now, &t_now);
+        if(( (t_now.tv_sec * 1000000) + t_now.tv_usec) > 0 ){
+            usleep((t_now.tv_sec * 1000000) + t_now.tv_usec);
         }
     }
 
@@ -532,15 +547,17 @@ static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8
 static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
     pcap_dump((uint8_t*)h->dumper, ph, data);
+/*
     ph->ts.tv_usec += (long)(1000000.0 / _rate);
     ph->ts.tv_sec += ph->ts.tv_usec / 1000000;
     ph->ts.tv_usec %= 1000000;
+*/
 }
 
 static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
     pcap_inject(h->device, data, ph->len);
-
+/*
     // wait for next hop
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -556,6 +573,7 @@ static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint
 //    fprintf(stderr, "sleep %u usec\n", tv.tv_usec);
     if(tv.tv_usec > 0)
         usleep(tv.tv_usec);
+*/
 }
 
 static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint8_t* data)
@@ -649,6 +667,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
             // load necessary certificates
             FSTime32 t = unix2itstime32(time(NULL) + _tdelta);
             cring_foreach(load_element_t, l, _o_load_elements){
+                _o_dc = l->dc;
                 if( 0 > FitSec_LoadTrustData(ptr, t, l->path)){
                     return -1;
                 }
@@ -669,7 +688,6 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
                 }
             }
         }
-        _app = MsgGenApp_Select("cam");
 
         m->result.result = rc;
         m->code = FS_UtInitializeResult;

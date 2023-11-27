@@ -6,17 +6,20 @@
 
 static int _options (MsgGenApp* app, int argc, char* argv[]);
 static size_t _fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
+static void _process (MsgGenApp * app, FitSec * e);
 
 static MsgGenApp _app = {
-    "beacon", MsgGenApp_DefaultApp, _options, _fill,
+    "beacon", MsgGenApp_DefaultApp, _process, _options, _fill,
 };
 
 __INITIALIZER__(initializer_beacon) {
      MsgGenApp_Register(&_app);
 }
+static int _o_beacon = 0;
 static int _o_secured_beacon = 1;
 
 static copt_t options[] = {
+    { NULL, "beacon",         COPT_BOOL , &_o_beacon,          "Send beacon if CAM disabled" },
     { NULL, "no-sec-beacon",  COPT_IBOOL , &_o_secured_beacon, "Send non-secured beacon" },
 
     { NULL, NULL, COPT_END, NULL, NULL }
@@ -56,6 +59,13 @@ static GNCommonHeader _def_ch = {
     1,    // .maxHopLimit
     0,    // .reserved2
 };
+
+static void _process (MsgGenApp * app, FitSec * e)
+{
+    if(_o_beacon){
+        MsgGenApp_Send(e, app);
+    }
+}
 
 static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {

@@ -15,6 +15,7 @@ enum {
     FS_UtChangePseudonym = 0x04,
     FS_UtChangePseudonymResult = 0x05,
 
+    FS_UtCamTrigger = 0x20,
     FS_UtCamTriggerResult = 0x21,
     FS_UtCamEventInd = 0x23,
     FS_UtCamTrigger_changeCurvature = 0x30,
@@ -62,6 +63,11 @@ __PACKED__(struct FSUTMsg_Result {
     uint8_t code;
     uint8_t result;
 });
+__PACKED__(struct FSUTMsg_SetCamState {
+    uint8_t code;
+    uint8_t state; // 0 - stop, 1 - start
+});
+
 __PACKED__(struct FSUTMsg_ChangePosition {
     uint8_t code;
     int32_t deltaLatitude;
@@ -125,6 +131,7 @@ __PACKED__(struct FSUTMsg_PkiTriggerInd {
 __PACKED__(union FSUT_Message {
     uint8_t                          code;
     struct FSUTMsg_Initialize        initialize;
+    struct FSUTMsg_SetCamState       camState;
     struct FSUTMsg_Result            result;
     struct FSUTMsg_ChangePosition    changePosition;
     struct FSUTMsg_ChangePseudonym   changePseudonym;

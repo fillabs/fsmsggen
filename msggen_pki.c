@@ -13,17 +13,23 @@ static size_t _fill_none   (MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 static size_t _fill_auth   (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static size_t _fill_enr    (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static int  pki_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
+static void pki_process_ea (MsgGenApp * app, FitSec * e);
+static void pki_process_aa (MsgGenApp * app, FitSec * e);
+static void pki_process_none (MsgGenApp * app, FitSec * e) {
+    pki_process_ea (app, e);
+    pki_process_aa (app, e);
+}
 
 static FitSecPki * _pki = NULL;
 
 static MsgGenApp _app = {
-    "pki", MsgGenApp_DefaultApp, _options, _fill_none, pki_ut_handler
+    "pki", MsgGenApp_DefaultApp, pki_process_none, _options, _fill_none, pki_ut_handler
 };
 static MsgGenApp _enr = {
-    "enr", MsgGenApp_DefaultApp, _options, _fill_enr
+    "enr", MsgGenApp_DefaultApp, pki_process_ea, _options, _fill_enr
 };
 static MsgGenApp _auth = {
-    "auth", MsgGenApp_DefaultApp, _options, _fill_auth
+    "auth", MsgGenApp_DefaultApp, pki_process_aa, _options, _fill_auth
 };
 
 __INITIALIZER__(initializer_beacon) {
@@ -47,13 +53,16 @@ static FitSecPkiConfig pki_cfg = {
         &station_id[0], sizeof(station_id),
         FS_NISTP256, &priv_key[0]
     },
-    DEFAULT_REQ_STORAGE_DURATION
+    true, // enable repetition
+    10
 };
 
 
 static const pchar_t * _o_canKeyPath = NULL;
 static const pchar_t * _o_stationIdPath = NULL;
 static const char * _o_dc = NULL;
+static int    _o_reenr_delay = 5;
+static int _o_skip_http = 0;
 
 static FSUT * ut = NULL;
 
@@ -61,6 +70,9 @@ static copt_t options[] = {
     { "K",  "canonical-key",  COPT_PATH,     &_o_canKeyPath,    "Canonical private key path" },
     { "I",  "station-id",     COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
     { "D",  "dc",             COPT_STR,      &_o_dc,            "Override all DC URLs" },
+    { NULL, "reenrol-delay",  COPT_UINT,     &_o_reenr_delay,   "Re-enrolment delay [5 sec]"},
+    { NULL, "skip-http",      COPT_BOOL,     &_o_skip_http,     "skip http operation"},
+    
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -123,6 +135,9 @@ static bool _process_http_request(FitSecPki* pki, const char* url, const char * 
 {
     bool ret = true;
     printf("Request: %s\n", url);
+    if(_o_skip_http){
+        return false;
+    }
 
     CURL* req = curl_easy_init();
     CURLcode res;
@@ -164,9 +179,8 @@ static bool _process_http_request(FitSecPki* pki, const char* url, const char * 
     return ret;
 }
 
-
 FSCertificateParams params = { 0 };
-
+static uint32_t _reenrolment_time = 0;
 static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {
     if(_pki == NULL){
@@ -184,6 +198,11 @@ static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
                         char state = 1;
                         FSUT_EnqueueIndication(ut, FS_UtPkiTriggerInd, &state, 1);
                     }
+                }else{
+                    // enqueue repetition
+                    if(_o_reenr_delay){
+                        _reenrolment_time = time(NULL) + _o_reenr_delay;
+                    }
                 }
             }
         }else{
@@ -193,6 +212,21 @@ static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         fprintf(stderr, "Enrol: %s\n", FitSec_ErrorMessage(m->status));
     }
     return 0;
+}
+
+static void pki_process_ea (MsgGenApp * app, FitSec * e)
+{
+    if(_reenrolment_time){
+        if(time(NULL) >= _reenrolment_time){
+            _reenrolment_time = 0;
+            MsgGenApp_Send(_pki->e, &_enr);
+        }
+    }
+}
+
+static void pki_process_aa (MsgGenApp * app, FitSec * e)
+{
+
 }
 
 static size_t _fill_auth(MsgGenApp* app, FitSec * e, FSMessageInfo* m)

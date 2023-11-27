@@ -348,10 +348,18 @@ static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv)
 }
 
 static int _cmd_UtCamStart(FSUT_Message ** pmsg, int argc, char ** argv) {
-    return 0;
+    FSUT_Message * m = malloc(sizeof(m->camState));
+    m->camState.code = FS_UtCamTrigger;
+    m->camState.state = 1;
+    *pmsg = m;
+    return 1;
 }
 static int _cmd_UtCamStop(FSUT_Message ** pmsg, int argc, char ** argv) {
-    return 0;
+    FSUT_Message * m = malloc(sizeof(m->camState));
+    m->camState.code = FS_UtCamTrigger;
+    m->camState.state = 0;
+    *pmsg = m;
+    return 1;
 }
 static int _cmd_UtCamRate(FSUT_Message ** pmsg, int argc, char ** argv) {
     return 0;
