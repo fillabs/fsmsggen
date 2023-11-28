@@ -439,7 +439,7 @@ int main(int argc, char** argv)
         FSUT_Message * m = NULL;
         if(arg < argc){ 
             if(i == icmd){
-                if(0 == strcmp("skip", argv[arg])){
+                if(0 == strcmp("pause", argv[arg])){
                     arg++;
                     if(arg < argc){
                         char * end = argv[arg];

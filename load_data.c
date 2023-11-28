@@ -57,24 +57,26 @@ static FSHashedId8 _load_data(FitSec * e, FSTime32 curTime, pchar_t * path, pcha
 			size_t cert_len = end - data;
 
 			ext = cstrpathextension(fname);
-			pchar_cpy(ext, ".vkey");
-				vkey = _data;
-				end = cstrnload(vkey, sizeof(_data), path);
-			if (end <= vkey){
-				end = vkey; vkey = NULL;
-			}
-			else{
-				vkey_len = end - vkey;
-			}
+			if((ext - fname) > 3 && cmemcmp("_EA", ext-3, 3) && cmemcmp("_AA", ext-3, 3) && cmemcmp("_RCA", ext-4, 4)) {
+				pchar_cpy(ext, ".vkey");
+					vkey = _data;
+					end = cstrnload(vkey, sizeof(_data), path);
+				if (end <= vkey){
+					end = vkey; vkey = NULL;
+				}
+				else{
+					vkey_len = end - vkey;
+				}
 
-			pchar_cpy(ext, ".ekey");
-			ekey = end;
-				end = cstrnload(ekey, sizeof(_data) - (end-_data), path);
-			if (end <= ekey){
-				end = ekey; ekey = NULL;
-			}
-			else{
-				ekey_len = end - ekey;
+				pchar_cpy(ext, ".ekey");
+				ekey = end;
+					end = cstrnload(ekey, sizeof(_data) - (end-_data), path);
+				if (end <= ekey){
+					end = ekey; ekey = NULL;
+				}
+				else{
+					ekey_len = end - ekey;
+				}
 			}
 			*ext = 0;
 			const FSCertificate* c =  FitSec_InstallCertificate(e, data, cert_len, vkey, vkey_len, ekey, ekey_len, &error);
