@@ -19,47 +19,84 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="asn_codecs_prim_ber.c" />
-    <ClCompile Include="BIT_STRING_print.c" />
-    <ClCompile Include="BIT_STRING_rfill.c" />
+    <ClCompile Include="asn_codecs_prim_ber.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="BIT_STRING_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="BIT_STRING_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="BIT_STRING_uper.c" />
-    <ClCompile Include="BOOLEAN_ber.c" />
-    <ClCompile Include="BOOLEAN_print.c" />
-    <ClCompile Include="BOOLEAN_rfill.c" />
+    <ClCompile Include="BOOLEAN_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="BOOLEAN_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="BOOLEAN_uper.c" />
     <ClCompile Include="CAM.c" />
-    <ClCompile Include="constr_CHOICE_ber.c" />
-    <ClCompile Include="constr_CHOICE_print.c" />
-    <ClCompile Include="constr_CHOICE_rfill.c" />
+    <ClCompile Include="constr_CHOICE_ber.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="constr_CHOICE_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="constr_CHOICE_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="constr_CHOICE_uper.c" />
-    <ClCompile Include="constr_SEQUENCE_ber.c" />
-    <ClCompile Include="constr_SEQUENCE_OF_ber.c" />
+    <ClCompile Include="constr_SEQUENCE_ber.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="constr_SEQUENCE_OF_ber.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="constr_SEQUENCE_OF_uper.c" />
-    <ClCompile Include="constr_SEQUENCE_print.c" />
-    <ClCompile Include="constr_SEQUENCE_rfill.c" />
+    <ClCompile Include="constr_SEQUENCE_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="constr_SEQUENCE_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="constr_SEQUENCE_uper.c" />
-    <ClCompile Include="constr_SET_OF_ber.c" />
-    <ClCompile Include="constr_SET_OF_print.c" />
-    <ClCompile Include="constr_SET_OF_rfill.c" />
+    <ClCompile Include="constr_SET_OF_ber.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="constr_SET_OF_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="constr_SET_OF_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="constr_SET_OF_uper.c" />
     <ClCompile Include="CoopAwareness.c" />
     <ClCompile Include="CamParameters.c" />
     <ClCompile Include="HighFrequencyContainer.c" />
-    <ClCompile Include="INTEGER_ber.c" />
-    <ClCompile Include="INTEGER_print.c" />
-    <ClCompile Include="INTEGER_rfill.c" />
+    <ClCompile Include="INTEGER_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="INTEGER_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="INTEGER_uper.c" />
     <ClCompile Include="LowFrequencyContainer.c" />
     <ClCompile Include="NativeEnumerated_uper.c" />
-    <ClCompile Include="NativeInteger_ber.c" />
-    <ClCompile Include="NativeInteger_print.c" />
-    <ClCompile Include="NativeInteger_rfill.c" />
+    <ClCompile Include="NativeInteger_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="NativeInteger_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="NativeInteger_uper.c" />
-    <ClCompile Include="OCTET_STRING_ber.c" />
-    <ClCompile Include="OCTET_STRING_print.c" />
-    <ClCompile Include="OCTET_STRING_rfill.c" />
+    <ClCompile Include="OCTET_STRING_print.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="OCTET_STRING_rfill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="OCTET_STRING_uper.c" />
-    <ClCompile Include="OPEN_TYPE_ber.c" />
     <ClCompile Include="OPEN_TYPE_uper.c" />
     <ClCompile Include="SpecialVehicleContainer.c" />
     <ClCompile Include="BasicContainer.c" />
@@ -245,15 +282,25 @@
     <ClCompile Include="constr_SET_OF.c" />
     <ClCompile Include="asn_application.c" />
     <ClCompile Include="asn_internal.c" />
-    <ClCompile Include="asn_random_fill.c" />
+    <ClCompile Include="asn_random_fill.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="asn_bit_data.c" />
     <ClCompile Include="OCTET_STRING.c" />
     <ClCompile Include="BIT_STRING.c" />
     <ClCompile Include="asn_codecs_prim.c" />
-    <ClCompile Include="ber_tlv_length.c" />
-    <ClCompile Include="ber_tlv_tag.c" />
-    <ClCompile Include="ber_decoder.c" />
-    <ClCompile Include="der_encoder.c" />
+    <ClCompile Include="ber_tlv_length.c">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ber_tlv_tag.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ber_decoder.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="der_encoder.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="constr_TYPE.c" />
     <ClCompile Include="constraints.c" />
     <ClCompile Include="per_support.c" />
@@ -455,14 +502,24 @@
     <ClInclude Include="asn_system.h" />
     <ClInclude Include="asn_codecs.h" />
     <ClInclude Include="asn_internal.h" />
-    <ClInclude Include="asn_random_fill.h" />
+    <ClInclude Include="asn_random_fill.h">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="asn_bit_data.h" />
     <ClInclude Include="BIT_STRING.h" />
     <ClInclude Include="asn_codecs_prim.h" />
-    <ClInclude Include="ber_tlv_length.h" />
-    <ClInclude Include="ber_tlv_tag.h" />
-    <ClInclude Include="ber_decoder.h" />
-    <ClInclude Include="der_encoder.h" />
+    <ClInclude Include="ber_tlv_length.h">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ber_tlv_tag.h">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ber_decoder.h">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="der_encoder.h">
+      <ExcludedFromBuild >true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="constr_TYPE.h" />
     <ClInclude Include="constraints.h" />
     <ClInclude Include="per_support.h" />

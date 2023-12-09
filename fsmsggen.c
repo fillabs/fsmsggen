@@ -1,5 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//#ifdef _MSC_VER
+//#include <windows.h>
+//#endif
+
 #include <pcap.h>
 
 #include "copts.h"

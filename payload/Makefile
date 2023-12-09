@@ -29,11 +29,11 @@ ASN1_PDU :=  CAM DENM
 
 
 Makefile.am.libasncodec: $(ASN1_SRC) 
-	$(ASN1C) -no-gen-example -no-gen-APER -no-gen-OER -no-gen-XER $(addprefix -pdu=,$(ASN1_PDU)) $(ASN1_SRC)
+	$(ASN1C) -no-gen-example -no-gen-APER -no-gen-OER -no-gen-XER -no-gen-JER -no-gen-random-fill -no-gen-print $(addprefix -pdu=,$(ASN1_PDU)) $(ASN1_SRC)
 	touch $@
 
 regen: FORCE
-	$(ASN1C) -no-gen-example -no-gen-APER -no-gen-OER -no-gen-XER $(addprefix -pdu=,$(ASN1_PDU)) $(ASN1_SRC)
+	$(ASN1C) -no-gen-example -no-gen-APER -no-gen-OER -no-gen-XER -no-gen-JER -no-gen-random-fill -no-gen-print $(addprefix -pdu=,$(ASN1_PDU)) $(ASN1_SRC)
 
 libItsPayload.vcxproj.list: Makefile.am.libasncodec
 	rm -f $@

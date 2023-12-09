@@ -91,82 +91,80 @@
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>cshared;uppertester;fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;./payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>wpcap.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>c:\Program Files\NPCAP\sdk\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Program Files\NPCAP\sdk\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./cshared;./uppertester;./fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;./payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>wpcap.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>c:\Program Files\NPCAP\sdk\Lib\x64;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\Program Files\NPCAP\sdk\Lib\x64;C:\Tools\VCPkg\installed\x64-windows\lib;$(OutDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./cshared;./uppertester;./fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>wpcap.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
       <AdditionalLibraryDirectories>c:\Program Files\NPCAP\sdk\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./cshared;./uppertester;./fitsec2;c:\Program Files\npcap\sdk\Include;payload</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>wpcap.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>c:\Program Files\NPCAP\sdk\Lib\x64;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\Program Files\NPCAP\sdk\Lib\x64;C:\Tools\VCPkg\installed\x64-windows\lib;$(OutDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="load_certs.c" />
     <ClCompile Include="fsmsggen.c" />
+    <ClCompile Include="load_data.c" />
+    <ClCompile Include="msggen_denm.c" />
+    <ClCompile Include="msggen_pki.c" />
     <ClCompile Include="utils.c" />
     <ClCompile Include="msggen_beacon.c" />
     <ClCompile Include="msggen_cam.c" />
@@ -175,8 +173,8 @@
     <ProjectReference Include="cshared\cshared.vcxproj">
       <Project>{d5918b85-fa45-4f75-9b50-c2d3e34aba17}</Project>
     </ProjectReference>
-    <ProjectReference Include="fitsec2\fitsec2.vcxproj">
-      <Project>{3b631b0d-6665-43d9-825b-f562cf8048f9}</Project>
+    <ProjectReference Include="fitsec2-rel/fitsec2-rel.vcxproj">
+      <Project>{B05CED85-91CD-4ABE-B737-B5AAAC29F4DD}</Project>
     </ProjectReference>
     <ProjectReference Include="payload\libItsPayload.vcxproj">
       <Project>{92294cf2-3436-4f10-93b1-b4fa4977c253}</Project>
