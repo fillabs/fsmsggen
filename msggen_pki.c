@@ -63,6 +63,7 @@ static const pchar_t * _o_stationIdPath = NULL;
 static const char * _o_dc = NULL;
 static int    _o_reenr_delay = 5;
 static int _o_skip_http = 0;
+static uint32_t _o_http_timeout = 10;
 
 static FSUT * ut = NULL;
 
@@ -71,9 +72,9 @@ static copt_t options[] = {
     { "I",  "station-id",     COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
     { "D",  "dc",             COPT_STR,      &_o_dc,            "Override all DC URLs" },
     { NULL, "reenrol-delay",  COPT_UINT,     &_o_reenr_delay,   "Re-enrolment delay [5 sec]"},
-    { NULL, "skip-http",      COPT_BOOL,     &_o_skip_http,     "skip http operation"},
+    { NULL, "http-dummy",     COPT_BOOL,     &_o_skip_http,     "do not perform any http requests"},
+    { NULL, "http-timeout",   COPT_UINT,     &_o_http_timeout,  "HTTP timeout for PKI requests[10 sec]"},
     
-
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
@@ -150,7 +151,7 @@ static bool _process_http_request(FitSecPki* pki, const char* url, const char * 
         curl_easy_setopt(req, CURLOPT_SSL_VERIFYHOST, 0L);
         curl_easy_setopt(req, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(req, CURLOPT_WRITEDATA, pki);
-        curl_easy_setopt(req, CURLOPT_TIMEOUT, 10);
+        curl_easy_setopt(req, CURLOPT_TIMEOUT, _o_http_timeout);
         if(body && len){
             curl_easy_setopt(req, CURLOPT_POST, 1L);
             curl_easy_setopt(req, CURLOPT_POSTFIELDSIZE, len);
