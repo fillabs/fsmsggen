@@ -249,7 +249,27 @@ time_t mkgmtime(struct tm *tim_p)
   return tim;
 }
 
-#endif
+void timeradd(const struct timeval* tvp, const struct timeval* uvp, struct timeval* vvp)
+{
+    (vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;
+    (vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;
+    while ((vvp)->tv_usec >= 1000000) {
+        (vvp)->tv_sec++;
+        (vvp)->tv_usec -= 1000000;          \
+    }
+}
+
+void timersub(const struct timeval* tvp, const struct timeval* uvp, struct timeval* vvp)
+{
+    (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;
+    (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;
+    while ((vvp)->tv_usec < 0) {
+        (vvp)->tv_sec--;
+        (vvp)->tv_usec += 1000000;
+    }
+}
+
+#endif // _MSC_VER
 	
 
 #endif

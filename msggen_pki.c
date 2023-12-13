@@ -32,7 +32,7 @@ static MsgGenApp _auth = {
     "auth", MsgGenApp_DefaultApp, pki_process_aa, _options, _fill_auth
 };
 
-__INITIALIZER__(initializer_beacon) {
+__INITIALIZER__(initializer_pki) {
      MsgGenApp_Register(&_app);
 }
 
