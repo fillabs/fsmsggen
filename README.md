@@ -67,16 +67,18 @@ Enrollment and authorization procedure can be triggered by uppertester command o
 The tool will select the Enrollment Authority certificate, suitable for the current location.
 Enrollment procedure requires canonical station id and key pair. Theis ID and public key shall be registered in the Enrollment Authority.
 You can let the tool to use hardcoded ones or change it to the custom ones using these command line options:
-- -I &lt;path to station&gt; - The path to the canonical station identifier. Default value is `b1b8c6e0b75dd6f676d577436bb541e`.
+- -I &lt;path to station&gt; - The path to the canonical station identifier. <br>Default value is `b1b8c6e0b75dd6f676d577436bb541e`.
 - -K &lt;path to private key&gt; - Path to the private key file. The file extension defines the curve to be used:
   - ".nist384"
   - ".bpool384"
   - ".bpool256"
   - ".sm2"
-  - NIST p256 curve is used by default.
+  - ".nist256" - used by default if unknown extension
+  
   Default canonocal key pair is based on NIST P256 curve:
   - private `32B0BAC19C38E93A821413281C4755E6DC25B6CE5A12DA8AAB49FC9BBC86EDE2`
   - public  `024B1A9F155CFD5B99BB25D9A1207CB48A17287E3790E319D23873AE54B9931922` (y0 point type).
+
 - --reenrol-delay <n sec> Run re-enrolment after the delay. Set to 0 to disable re-enrolment.
 
 ### Authorization
