@@ -174,7 +174,7 @@ static int _FitSec_LoadTrustData(FitSec * e, FSTime32 curTime, pchar_t * path, i
 			pchar_t * fn = pchar_rchr(path, '/');
 			if(fn && fn[1] != 0) fn++;
 			else   fn = path;
-			if (0 <= _load_data(e, curTime, path, fn)) {
+			if (0 == _load_data(e, curTime, path, fn)) {
 				errno = 0;
 				count++;
 			}else if(errno){

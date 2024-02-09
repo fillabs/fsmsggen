@@ -207,7 +207,7 @@ static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
                 }
             }
         }else{
-            fprintf(stderr, "Enrol: No DC found for CA cert " cPrefixUint64 "x\n", cint64_hton(FitSec_CertificateDigest(m->encryption.cert)));
+            fprintf(stderr, "Enrol: No DC found for CA cert " cPrefixUint64 "X\n", cint64_hton(FitSec_CertificateDigest(m->encryption.cert)));
         }
     }else{
         fprintf(stderr, "Enrol: %s\n", FitSec_ErrorMessage(m->status));

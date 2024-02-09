@@ -202,9 +202,11 @@ static int copt_on_load(const copt_t* opt, const char* option, const copt_value_
 {
     storage1 = NULL;
     load_element_t * e = cnew(load_element_t);
-    e->path = value->v_str;
-    e->dc = _o_dc;
-    cring_enqueue(&_o_load_elements, &e->ring);
+    if(e){
+        e->path = value->v_str;
+        e->dc = _o_dc;
+        cring_enqueue(&_o_load_elements, &e->ring);
+    }
     return 0;
 }
 static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_value_t* value)
@@ -660,12 +662,12 @@ static int _strpdate(const char* s, struct tm* t)
 
 static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
 {
-    int rc = 0;
     int size = *psize;
     struct timeval tv;
     gettimeofday(&tv, NULL);
     switch (m->code) {
     case FS_UtInitialize: // utInitialize
+        m->result.result = 1;
         if (size >= sizeof(struct FSUTMsg_Initialize)) {
             FitSec_Clean(ptr);
             // load necessary certificates
@@ -679,48 +681,42 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
 
             if (m->initialize.digest == 0 || FitSec_Select(ptr, FITSEC_AID_ANY, m->initialize.digest)) {
                 mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - OK", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
-                rc= 1;
             }
             else {
                 const FSCertificate* c = FitSec_CurrentCertificate(ptr, FITSEC_AID_CAM);
                 if (c && m->initialize.digest == FitSec_CertificateDigest(c)) {
                     mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - ALREADY", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
-                    rc = 1;
                 }
                 else {
                     mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - NOT FOUND", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
+                    m->result.result = 0;
                 }
             }
         }
 
-        m->result.result = rc;
         m->code = FS_UtInitializeResult;
         *psize = sizeof(m->result);
         return 1;
     
     case FS_UtChangePosition: 
-        m->code = FS_UtChangePositionResult;
         if (size >= sizeof(struct FSUTMsg_ChangePosition)) {
             position.latitude += m->changePosition.deltaLatitude;
             position.latitude += m->changePosition.deltaLongitude;
-            m->result.result = 1;
-            *psize = sizeof(m->result);
-            rc = 1;
         }
-        m->result.result = rc;
+        m->result.result = 1;
         m->code = FS_UtChangePositionResult;
         *psize = sizeof(m->result);
         return 1;
     
     case FS_UtChangePseudonym: 
-        if (size >= sizeof(struct FSUTMsg_ChangePseudonym)) {
+        if (size < sizeof(struct FSUTMsg_ChangePseudonym)) {
             _changePseudonym = 1;
-            rc = 1;
         }
-        m->result.result = rc;
+        m->result.result = 1;
         m->code = FS_UtChangePseudonymResult;
         *psize = sizeof(m->result);
         return 1;
+
     case FS_UtDenmTrigger:
         // send already prepared denm
         MsgGenApp_Send(ptr, MsgGenApp_Select("denm"));
@@ -729,7 +725,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
         *psize = sizeof(m->denmTriggerResult);
         return 1;
     default:
-        rc = -1;
+        break;
     }
-    return rc;
+    return -1;
 }
