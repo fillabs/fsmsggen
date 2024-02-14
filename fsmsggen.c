@@ -667,7 +667,6 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
     gettimeofday(&tv, NULL);
     switch (m->code) {
     case FS_UtInitialize: // utInitialize
-        m->result.result = 1;
         if (size >= sizeof(struct FSUTMsg_Initialize)) {
             FitSec_Clean(ptr);
             // load necessary certificates
@@ -693,7 +692,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
                 }
             }
         }
-
+        m->result.result = 1;
         m->code = FS_UtInitializeResult;
         *psize = sizeof(m->result);
         return 1;
