@@ -7,9 +7,10 @@
 static int _options (MsgGenApp* app, int argc, char* argv[]);
 static size_t _fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static void _process (MsgGenApp * app, FitSec * e);
+static void _onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
 
 static MsgGenApp _app = {
-    "beacon", MsgGenApp_DefaultApp, _process, _options, _fill,
+    "beacon", MsgGenApp_DefaultApp, _process, _options, _fill, _onEvent
 };
 
 __INITIALIZER__(initializer_beacon) {
@@ -66,6 +67,8 @@ static void _process (MsgGenApp * app, FitSec * e)
         MsgGenApp_Send(e, app);
     }
 }
+static void _onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params)
+{}
 
 static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {

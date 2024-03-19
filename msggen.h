@@ -14,8 +14,10 @@ struct MsgGenApp {
     const char * appName;
     uint32_t flags;
     void (*process) (MsgGenApp * app, FitSec * e);
-    int (*options) (MsgGenApp * app, int argc, char* argv[]);
-    size_t (*fill) (MsgGenApp * app, FitSec * e, FSMessageInfo * m);
+    int (*options)  (MsgGenApp * app, int argc, char* argv[]);
+    size_t (*fill)  (MsgGenApp * app, FitSec * e, FSMessageInfo * m);
+    void (*onEvent) (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
+
     FSUT_Handler_fn  utHandler;
     void * utPtr;
 };

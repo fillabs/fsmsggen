@@ -46,7 +46,7 @@ static FSHashedId8 _load_data(FitSec * e, FSTime32 curTime, pchar_t * path, pcha
 	char *vkey = NULL, *ekey = NULL;
 	size_t vkey_len = 0, ekey_len = 0;
 	pchar_t *ext;
-	FSHashedId8 digest = (FSHashedId8)-1;
+	FSHashedId8 digest = (FSHashedId8)0;
 	int error = 0;
 
 	end = cstraload(&data, path);
@@ -77,26 +77,27 @@ static FSHashedId8 _load_data(FitSec * e, FSTime32 curTime, pchar_t * path, pcha
 				else{
 					ekey_len = end - ekey;
 				}
+				errno = 0;
 			}
 			*ext = 0;
 			const FSCertificate* c =  FitSec_InstallCertificate(e, data, cert_len, vkey, vkey_len, ekey, ekey_len, &error);
-			digest = FitSec_CertificateDigest(c);
-			const char * name = FitSec_CertificateName(c);
+			digest = FSCertificate_Digest(c);
+			const char * name = FSCertificate_Name(c);
 			if(name == NULL){
-				FitSec_SetCertificateName(c, fname);
+				FSCertificate_SetName(c, fname);
 			}
 			printf("%5.5s %20.20s [%016"PRIX64"] %s- %s\n", FitSec_Name(e), fname, cint64_hton(digest), vkey?"(local) ":"", error ? FitSec_ErrorMessage(error):"CERT");
 		}else if(data[0] == 0x03){
 			printf("%-2s %20.20s Install trust info:\n", FitSec_Name(e), fname);
 			error = FitSec_ApplyTrustInformation(e, curTime, data, end - data);
 			printf("%-2s %20.20s End trust info: %s\n", FitSec_Name(e), fname, FitSec_ErrorMessage(error));
+			digest = 1;
 		} else {
 			printf("%-2s %20.20s Unknown format\n", FitSec_Name(e), fname);
 		}
 		free(data);
 	}
 	else{
-		error = -1;
 		printf("%-2s: %s: Empty File\n", FitSec_Name(e), fname);
 	}
 	return digest;

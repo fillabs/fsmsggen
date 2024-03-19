@@ -19,11 +19,12 @@ static void pki_process_none (MsgGenApp * app, FitSec * e) {
     pki_process_ea (app, e);
     pki_process_aa (app, e);
 }
+static void pki_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
 
 static FitSecPki * _pki = NULL;
 
 static MsgGenApp _app = {
-    "pki", MsgGenApp_DefaultApp, pki_process_none, _options, _fill_none, pki_ut_handler
+    "pki", MsgGenApp_DefaultApp, pki_process_none, _options, _fill_none, pki_onEvent, pki_ut_handler
 };
 static MsgGenApp _enr = {
     "enr", MsgGenApp_DefaultApp, pki_process_ea, _options, _fill_enr
@@ -64,6 +65,7 @@ static const char * _o_dc = NULL;
 static int    _o_reenr_delay = 5;
 static int _o_skip_http = 0;
 static uint32_t _o_http_timeout = 10;
+static const char * _o_out = NULL;
 
 static FSUT * ut = NULL;
 
@@ -71,6 +73,7 @@ static copt_t options[] = {
     { "K",  "canonical-key",  COPT_PATH,     &_o_canKeyPath,    "Canonical private key path" },
     { "I",  "station-id",     COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
     { "D",  "dc",             COPT_STR,      &_o_dc,            "Override all DC URLs" },
+    { "O",  "certs",          COPT_PATH,     &_o_out,           "Store received certificates" },
     { NULL, "reenrol-delay",  COPT_UINT,     &_o_reenr_delay,   "Re-enrolment delay [5 sec]"},
     { NULL, "http-dummy",     COPT_BOOL,     &_o_skip_http,     "do not perform any http requests"},
     { NULL, "http-timeout",   COPT_UINT,     &_o_http_timeout,  "HTTP timeout for PKI requests[10 sec]"},
@@ -114,15 +117,73 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
                     rc = -1;
                 }
             }
+            if(_o_out){
+                _o_out = cstrdups(_o_out, 256);
+            }
         }
     }
     return rc;
 }
 
+static int _store_cert=0;
+static void pki_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params)
+{
+    if(event == FSEvent_CertStatus){
+        if(_o_out && _store_cert){
+            _store_cert = 0;
+            FSHashedId8 digest = FSCertificate_Digest(params->certStateChange.certificate);
+            const char * dir = "";
+            if(params->certStateChange.to == FSCERT_INVALID){
+                dir = "invalid/";
+            }
+            size_t len;
+            const char * d = FSCertificate_Buffer(params->certStateChange.certificate, &len);
+            if(d){
+                char * end = cstrend(_o_out);
+                sprintf(end, "/%s"cPrefixUint64"X.oer", dir, cint64_hton(digest));
+                if (cstrnsave(d, len, _o_out)){
+                    fprintf(stderr, "["cPrefixUint64"X]: stored as %s [%ld bytes]\n", cint64_hton(digest), _o_out, len);
+                }else{
+                    fprintf(stderr, "["cPrefixUint64"X]: failed to store as %s\n", cint64_hton(digest), _o_out);
+                }
+                pchar_t * ext = cstrpathextension(_o_out);
+                FSCrypt * ce = FSCrypt_FindEngine(FitSec_GetConfig(e)->signEngine);
+                if(ce){
+                    const FSPrivateKey * k = FSCertificate_GetVerificationPrivateKey(params->certStateChange.certificate);
+                    if(k){
+                        uint8_t buf[256];
+                        size_t len = FSKey_ExportPrivate(ce, k, buf);
+                        if(len){
+                            strcpy(ext, ".vkey");
+                            cstrnsave((const char*)buf, len, _o_out);
+                        }
+                    }
+                }
+                ce = FSCrypt_FindEngine(FitSec_GetConfig(e)->encryptEngine);
+                if(ce){
+                    const FSPrivateKey * k = FSCertificate_GetEncryptionPrivateKey(params->certStateChange.certificate);
+                    if(k){
+                        uint8_t buf[256];
+                        size_t len = FSKey_ExportPrivate(ce, k, buf);
+                        if(len){
+                            strcpy(ext, ".ekey");
+                            cstrnsave((const char*)buf, len, _o_out);
+                        }
+                    }
+                }
+                *end = 0;
+            }
+        }
+    }
+}
+
+
 static size_t _curl_receive(void const* buf, size_t eSize, size_t eCount, void* ptr) {
     FitSecPki* pki = (FitSecPki*)ptr;
     if (eCount > 0) {
+        _store_cert = 1;
         int ret = FitSecPki_loadData(pki, buf, eSize * eCount);
+        _store_cert = 0;
         if(ret != 0){
             fprintf(stderr, "PKI: %s\n", FitSec_ErrorMessage(ret));
             // error occured
@@ -207,7 +268,7 @@ static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
                 }
             }
         }else{
-            fprintf(stderr, "Enrol: No DC found for CA cert " cPrefixUint64 "X\n", cint64_hton(FitSec_CertificateDigest(m->encryption.cert)));
+            fprintf(stderr, "Enrol: No DC found for CA cert " cPrefixUint64 "X\n", cint64_hton(FSCertificate_Digest(m->encryption.cert)));
         }
     }else{
         fprintf(stderr, "Enrol: %s\n", FitSec_ErrorMessage(m->status));
@@ -260,7 +321,7 @@ static size_t _fill_auth(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
                 }
             }
         }else{
-            fprintf(stderr, "Auth: No DC found for CA cert " cPrefixUint64 "x\n", cint64_hton(FitSec_CertificateDigest(m->encryption.cert)));
+            fprintf(stderr, "Auth: No DC found for CA cert " cPrefixUint64 "x\n", cint64_hton(FSCertificate_Digest(m->encryption.cert)));
         }
     }else{
         fprintf(stderr, "Auth: %s\n", FitSec_ErrorMessage(m->status));
@@ -277,12 +338,12 @@ static int  pki_ut_handler(FSUT* _ut, void* ptr, FSUT_Message* m, int * psize)
     }
     switch (m->code){
         case FS_UtGenerateInnerEcRequest:
-            fprintf(stderr, "UtGenerateInnerEcRequest[%u]\n", m->code);
+            fprintf(stderr, "======================================== UtGenerateInnerEcRequest[%u]\n", m->code);
             MsgGenApp_Send(_pki->e, &_enr);
             m->result.code = FS_UtGenerateInnerEcResult;
             break;
         case FS_UtGenerateInnerAtRequest:
-            fprintf(stderr, "UtGenerateInnerAtRequest[%u]\n", m->code);
+            fprintf(stderr, "======================================== UtGenerateInnerAtRequest[%u]\n", m->code);
             MsgGenApp_Send(_pki->e, &_auth);
             m->result.code = FS_UtGenerateInnerEcResult;
             break;
@@ -291,5 +352,6 @@ static int  pki_ut_handler(FSUT* _ut, void* ptr, FSUT_Message* m, int * psize)
     }
     m->result.result = 1;
     *psize = sizeof(m->result);
+    fprintf(stderr, "======================================== END [%u=%u]\n", m->code, m->result.result);
     return 1;
 }

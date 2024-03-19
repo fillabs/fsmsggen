@@ -78,7 +78,7 @@ static FSHashedId8 _load_certificate(FitSec * e, pchar_t * path, pchar_t * fname
 			ekey_len = end - ekey;
 		}
 		const FSCertificate* c =  FitSec_InstallCertificate(e, data, cert_len, vkey, vkey_len, ekey, ekey_len, &error);
-        digest = FitSec_CertificateDigest(c);
+        digest = FSCertificate_Digest(c);
         printf(" [%016"PRIX64"] - %s\n", cint64_hton(digest), FitSec_ErrorMessage(error));
 	}
 	else{

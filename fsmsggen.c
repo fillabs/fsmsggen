@@ -291,13 +291,17 @@ static bool _onEvent(FitSec* e, void* user, FSEventId event, const FSEventParam*
 {
     if (event == FSEvent_CertStatus) {
         FSCertificate * c = params->certStateChange.certificate;
-        FSHashedId8 digest = cint64_hton(FitSec_CertificateDigest(c));
-        printf("["cPrefixUint64"X](%s): %s => %s\n", digest, FitSec_CertificateName(c), _cctates[params->certStateChange.from&3], _cctates[params->certStateChange.to&3]);
+        FSHashedId8 digest = cint64_hton(FSCertificate_Digest(c));
+        printf("["cPrefixUint64"X](%s): %s => %s\n", digest, FSCertificate_Name(c), _cctates[params->certStateChange.from&3], _cctates[params->certStateChange.to&3]);
         if(_o_dc && (params->certStateChange.to & FSCERT_TRUSTED)) {
             printf("["cPrefixUint64"X]: Assign DC %s\n", digest, _o_dc);
             FSCertificate_SetDC(c, _o_dc, strlen(_o_dc));
         }
     }
+    for (size_t i = 0; i < _applications_count; i++) {
+        _applications[i]->onEvent(_applications[i], e, user, event, params);
+    }
+    
     return true;
 }
 
@@ -518,13 +522,13 @@ void MsgGenApp_Send(FitSec * e, MsgGenApp * a)
     m.position = position;
     m.generationTime = timeval2itstime64(&ph.ts);
     if (_changePseudonym) {
-        FitSec_ChangeId(e, FITSEC_AID_ANY, m.generationTime, (const FSLocation*)&position);
+        FitSec_ChangeId(e, FITSEC_AID_ANY);
     }
     size_t len = a->fill(a, e, &m);
     if (len > 0) {
         // fill the src addr
         if (!_gn_src && m.sign.cert) {
-            FSHashedId8 id = FitSec_CertificateDigest(m.sign.cert);
+            FSHashedId8 id = FSCertificate_Digest(m.sign.cert);
             memcpy(buf + 6, &id, 6);
         }
         if (m.payloadType == FS_PAYLOAD_UNSECURED) {
@@ -604,7 +608,7 @@ static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint
                                             (flags & FSCERT_TRUSTED) ? "trusted" : "unknown";
                 mclog_info(MAIN, "%s Message received (gt=%s cert="cPrefixUint64"X %s)\n",
                     strlocaltime(tv.tv_sec, tv.tv_usec), 
-                    stritstime64(m.generationTime),cint64_hton(FitSec_CertificateDigest(m.sign.cert)),
+                    stritstime64(m.generationTime),cint64_hton(FSCertificate_Digest(m.sign.cert)),
                     status);
                 if (m.payloadType == FS_PAYLOAD_SIGNED) {
                     if (FitSec_ValidateSignedMessage(e, &m)) {
@@ -683,7 +687,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
             }
             else {
                 const FSCertificate* c = FitSec_CurrentCertificate(ptr, FITSEC_AID_CAM);
-                if (c && m->initialize.digest == FitSec_CertificateDigest(c)) {
+                if (c && m->initialize.digest == FSCertificate_Digest(c)) {
                     mclog_info(MAIN, "%s UTInitialize (" cPrefixUint64 "X) - ALREADY", strlocaltime(tv.tv_sec, tv.tv_usec), cint64_hton(m->initialize.digest));
                 }
                 else {

@@ -10,9 +10,10 @@ static void denm_process (MsgGenApp * app, FitSec * e);
 static int denm_options (MsgGenApp* app, int argc, char* argv[]);
 static size_t denm_fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static int  denm_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
+static void denm_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
 
 static MsgGenApp _denm = {
-    "denm", 0, denm_process, denm_options, denm_fill, denm_ut_handler
+    "denm", 0, denm_process, denm_options, denm_fill, denm_onEvent, denm_ut_handler
 };
 
 __INITIALIZER__(initializer_denm) {
@@ -103,6 +104,8 @@ static int denm_options(MsgGenApp* app, int argc, char* argv[])
     }
     return rc;
 }
+static void denm_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params)
+{}
 
 static GNCommonHeader _def_ch = {
     0x20, // nextHeader BTP-B

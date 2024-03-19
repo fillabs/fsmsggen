@@ -7,13 +7,14 @@
 #include "../uppertester/uppertester.h"
 
 static void cam_process (MsgGenApp * app, FitSec * e);
-static int cam_options (MsgGenApp* app, int argc, char* argv[]);
+static int cam_options  (MsgGenApp* app, int argc, char* argv[]);
 static size_t cam_fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
+static void cam_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
 
 static int   cam_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
 
 static MsgGenApp _cam = {
-    "cam", 0, cam_process, cam_options, cam_fill, cam_ut_handler
+    "cam", 0, cam_process, cam_options, cam_fill, cam_onEvent, cam_ut_handler
 };
 
 __INITIALIZER__(initializer_cam) {
@@ -106,6 +107,8 @@ static int cam_options(MsgGenApp* app, int argc, char* argv[])
     }
     return rc;
 }
+static void cam_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params)
+{}
 
 static GNCommonHeader _def_ch = {
     0x20, // nextHeader BTP-B
@@ -173,7 +176,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         ch->nextHeader = 0x10;
     }
 
-    cam->header.stationID = 0x10101010;//(unsigned long)FitSec_CertificateDigest(m->cert);
+    cam->header.stationID = 0x10101010;//(unsigned long)FSCertificate_Digest(m->cert);
     cam->cam.camParameters.basicContainer.referencePosition.latitude = m->position.latitude;
     cam->cam.camParameters.basicContainer.referencePosition.longitude = m->position.longitude;
 
