@@ -259,6 +259,9 @@ static int _cmd_UtDenm(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtGnTrigger(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtEnroll(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtAuth(FSUT_Message ** pmsg, int argc, char ** argv);
+static int _cmd_UtCrl(FSUT_Message ** pmsg, int argc, char ** argv);
+static int _cmd_UtCtl(FSUT_Message ** pmsg, int argc, char ** argv);
+static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv);
 
 typedef struct UTHandlerRecord{
     const char * name;
@@ -274,6 +277,10 @@ static const UTHandlerRecord _msgnames[] = {
     {"gn", _cmd_UtGnTrigger },
     {"enrol" , _cmd_UtEnroll},
     {"auth" , _cmd_UtAuth },
+    {"crl" , _cmd_UtCrl },
+    {"ctl" , _cmd_UtCtl },
+    {"ectl" , _cmd_UtECtl },
+    
 };
 
 int _FSUT_ExecCommand(FSUT_Message ** pmsg, const UTHandlerRecord * cmds, size_t ccnt, int argc, char ** argv)
@@ -430,6 +437,28 @@ static int _cmd_UtAuth(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     if(argc >= 1){
         return _cmd_UtSimpleMessage(pmsg, FS_UtGenerateInnerAtRequest);
+    }
+    return 0;
+}
+
+static int _cmd_UtCrl(FSUT_Message ** pmsg, int argc, char ** argv)
+{
+    if(argc >= 1){
+        return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerCrlRequest);
+    }
+    return 0;
+}
+static int _cmd_UtCtl(FSUT_Message ** pmsg, int argc, char ** argv)
+{
+    if(argc >= 1){
+        return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerRcaCtlRequest);
+    }
+    return 0;
+}
+static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv)
+{
+    if(argc >= 1){
+        return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerTlmCtlRequest);
     }
     return 0;
 }

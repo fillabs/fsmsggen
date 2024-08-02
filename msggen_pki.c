@@ -55,28 +55,40 @@ static FitSecPkiConfig pki_cfg = {
         FS_NISTP256, &priv_key[0]
     },
     true, // enable repetition
-    10
+    false, // with privacy
+    20  // 20 sec of request validity 
 };
 
 
 static const pchar_t * _o_canKeyPath = NULL;
 static const pchar_t * _o_stationIdPath = NULL;
 static const char * _o_dc = NULL;
-static int    _o_reenr_delay = 5;
+static int    _o_enr_rep_delay  = 5;
+static int    _o_auth_rep_delay = 5;
 static int _o_skip_http = 0;
 static uint32_t _o_http_timeout = 10;
 static const char * _o_out = NULL;
+static uint32_t _o_enr_rep_max = 0xFFFFFFFF;
+static uint32_t _o_auth_rep_max = 0xFFFFFFFF;
+static int _o_no_privacy = 0;
+static int _o_repetition = 1;
 
 static FSUT * ut = NULL;
 
 static copt_t options[] = {
-    { "K",  "canonical-key",  COPT_PATH,     &_o_canKeyPath,    "Canonical private key path" },
-    { "I",  "station-id",     COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
-    { "D",  "dc",             COPT_STR,      &_o_dc,            "Override all DC URLs" },
-    { "O",  "certs",          COPT_PATH,     &_o_out,           "Store received certificates" },
-    { NULL, "reenrol-delay",  COPT_UINT,     &_o_reenr_delay,   "Re-enrolment delay [5 sec]"},
-    { NULL, "http-dummy",     COPT_BOOL,     &_o_skip_http,     "do not perform any http requests"},
-    { NULL, "http-timeout",   COPT_UINT,     &_o_http_timeout,  "HTTP timeout for PKI requests[10 sec]"},
+    { "K",  "canonical-key",        COPT_PATH,     &_o_canKeyPath,    "Canonical private key path" },
+    { "I",  "station-id",           COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
+    { "D",  "dc",                   COPT_STR,      &_o_dc,            "Override all DC URLs" },
+    { "O",  "certs",                COPT_PATH,     &_o_out,           "Store received certificates" },
+    { NULL, "req-validity",         COPT_UINT,     &pki_cfg.reqStorageDuration, "PKI request validity time. During this time request to the same CA will be repeated. Set to 0 to prevent repetition."},
+    { NULL, "rep-enrol-period",     COPT_UINT,     &_o_enr_rep_delay, "Enrolment repetition period [5 sec]. Set to 0 to disable."},
+    { NULL, "rep-enrol-max",        COPT_UINT,     &_o_enr_rep_max,   "Max enrolment repetition count. Disable by default."},
+    { NULL, "rep-auth-period",      COPT_UINT,     &_o_auth_rep_delay,"Authorization repetition period [5 sec]. Set to 0 to disable."},
+    { NULL, "rep-auth-max",         COPT_UINT,     &_o_auth_rep_max,  "Max authorization repetition count. Disable by default."},
+    { NULL, "http-dummy",           COPT_BOOL,     &_o_skip_http,     "do not perform any http requests"},
+    { NULL, "http-timeout",         COPT_UINT,     &_o_http_timeout,  "HTTP timeout for PKI requests[10 sec]"},
+    { NULL, "no-privacy",           COPT_BOOL,     &_o_no_privacy,    "Disable privacy in AT requests [enable]"},
+    { NULL, "no-repetition",        COPT_BOOLI,    &_o_repetition,    "Disable repetition [enable]"},
     
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -120,10 +132,18 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
             if(_o_out){
                 _o_out = cstrdups(_o_out, 256);
             }
+            pki_cfg.disablePrivacy = _o_no_privacy;
+            pki_cfg.repetition = _o_repetition;
+            if(0 == _o_repetition){
+                _o_enr_rep_delay = 0;
+                _o_auth_rep_delay = 0;
+            }
         }
     }
     return rc;
 }
+
+static bool _process_http_request(FitSecPki* pki, const char* url, const char * body, size_t len);
 
 static int _store_cert=0;
 static void pki_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params)
@@ -174,6 +194,10 @@ static void pki_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event
                 *end = 0;
             }
         }
+    }
+    else if(event == FSEvent_HttpGetRequest){
+        FitSecPki* pki = user;
+        _process_http_request(pki, params->httpGet.url, NULL, 0);
     }
 }
 
@@ -243,6 +267,9 @@ static bool _process_http_request(FitSecPki* pki, const char* url, const char * 
 
 FSCertificateParams params = { 0 };
 static uint32_t _reenrolment_time = 0;
+static uint32_t _reenrolment_count = 0;
+static uint32_t _reauth_time = 0;
+static uint32_t _reauth_count = 0;
 static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {
     if(_pki == NULL){
@@ -262,8 +289,8 @@ static size_t _fill_enr(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
                     }
                 }else{
                     // enqueue repetition
-                    if(_o_reenr_delay){
-                        _reenrolment_time = time(NULL) + _o_reenr_delay;
+                    if(_o_enr_rep_delay){
+                        _reenrolment_time = time(NULL) + _o_enr_rep_delay;
                     }
                 }
             }
@@ -281,13 +308,25 @@ static void pki_process_ea (MsgGenApp * app, FitSec * e)
     if(_reenrolment_time){
         if(time(NULL) >= _reenrolment_time){
             _reenrolment_time = 0;
-            MsgGenApp_Send(_pki->e, &_enr);
+            if(_reenrolment_count < _o_enr_rep_max){
+                _reenrolment_count ++;
+                MsgGenApp_Send(_pki->e, &_enr);
+            }
         }
     }
 }
 
 static void pki_process_aa (MsgGenApp * app, FitSec * e)
 {
+    if(_reauth_time){
+        if(time(NULL) >= _reauth_time){
+            _reauth_time = 0;
+            if(_reauth_count < _o_auth_rep_max){
+                _reauth_count ++;
+                MsgGenApp_Send(_pki->e, &_auth);
+            }
+        }
+    }
 
 }
 
@@ -318,6 +357,11 @@ static size_t _fill_auth(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
                         char state = 1;
                         FSUT_EnqueueIndication(ut, FS_UtPkiTriggerInd, &state, 1);
                     }
+                }else{
+                    // enqueue auth repetition
+                    if(_o_auth_rep_delay){
+                        _reauth_time = time(NULL) + _o_auth_rep_delay;
+                    }
                 }
             }
         }else{
@@ -331,22 +375,45 @@ static size_t _fill_auth(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 
 static int  pki_ut_handler(FSUT* _ut, void* ptr, FSUT_Message* m, int * psize)
 {
+    const char * const _ut_msg_name[] = {
+        "FS_UtPkiTriggerRcaCtlRequest",
+        "FS_UtPkiTriggerTlmCtlRequest",
+        "FS_UtPkiTriggerCrlRequest",
+    };
     ut = _ut;
     FitSec * e = ptr;
     if(_pki == NULL){
         _pki = FitSecPki_New(e, &pki_cfg);
     }
     switch (m->code){
+        case FS_UtInitialize:
+            fprintf(stderr, "======================================== UtInitialize[%u]\n", m->code);
+            _reenrolment_time = 0;
+            _reenrolment_count = 0;
+            _reauth_time = 0;
+            _reauth_count = 0;
+            FitSecPki_Clean(_pki);
+            return 0;
         case FS_UtGenerateInnerEcRequest:
             fprintf(stderr, "======================================== UtGenerateInnerEcRequest[%u]\n", m->code);
+            _reenrolment_time = 0;
+            _reenrolment_count = 0;
             MsgGenApp_Send(_pki->e, &_enr);
             m->result.code = FS_UtGenerateInnerEcResult;
             break;
         case FS_UtGenerateInnerAtRequest:
             fprintf(stderr, "======================================== UtGenerateInnerAtRequest[%u]\n", m->code);
+            _reauth_time = 0;
+            _reauth_count = 0;
             MsgGenApp_Send(_pki->e, &_auth);
             m->result.code = FS_UtGenerateInnerEcResult;
             break;
+        case FS_UtPkiTriggerRcaCtlRequest:
+        case FS_UtPkiTriggerTlmCtlRequest:
+        case FS_UtPkiTriggerCrlRequest:
+            fprintf(stderr, "======================================== %s [%u]\n", _ut_msg_name[m->code-FS_UtPkiTriggerRcaCtlRequest], m->code);
+            FitSec_RequestTrustInfo(_pki->e, 0, _pki);
+            return 0;
         default:
             return 0;
     }

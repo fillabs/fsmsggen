@@ -49,7 +49,7 @@ static int _o_secured = 1;
 
 static DENM_t denm = {
     // ItsPduHeader
-    { 2, messageID_denm, 0x10101010 },
+    { 2, MessageId_denm, 0x10101010 },
     // DecentralizedEnvironmentalNotificationMessage
     {
         // ManagementContainer
@@ -63,32 +63,32 @@ static DENM_t denm = {
 static int copt_on_termination(const copt_t* opt, const char* option, const copt_value_t* value);
 
 static copt_t options[] = {
-    { "I",  "station-id",              COPT_UINT ,     &denm.header.stationID, "Originating Station ID" },
-    { "S",  "action-sequence-number",  COPT_UINT ,     &denm.denm.management.actionID.sequenceNumber, "Action Sequence number" },
-    { NULL, "station-type",            COPT_STRENUM ,  _o_stationTypes,         "Station Type [unknown]" },
-    { "C",  "cancelation",             COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate cancelation message" },
-    { "N",  "negation",                COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate negation message" },
+    { "I",  "station-id",       COPT_UINT ,     &denm.header.stationId, "Originating Station ID" },
+    { "S",  "denm-action-sn",   COPT_UINT ,     &denm.denm.management.actionId.sequenceNumber, "Action Sequence number" },
+    { NULL, "station-type",     COPT_STRENUM ,  _o_stationTypes,         "Station Type [unknown]" },
+    { NULL, "denm-cancelation", COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate cancelation message" },
+    { NULL, "denm-negation",    COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate negation message" },
 
-
-    { "B", "btp-type",                 COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [default]" },
-    { NULL, "no-sec-denm",             COPT_IBOOL ,   &_o_secured, "Send non-secured messages" },
+    { "B",  "denm-btp-type",    COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [default]" },
+    { NULL, "no-sec-denm",      COPT_IBOOL ,   &_o_secured, "Send non-secured messages" },
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
+static Termination_t _v_termination = Termination_isCancellation; 
 static int copt_on_termination(const copt_t* opt, const char* option, const copt_value_t* value)
 {
     if(denm.denm.management.termination == NULL){
-        denm.denm.management.termination = cnew0(Termination_t);
+        denm.denm.management.termination = &_v_termination;
     }
-    *denm.denm.management.termination = (opt->sopts[0] == 'C') ? Termination_isCancellation : Termination_isNegation;
+    *denm.denm.management.termination = (opt == &options[3]) ? Termination_isCancellation : Termination_isNegation;
     return 0;
 }
 
 static int denm_options(MsgGenApp* app, int argc, char* argv[])
 {
     // init DENM
-    denm.denm.management.actionID.originatingStationID = denm.header.stationID;
+    denm.denm.management.actionId.originatingStationId = denm.header.stationId;
 
     int rc = 0;
     if (argc == 0) {
@@ -171,8 +171,13 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     if(((const char **)options[5].vptr) != _o_btpTypes){
         ch->nextHeader = ((((const char **)options[5].vptr) - _o_btpTypes) - 1) * 0x10;
     }
-    denm.denm.management.eventPosition.latitude = m->position.latitude;
-    denm.denm.management.eventPosition.longitude = m->position.longitude;
+    if(m->position.latitude || m->position.longitude){
+        denm.denm.management.eventPosition.latitude = m->position.latitude;
+        denm.denm.management.eventPosition.longitude = m->position.longitude;
+    }else{
+        denm.denm.management.eventPosition.latitude = Latitude_unavailable;
+        denm.denm.management.eventPosition.longitude = Longitude_unavailable;
+    }
     asn_uint642INTEGER(&denm.denm.management.referenceTime, m->generationTime/1000);
     asn_uint642INTEGER(&denm.denm.management.detectionTime, m->generationTime/1000); 
     
@@ -203,46 +208,49 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     return len;
 }
 
+static DeltaTimeMilliSecondPositive_t _v_transmissionInterval = 0;
+static DeltaTimeSecond_t _v_validityDuration = 0;
+static TrafficDirection_t _v_trafficDirection = TrafficDirection_allTrafficDirections;
+static StandardLength3b_t _v_awarenessDiscance = StandardLength3b_lessThan50m;
+static SituationContainer_t _v_situationContainer = {};
+
 static int  denm_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
 {
     switch (m->code){
         case FS_UtDenmTrigger:
         {
-            ASN_STRUCT_RESET(asn_DEF_DecentralizedEnvironmentalNotificationMessage, &denm.denm);
             if(m->denmTrigger.flags & 0x80) {// validityDuration
-                uint32_t v = *(uint32_t*)&m->denmTrigger.validityDurationBuf[-1];
-                v = 0x00FFFFFF & cint32_ntoh(v);
-                denm.denm.management.validityDuration = cnew(ValidityDuration_t);
-                denm.denm.management.validityDuration[0] = v;
+                _v_validityDuration = *(DeltaTimeSecond_t*)&m->denmTrigger.validityDurationBuf[-1];
+                _v_validityDuration = 0x00FFFFFF & cint32_ntoh(_v_validityDuration);
+                denm.denm.management.validityDuration = &_v_validityDuration;
+            }else{
+                denm.denm.management.validityDuration = NULL;
             }
             if(m->denmTrigger.flags & 0x01) {// RelevanceTrafficDirection
-                denm.denm.management.relevanceTrafficDirection = cnew(RelevanceTrafficDirection_t);
-                denm.denm.management.relevanceTrafficDirection[0] = m->denmTrigger.relevanceTrafficDirection;
+                _v_trafficDirection = m->denmTrigger.relevanceTrafficDirection;
+                denm.denm.management.trafficDirection = &_v_trafficDirection;
+            }else{
+                denm.denm.management.trafficDirection = NULL;
             }
             if(m->denmTrigger.flags & 0x04) {// TransmissionInterval 
-                denm.denm.management.transmissionInterval = cnew(TransmissionInterval_t);
-                denm.denm.management.transmissionInterval[0] = m->denmTrigger.transmissionInterval;
+                _v_transmissionInterval = m->denmTrigger.transmissionInterval;
+                denm.denm.management.transmissionInterval = &_v_transmissionInterval;
             }
             if(m->denmTrigger.flags & 0x02) {// RepetitionInterval 
             }
             if(m->denmTrigger.flags & 0x40) {// RepetitionDuration
             }
-            denm.denm.management.relevanceDistance = cnew(RelevanceDistance_t);
-            denm.denm.management.relevanceDistance[0] = m->denmTrigger.relevanceDistance;
 
-            if(m->denmTrigger.infoQuality) {
-                if(denm.denm.situation == NULL){
-                    denm.denm.situation = cnew0(SituationContainer_t);
-                }
-                denm.denm.situation->informationQuality = m->denmTrigger.infoQuality;
-            }
-            denm.denm.situation = cnew0(SituationContainer_t);
-            denm.denm.situation->informationQuality = m->denmTrigger.infoQuality;
-            denm.denm.situation->eventType.causeCode = m->denmTrigger.causeCode;
-            denm.denm.situation->eventType.subCauseCode = m->denmTrigger.subCauseCode;
+            denm.denm.management.awarenessDistance = &_v_awarenessDiscance;
+            _v_awarenessDiscance = m->denmTrigger.relevanceDistance;
+
+            denm.denm.situation = &_v_situationContainer;
+            _v_situationContainer.informationQuality = m->denmTrigger.infoQuality;
+            _v_situationContainer.eventType.ccAndScc.present = m->denmTrigger.causeCode;
+            _v_situationContainer.eventType.ccAndScc.choice.reserved0 = m->denmTrigger.subCauseCode;
     
-            m->denmTriggerResult.sequenceNumber = denm.denm.management.actionID.sequenceNumber;
-            m->denmTriggerResult.stationId =  denm.denm.management.actionID.originatingStationID;
+            m->denmTriggerResult.sequenceNumber = denm.denm.management.actionId.sequenceNumber;
+            m->denmTriggerResult.stationId =  denm.denm.management.actionId.originatingStationId;
             break;
         }
         case FS_UtDenmTermination:

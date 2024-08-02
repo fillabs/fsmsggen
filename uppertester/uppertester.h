@@ -1,5 +1,6 @@
 #ifndef uppertester_h
 #define uppertester_h
+
 #include "cmem.h"
 #include <inttypes.h>
 typedef struct FSUT FSUT;
@@ -53,6 +54,11 @@ enum {
     FS_UtGenerateInnerEcResult  = 0xD2,
     FS_UtGenerateInnerAtResult  = 0xD2,
     FS_UtPkiTriggerInd          = 0xD3,
+    FS_UtPkiTriggerRcaCtlRequest= 0xD4,
+    FS_UtPkiTriggerTlmCtlRequest= 0xD5,
+    FS_UtPkiTriggerCrlRequest   = 0xD6,
+
+    FS_UtVamTrigger = 0xE0
 };
 
 __PACKED__(struct FSUTMsg_Initialize {
@@ -128,6 +134,11 @@ __PACKED__(struct FSUTMsg_PkiTriggerInd {
     uint8_t  state;
 });
 
+__PACKED__(struct FSUTMsg_PkiTrustTrigger {
+    uint8_t   code;
+    char      path[1];
+});
+
 __PACKED__(union FSUT_Message {
     uint8_t                          code;
     struct FSUTMsg_Initialize        initialize;
@@ -146,6 +157,8 @@ __PACKED__(union FSUT_Message {
     struct FSUTMsg_DenmTriggerResult denmTriggerResult;
     
     struct FSUTMsg_PkiTriggerInd     pkiState;
+
+    struct FSUTMsg_PkiTrustTrigger   pkiTrust;
 });
 
 FSUT* FSUT_New(const char* bind_host, int bind_port);
