@@ -1,6 +1,3 @@
-#include <gps.h>
-#include <math.h>
-
 #include "msggen.h"
 #include "cmem.h"
 #include "copts.h"
@@ -9,7 +6,11 @@
 #include "gn_types.h"
 #include "../uppertester/uppertester.h"
 
+#ifdef USE_LIBGPS
+#include <gps.h>
+#include <math.h>
 const struct gps_data_t * get_gps_data();
+#endif
 
 static void _process (MsgGenApp * app, FitSec * e);
 static int _options  (MsgGenApp* app, int argc, char* argv[]);
@@ -87,6 +88,7 @@ static copt_t options[] = {
 };
 
 static VAM_t* vam = NULL;
+
 static VruSizeClass_t _sizeClass = 2;
 static VruLowFrequencyContainer_t vam_lfc = {
     .profileAndSubprofile = {
@@ -109,7 +111,7 @@ static VruClusterOperationContainer_t vam_coc = {
 */
 static int _options(MsgGenApp* app, int argc, char* argv[])
 {
-    // init CAM
+    // init VAM
     if (vam == NULL) {
         // register uppertester
 
@@ -238,6 +240,7 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 
     vam->vam.generationDeltaTime = eh->shb.srcPosVector.timestamp % 65536;
 
+#ifdef USE_LIBGPS
     const struct gps_data_t * gps = get_gps_data();
     if(gps){
         if( gps->fix.mode >= 2 ){
@@ -289,6 +292,7 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             }
         }
     }
+#endif
 
     asn_enc_rval_t rc = asn_encode_to_buffer(NULL, ATS_UNALIGNED_CANONICAL_PER, &asn_DEF_VAM, vam, m->payload + len, m->payloadSize - len);
     if (rc.encoded < 0) {

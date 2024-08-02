@@ -1,5 +1,7 @@
+#ifdef USE_LIBGPS
 #include <gps.h>
 #include <math.h>
+#endif
 
 #include "msggen.h"
 #include "cmem.h"
@@ -290,6 +292,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     eh->shb.srcPosVector.longitude = m->position.longitude;
     eh->shb.srcPosVector.timestamp = (uint32_t)(m->generationTime / 1000);
 
+#ifdef USE_LIBGPS
     const struct gps_data_t * gps = get_gps_data();
     if(gps){
         if( gps->fix.mode >= 2 ){
@@ -342,7 +345,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             }
         }
     }
-
+#endif
     if( (m->generationTime - _last_LFC.t) > 500000){
         _cam.cam.camParameters.lowFrequencyContainer = &_lfc;
         if(_last_LFC.t){

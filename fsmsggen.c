@@ -6,7 +6,9 @@
 
 #include <pcap.h>
 
+#ifdef USE_LIBGPS
 #include <gps.h>
+#endif
 
 #include "copts.h"
 #include "cstr.h"
@@ -70,8 +72,9 @@ static int _o_uppertester = 0;
 static const char* _o_ut_addr = NULL;
 static uint16_t _o_ut_port = 12345;
 static const char * _o_dc = NULL;
+#ifdef USE_LIBGPS
 static const char * _gpsd_server = NULL;
-
+#endif
 typedef struct ether_header_t ether_header_t;
 __PACKED__(struct ether_header_t{
 
@@ -112,7 +115,9 @@ static copt_t options [] = {
     { "r",  "rate",     COPT_FLOAT,    &_rate,        "Message rate in Hz" },
     { "t",  "time",     COPT_STR,      &_curStrTime,  "The ISO representation of starting time" },
     { "p",  "position", COPT_STR  | COPT_CALLBACK, copt_on_position,  "The position in form latitude:longitude" },
+#ifdef USE_LIBGPS
     { "g",  "gpsd",     COPT_STR,      &_gpsd_server, "Connect to gpsd host:port" },
+#endif
     { "s",  "srcaddr",  COPT_STR  | COPT_CALLBACK, copt_on_gn_src_addr,  "The GN source address" },
     { "u",  "ut",       COPT_BOOL | COPT_CALLBACK, copt_on_ut_addr, "Start UpperTester" },
     { "d",  "dc",       COPT_STR  | COPT_CALLBACK, copt_on_set_dc,  "Assign this DC to all CA certificates" },
@@ -226,6 +231,7 @@ static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_valu
 static MsgGenApp* _applications[10];
 static size_t _applications_count = 0;
 
+#ifdef USE_LIBGPS
 struct gps_data_t _gps = {};
 
 const struct gps_data_t * get_gps_data() {
@@ -237,6 +243,7 @@ const struct gps_data_t * get_gps_data() {
     }
     return NULL;
 }
+#endif
 
 //static MsgGenApp* _app = NULL;
 void  MsgGenApp_Register(MsgGenApp* app)
@@ -412,7 +419,7 @@ int main(int argc, char** argv)
         mclog_error(PCAP, "%s: %s", dev_name, _error_buffer);
 //        return -1;
     }
-
+#ifdef USE_LIBGPS
     if(_gpsd_server){
         static char _gpsd_default_port[] = "2947";
         char * port = strrchr(_gpsd_server, ':');
@@ -428,7 +435,7 @@ int main(int argc, char** argv)
         }
         (void)gps_stream(&_gps, WATCH_ENABLE | WATCH_JSON, NULL);
     }
-
+#endif
     if (_curStrTime) {
         struct tm t;
         if (0 > _strpdate(_curStrTime, &t)) {
@@ -537,10 +544,11 @@ int main(int argc, char** argv)
 
     pcap_close(h.device);
     
+#ifdef USE_LIBGPS
     if(_gpsd_server){
         gps_close(&_gps);
     }
-
+#endif
     FitSec_Free(e);
     FSMessageInfo_Cleanup(); 
     return 0;
@@ -554,6 +562,7 @@ void MsgGenApp_Send(FitSec * e, MsgGenApp * a)
     m.message = (char*)&buf[SHIFT_SEC];
     m.messageSize = sizeof(buf) - SHIFT_SEC;
     m.sign.signerType = FS_SI_AUTO;
+#ifdef USE_LIBGPS
     if(_gpsd_server) {
         const struct gps_data_t * gps = get_gps_data();
         if(gps && gps->fix.mode > MODE_NO_FIX) { // only when fix
@@ -568,7 +577,9 @@ void MsgGenApp_Send(FitSec * e, MsgGenApp * a)
             m.position.latitude  = 0;
             m.position.longitude = 0;
         }
-    } else {
+    } else
+#endif
+    {
         gettimeofday(&ph.ts, NULL);
         m.position = position;
     }
