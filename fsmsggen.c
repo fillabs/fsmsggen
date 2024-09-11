@@ -505,10 +505,6 @@ int main(int argc, char** argv)
         }
         FSUT_RegisterHandler(ut, _UTHandler, e);
         FSUT_Start(ut);
-    }else{
-        if(arg < argc){ 
-            mclog_warning(UT, "UpperTester must be started for script execution. Use -u option\n");
-        }
     }
 
     size_t icmd = 1;
@@ -534,11 +530,18 @@ int main(int argc, char** argv)
                         arg++;
                     }
                 }else{
-                    int r = FSUT_CommandMessage(&um, argc - arg, argv + arg);
-                    if(r <= 0){
-                        arg = argc;
-                    }else{
-                        arg += r;
+                    while(arg < argc){
+                        int r = FSUT_CommandMessage(&um, argc - arg, argv + arg);
+                        if(r <= 0){
+                            arg++;
+                        }else{
+                            if(ut){
+                                arg += r;
+                                break;
+                            }
+                            mclog_warning(UT, "UpperTester must be started for script execution. Use -u option\n");
+                            arg = argc;
+                        }
                     }
                 }
                 icmd++;
