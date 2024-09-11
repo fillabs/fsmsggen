@@ -1,6 +1,7 @@
 #include "msggen.h"
 #include "cmem.h"
 #include "copts.h"
+#include "fsgpsd.h"
 
 #include "DENM.h"
 #include "gn_types.h"
@@ -11,9 +12,10 @@ static int denm_options (MsgGenApp* app, int argc, char* argv[]);
 static size_t denm_fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static int  denm_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
 static void denm_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
+static void denm_receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort);
 
 static MsgGenApp _denm = {
-    "denm", 0, denm_process, denm_options, denm_fill, denm_onEvent, denm_ut_handler
+    "denm", 0, denm_process, denm_options, denm_fill, denm_onEvent, denm_receive, denm_ut_handler
 };
 
 __INITIALIZER__(initializer_denm) {
@@ -70,7 +72,8 @@ static copt_t options[] = {
     { NULL, "denm-negation",    COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate negation message" },
 
     { "B",  "denm-btp-type",    COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [default]" },
-    { NULL, "no-sec-denm",      COPT_IBOOL ,   &_o_secured, "Send non-secured messages" },
+    { NULL, "denm-no-sec",      COPT_IBOOL ,   &_o_secured, "Send non-secured messages" },
+    { NULL, "no-sec",           COPT_IBOOL ,   &_o_secured, NULL },
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -87,19 +90,18 @@ static int copt_on_termination(const copt_t* opt, const char* option, const copt
 
 static int denm_options(MsgGenApp* app, int argc, char* argv[])
 {
+    if (argc == 0) {
+        fprintf(stderr, "\n");
+        coptions_help(stderr, "DENM", 0, options, "");
+        return 0;
+    }
     // init DENM
     denm.denm.management.actionId.originatingStationId = denm.header.stationId;
 
-    int rc = 0;
-    if (argc == 0) {
-        coptions_help(stderr, "DENM", 0, options, "");
-    }
-    else {
-        rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
-        if (rc >= 0) {
-            if (options[0].vptr != _o_stationTypes) {
-                denm.denm.management.stationType = copts_enum_value(options, 0, _o_stationTypes)-1;
-            }
+    int rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
+    if (rc >= 0) {
+        if (options[0].vptr != _o_stationTypes) {
+            denm.denm.management.stationType = copts_enum_value(options, 0, _o_stationTypes)-1;
         }
     }
     return rc;
@@ -206,6 +208,11 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         }
     }
     return len;
+}
+
+static void denm_receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort)
+{
+    
 }
 
 static DeltaTimeMilliSecondPositive_t _v_transmissionInterval = 0;

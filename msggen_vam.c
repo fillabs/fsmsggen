@@ -1,26 +1,26 @@
 #include "msggen.h"
 #include "cmem.h"
 #include "copts.h"
+#include "clog.h"
+#include "fitsec_time.h"
 
 #include "payload/VAM.h"
 #include "gn_types.h"
 #include "../uppertester/uppertester.h"
-
-#ifdef USE_LIBGPS
-#include <gps.h>
+#include "fsgpsd.h"
 #include <math.h>
-const struct gps_data_t * get_gps_data();
-#endif
+
 
 static void _process (MsgGenApp * app, FitSec * e);
 static int _options  (MsgGenApp* app, int argc, char* argv[]);
 static size_t _fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static void _onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
+static void _receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort);
 
 static int   _ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
 
 static MsgGenApp _app = {
-    "vam", 0, _process, _options, _fill, _onEvent, _ut_handler
+    "vam", 0, _process, _options, _fill, _onEvent, _receive, _ut_handler
 };
 
 __INITIALIZER__(initializer_vam) {
@@ -31,7 +31,19 @@ static int _o_secured = 1;
 static int _o_btpA = 0;
 static int _o_activated = 0;
 static int _o_stationType = 0;
+static int _o_join = 0;
+static int _o_leader = 0;
+#define O_CLUSTER_DEFAULT 100 // by default clusterId 100
+static long _o_cluster_id = 0;
 
+static Shape_t _vam_cl_info_shape = {
+    .present = Shape_PR_circular,
+    .choice.circular = {
+        .radius = 500 // 5 meters
+    }
+};
+
+static const pchar_t * _o_vam_xer = NULL;
 static const struct {
     const char *               option;
     TrafficParticipantType_t   tpType;
@@ -80,14 +92,20 @@ static int  _st_callback(const copt_t * opt, const char * option, const copt_val
 }
 
 static copt_t options[] = {
-    { "T",  "vam-station-type",  COPT_CALLBACK ,  _st_callback, "Station Type [pedestrian by default]. 'list' to show all variants" },
-    { "B",  "vam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
-    { "V",  "vam-start",         COPT_BOOL ,    &_o_activated,  "Start sending VAM by default"},
-    { NULL, "vam-no-sec",        COPT_IBOOL ,   &_o_secured,    "Send non-secured cam" },
+    { "T",  "station-type",      COPT_CALLBACK | COPT_NOHELP ,  _st_callback,   NULL },
+    { NULL, "vam-station-type",  COPT_CALLBACK ,                _st_callback,   "Station Type [pedestrian by default]. 'list' to show all variants" },
+    { NULL, "vam-join",          COPT_BOOL ,                    &_o_join,       "join the cluster" },   
+    { NULL, "vam-leader",        COPT_BOOL ,                    &_o_leader,     "lead the cluster" },   
+    { NULL, "vam-claster",       COPT_LONG ,                    &_o_cluster_id, "use this clusterId to join or lead" },
+    { NULL, "vam-claster-radius",COPT_LONG ,                    &_vam_cl_info_shape.choice.circular.radius, "use this claster radius (in centimeters) [500 cm]" },
+    { "B",  "btpA",              COPT_BOOL | COPT_NOHELP ,      &_o_btpA,       NULL },
+    { NULL, "vam-btpA",          COPT_BOOL ,                    &_o_btpA,       "Use BTP A for VAM [use btpB by default]" },
+    { "V",  "vam-start",         COPT_BOOL ,                    &_o_activated,  "Start sending VAM by default"},
+    { NULL, "vam-no-sec",        COPT_IBOOL ,                   &_o_secured,    "Send non-secured cam" },
+    { NULL, "no-sec",            COPT_IBOOL | COPT_NOHELP,      &_o_secured,    NULL },
+    { NULL, "vam-template",      COPT_PATH ,                    &_o_vam_xer,    "Load this VAM template" },
     { NULL, NULL, COPT_END, NULL, NULL }
 };
-
-static VAM_t* vam = NULL;
 
 static VruSizeClass_t _sizeClass = 2;
 static VruLowFrequencyContainer_t vam_lfc = {
@@ -99,60 +117,128 @@ static VruLowFrequencyContainer_t vam_lfc = {
     },
     .sizeClass = &_sizeClass
 };
-/*
-static VruClusterInformationContainer_t vam_cic = {
-    .vruClusterInformation = {
+
+static VAM_t _vam = {
+    .header = {
+        .protocolVersion = 3,
+        .messageId = MessageId_vam,
+        .stationId = 0x10101010
+    },
+    .vam = {
+        .generationDeltaTime = 0,
+        .vamParameters = {
+            .basicContainer = {
+                .stationType = TrafficParticipantType_pedestrian,
+                .referencePosition = {
+                    .latitude = Latitude_unavailable,
+                    .longitude = Longitude_unavailable,
+                    .positionConfidenceEllipse = {
+                        .semiMajorAxisLength = SemiAxisLength_unavailable,
+                        .semiMinorAxisLength = SemiAxisLength_unavailable,
+                        .semiMajorAxisOrientation = Wgs84AngleValue_unavailable
+                    },
+                    .altitude = {
+                        .altitudeValue = AltitudeValue_unavailable,
+                        .altitudeConfidence = AltitudeConfidence_unavailable
+                    }
+                }
+
+            },
+            .vruHighFrequencyContainer = {
+	            .heading = {
+                    .value = Wgs84AngleValue_unavailable,
+                    .confidence = Wgs84AngleConfidence_unavailable
+                },
+                .speed = {
+                    .speedValue = SpeedValue_standstill,
+                    .speedConfidence = SpeedConfidence_unavailable
+                },
+	            .longitudinalAcceleration = {
+                    .longitudinalAccelerationValue = LongitudinalAccelerationValue_unavailable,
+                    .longitudinalAccelerationConfidence = AccelerationConfidence_unavailable
+                }
+            }
+        }
     }
 };
 
-static VruClusterOperationContainer_t vam_coc = {
-    
+static ClusterJoinInfo_t _vam_cl_join_info = {
+    .joinTime = 3
 };
+static VruClusterOperationContainer_t _vam_cl_join_container = {
+    .clusterJoinInfo = &_vam_cl_join_info
+};
+static VruClusterInformationContainer_t _vam_cl_info_container = {
+    .vruClusterInformation = {
+        .clusterBoundingBoxShape = &_vam_cl_info_shape,
+        .clusterId = &_o_cluster_id,
+        .clusterCardinalitySize = 1
+    }
+};
+
+/*
+static asn_TYPE_operation_t _op_DebugInteger;
+static asn_enc_rval_t _op_DebugInteger_uper_encoder(const struct asn_TYPE_descriptor_s *type_descriptor,
+                                                 const asn_per_constraints_t *constraints, const void *struct_ptr,
+                                                 asn_per_outp_t *per_output)
+{
+    return asn_OP_NativeInteger.uper_encoder(type_descriptor, constraints, struct_ptr, per_output);
+}
 */
 static int _options(MsgGenApp* app, int argc, char* argv[])
 {
     // init VAM
-    if (vam == NULL) {
-        // register uppertester
 
-        vam = cnew0(VAM_t);
-        vam->header.messageId = MessageId_vam;
-        vam->header.protocolVersion = 3;
-        
-        vam->vam.generationDeltaTime = 0;
-        
-        vam->vam.vamParameters.basicContainer.stationType = TrafficParticipantType_pedestrian;
-        vam->vam.vamParameters.basicContainer.referencePosition.altitude.altitudeValue = AltitudeValue_unavailable;
-        vam->vam.vamParameters.basicContainer.referencePosition.altitude.altitudeConfidence = AltitudeConfidence_unavailable;
-        vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_unavailable;
-        vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_unavailable;
-        vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = Wgs84AngleValue_unavailable;
-
-        memset(&vam->vam.vamParameters.vruHighFrequencyContainer, 0, sizeof(vam->vam.vamParameters.vruHighFrequencyContainer));
-        vam->vam.vamParameters.vruHighFrequencyContainer.heading.value = Wgs84AngleValue_unavailable;
-        vam->vam.vamParameters.vruHighFrequencyContainer.heading.confidence = Wgs84AngleConfidence_unavailable;
-        vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedValue = SpeedValue_standstill;
-        vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = SpeedConfidence_unavailable;
-        vam->vam.vamParameters.vruHighFrequencyContainer.longitudinalAcceleration.longitudinalAccelerationValue = LongitudinalAccelerationValue_unavailable;
-        vam->vam.vamParameters.vruHighFrequencyContainer.longitudinalAcceleration.longitudinalAccelerationConfidence = AccelerationConfidence_unavailable;
-    }
-
-    int rc = 0;
     if (argc == 0) {
+        fprintf(stderr, "\n");
         coptions_help(stderr, "VAM", 0, options, "");
+        return 0;
     }
-    else {
-        rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
-        if(rc < 0){
-            return rc;
+    int rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
+    if(rc >= 0){
+        if(_o_vam_xer){
+            // load from template
+            char * ebuf = NULL;
+            char * buf = cstraload(&ebuf, _o_vam_xer);
+            if(buf == NULL){
+                mclog_fatal(VAM, "%s: no XER template file found", _o_vam_xer);
+                return -1;
+            }
+
+            asn_dec_rval_t rc_d = asn_decode(NULL, ATS_BASIC_XER, &asn_DEF_VAM, (void**)&_vam, buf, ebuf - buf);
+            if(rc_d.code != RC_OK){
+                mclog_fatal(VAM, "%s: error in XER template at pos %n", _o_vam_xer, rc_d.consumed);
+                return -1;
+            }
+        }else{
+            _vam.vam.vamParameters.vruLowFrequencyContainer = &vam_lfc;
+            _vam.vam.vamParameters.basicContainer.stationType = _st_types[_o_stationType].tpType;
+            vam_lfc.profileAndSubprofile.present = _st_types[_o_stationType].vruProfilePR;
+            vam_lfc.profileAndSubprofile.choice.pedestrian = _st_types[_o_stationType].subProfile;
         }
+        if(_o_join){
+            if(_o_leader){
+                mclog_fatal(VAM, "can not lead and join cluster at the same time");
+                return -1;
+            }
+        }else{
+            if(_o_cluster_id){
+                _o_leader = 1;
+            }
+            if(_o_leader){
+                if(_o_cluster_id == 0){
+                    _o_cluster_id = O_CLUSTER_DEFAULT;
+                }
+                _vam_cl_info_container.vruClusterInformation.clusterId = &_o_cluster_id;
+                _vam.vam.vamParameters.vruClusterInformationContainer = &_vam_cl_info_container;
+            }
+        }
+/*    
+        _op_DebugInteger = *asn_DEF_Wgs84AngleValue.op;
+        asn_DEF_Wgs84AngleValue.op = &_op_DebugInteger;
+        _op_DebugInteger.uper_encoder = _op_DebugInteger_uper_encoder;
+*/
     }
-
-    vam->vam.vamParameters.basicContainer.stationType = _st_types[_o_stationType].tpType;
-
-    vam_lfc.profileAndSubprofile.present = _st_types[_o_stationType].vruProfilePR;
-    vam_lfc.profileAndSubprofile.choice.pedestrian = _st_types[_o_stationType].subProfile;
-
     return rc;
 }
 
@@ -190,6 +276,8 @@ static void _process (MsgGenApp * app, FitSec * e)
     }
 }
 
+FSTime64 _stopSendingTime = 0;
+
 static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {
     size_t len;
@@ -225,76 +313,82 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         ch->nextHeader = 0x10;
     }
 
-    vam->header.stationId = 0x10101010;//(unsigned long)FSCertificate_Digest(m->cert);
     if(m->position.latitude || m->position.longitude){
-        vam->vam.vamParameters.basicContainer.referencePosition.latitude = m->position.latitude;
-        vam->vam.vamParameters.basicContainer.referencePosition.longitude = m->position.longitude;
+        _vam.vam.vamParameters.basicContainer.referencePosition.latitude = m->position.latitude;
+        _vam.vam.vamParameters.basicContainer.referencePosition.longitude = m->position.longitude;
     }else{
-        vam->vam.vamParameters.basicContainer.referencePosition.latitude = Latitude_unavailable;
-        vam->vam.vamParameters.basicContainer.referencePosition.longitude = Longitude_unavailable;
+        _vam.vam.vamParameters.basicContainer.referencePosition.latitude = Latitude_unavailable;
+        _vam.vam.vamParameters.basicContainer.referencePosition.longitude = Longitude_unavailable;
     }
 
     eh->shb.srcPosVector.latitude = m->position.latitude;
     eh->shb.srcPosVector.longitude = m->position.longitude;
     eh->shb.srcPosVector.timestamp = (uint32_t)(m->generationTime / 1000);
 
-    vam->vam.generationDeltaTime = eh->shb.srcPosVector.timestamp % 65536;
+    _vam.vam.generationDeltaTime = eh->shb.srcPosVector.timestamp % 65536;
 
 #ifdef USE_LIBGPS
-    const struct gps_data_t * gps = get_gps_data();
-    if(gps){
-        if( gps->fix.mode >= 2 ){
-            if(isfinite(gps->fix.epy) && isfinite(gps->fix.epx)){
-                vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gps->fix.epy * 100.0));
-                if(vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength >= SemiAxisLength_outOfRange)
-                    vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_outOfRange;
-                vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = abs(floor(gps->fix.epx * 100.0));
-                if(vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength >= SemiAxisLength_outOfRange)
-                    vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_outOfRange;
-                vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 0;
-                if(gps->fix.epx < gps->fix.epx){
-                    long n = vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength;
-                    vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = 
-                        vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength;
-                    vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = n;
-                    vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 90;
-                }
-            }else {
-                vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_unavailable;
-                vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_unavailable;
-                vam->vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = Wgs84AngleValue_unavailable;
+    FSGpsData gd;
+    if(libgps_get_data(0, &gd) > 0){
+        if(isfinite(gd.dy) && isfinite(gd.dx)){
+            _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gd.dy * 100.0));
+            if(_vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength >= SemiAxisLength_outOfRange)
+                _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_outOfRange;
+            _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = abs(floor(gd.dx * 100.0));
+            if(_vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength >= SemiAxisLength_outOfRange)
+                _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_outOfRange;
+            _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 0;
+            if(gd.dx < gd.dx){
+                long n = _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength;
+                _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = 
+                    _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength;
+                _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = n;
+                _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 90;
             }
+        }else {
+            _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_unavailable;
+            _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_unavailable;
+            _vam.vam.vamParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = Wgs84AngleValue_unavailable;
+        }
 
-            if(gps->set & SPEED_SET){
-                /* speed */
-                vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedValue = (long)floor(gps->fix.speed * 100.0);
-                if(vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedValue > SpeedValue_outOfRange)
-                    vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedValue = SpeedValue_outOfRange;
-                if(isfinite(gps->fix.eps)){
-                    vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = (long)floor(gps->fix.eps*100.0);
-                    if(vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence > SpeedConfidence_outOfRange)
-                        vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = SpeedConfidence_outOfRange;
-                }else{
-                    vam->vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = SpeedConfidence_unavailable;
-                }
-            }
+        /* speed */
+        _vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedValue = gd.speed;
+        if(_vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedValue > SpeedValue_outOfRange)
+            _vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedValue = SpeedValue_outOfRange;
+        if(isfinite(gd.ds)){
+            _vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = (long)floor(gd.ds*100.0);
+            if(_vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence > SpeedConfidence_outOfRange)
+                _vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = SpeedConfidence_outOfRange;
+        }else{
+            _vam.vam.vamParameters.vruHighFrequencyContainer.speed.speedConfidence = SpeedConfidence_unavailable;
+        }
 
-            if(gps->set & TRACK_SET){
-                /* heading */
-                vam->vam.vamParameters.vruHighFrequencyContainer.heading.value = (long)floor(gps->fix.track*10);
-                if(isfinite(gps->fix.epd)){
-                    vam->vam.vamParameters.vruHighFrequencyContainer.heading.confidence = abs((long)floor(gps->fix.epd*10));
-                    if(vam->vam.vamParameters.vruHighFrequencyContainer.heading.confidence > Wgs84AngleConfidence_outOfRange)
-                        vam->vam.vamParameters.vruHighFrequencyContainer.heading.confidence = Wgs84AngleConfidence_outOfRange;
-                }else{
-                    vam->vam.vamParameters.vruHighFrequencyContainer.heading.confidence = Wgs84AngleConfidence_unavailable;
+        /* heading */
+        _vam.vam.vamParameters.vruHighFrequencyContainer.heading.value = gd.heading;
+        if(isfinite(gd.dh)){
+            _vam.vam.vamParameters.vruHighFrequencyContainer.heading.confidence = abs((long)floor(gd.dh*10));
+            if(_vam.vam.vamParameters.vruHighFrequencyContainer.heading.confidence > Wgs84AngleConfidence_outOfRange)
+                _vam.vam.vamParameters.vruHighFrequencyContainer.heading.confidence = Wgs84AngleConfidence_outOfRange;
+        }else{
+            _vam.vam.vamParameters.vruHighFrequencyContainer.heading.confidence = Wgs84AngleConfidence_unavailable;
+        }
+    }
+#endif
+    if(_o_join) {
+        if(_o_cluster_id) {
+            _vam.vam.vamParameters.vruClusterOperationContainer = &_vam_cl_join_container;
+            if(_vam_cl_join_info.clusterId != _o_cluster_id){
+                _vam_cl_join_info.clusterId = _o_cluster_id;
+                _stopSendingTime = m->generationTime + (_vam_cl_join_info.joinTime * 256000);
+            }else{
+                if(m->generationTime > _stopSendingTime){
+                    return 0; // send nothing
                 }
             }
         }
     }
-#endif
 
-    asn_enc_rval_t rc = asn_encode_to_buffer(NULL, ATS_UNALIGNED_CANONICAL_PER, &asn_DEF_VAM, vam, m->payload + len, m->payloadSize - len);
+    asn_enc_rval_t rc = asn_encode_to_buffer(NULL, ATS_UNALIGNED_CANONICAL_PER, &asn_DEF_VAM, &_vam, m->payload + len, m->payloadSize - len);
     if (rc.encoded < 0) {
         fprintf(stderr, "%-2s SEND %s:\t ERROR: %zu at %s\n", FitSec_Name(e), "asn_encode", rc.encoded, rc.failed_type->name);
         len = 0;
@@ -317,11 +411,49 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     return len;
 }
 
+static void _receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort)
+{
+    if(btpPort == 2018){
+        mclog_info(VRU, "%s VAM received",
+            stritstime64(m->generationTime) 
+        );
+        if(_o_join){
+            if(_o_cluster_id == 0){
+                // decode VAM
+                VAM_t rvam = {}, *prvam = &rvam;
+                
+                asn_dec_rval_t rc_d = asn_decode(NULL, ATS_UNALIGNED_BASIC_PER, &asn_DEF_VAM, (void**)&prvam, m->payload, m->payloadSize);
+                if(rc_d.code == RC_OK){
+                    if(rvam.vam.vamParameters.vruClusterInformationContainer){
+                        if(rvam.vam.vamParameters.vruClusterInformationContainer->vruClusterInformation.clusterId){
+                            _o_cluster_id = *rvam.vam.vamParameters.vruClusterInformationContainer->vruClusterInformation.clusterId;
+                        }
+                    }
+                    ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_VAM, &rvam);
+                }
+            }
+        }
+    }
+}
+
+
 static int  _ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
 {
     switch (m->code){
         case FS_UtVamTrigger:
             _o_activated = m->camState.state;
+            break;
+        case FS_UtVamJoin:
+            _o_join = 1;
+            _o_leader = 0;
+            _o_cluster_id = m->vamCluster.clasterId;
+            _vam.vam.vamParameters.vruClusterInformationContainer = NULL;
+            break;
+        case FS_UtVamLeader:
+            _o_join = 0;
+            _o_leader = 1;
+            _vam.vam.vamParameters.vruClusterOperationContainer = NULL;
+            _vam.vam.vamParameters.vruClusterInformationContainer = &_vam_cl_info_container;
             break;
     }
     return 0;

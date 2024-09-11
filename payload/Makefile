@@ -3,9 +3,14 @@ include Makefile.am.libasncodec
 ASN1_SRC := asn1/CAM-PDU-Descriptions.asn \
             asn1/DENM-PDU-Descriptions.asn \
 			asn1/VAM-PDU-Descriptions.asn \
+			asn1/CPM-OriginatingStationContainers.asn \
+			asn1/CPM-PDU-Descriptions.asn \
+			asn1/CPM-PerceivedObjectContainer.asn \
+			asn1/CPM-PerceptionRegionContainer.asn \
+			asn1/CPM-SensorInformationContainer.asn \
             asn1/ETSI-ITS-CDD.asn
 
-ASN1_PDU :=  CAM DENM VAM
+ASN1_PDU :=  CAM DENM VAM CollectivePerceptionMessage
 
 PROJECTROOT  = ..
 
@@ -22,7 +27,7 @@ alibs        = $(PROJECT)
 sources       := $(ASN_MODULE_SRCS)
 
 headers       := $(ASN_MODULE_HDRS)
-
+#defines       := ASN_EMIT_DEBUG=1
 includes      += .
 
 include $(CSHAREDDIR)/common.mk

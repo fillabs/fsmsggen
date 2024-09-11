@@ -24,7 +24,7 @@ static void pki_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event
 static FitSecPki * _pki = NULL;
 
 static MsgGenApp _app = {
-    "pki", MsgGenApp_DefaultApp, pki_process_none, _options, _fill_none, pki_onEvent, pki_ut_handler
+    "pki", MsgGenApp_DefaultApp, pki_process_none, _options, _fill_none, pki_onEvent, NULL, pki_ut_handler
 };
 static MsgGenApp _enr = {
     "enr", MsgGenApp_DefaultApp, pki_process_ea, _options, _fill_enr
@@ -37,7 +37,7 @@ __INITIALIZER__(initializer_pki) {
      MsgGenApp_Register(&_app);
 }
 
-static uint8_t station_id [] = {
+static uint8_t station_id [64] = {
     0xb1, 0xb8, 0xc6, 0xe0, 0xb7, 0x5d, 0xd6, 0xf6,
     0x76, 0xd5, 0x77, 0x43, 0x6b, 0xb5, 0x41, 0xde
 };
@@ -51,7 +51,7 @@ static uint8_t priv_key [32] = {
 
 static FitSecPkiConfig pki_cfg = {
     {
-        &station_id[0], sizeof(station_id),
+        &station_id[0], 16,
         FS_NISTP256, &priv_key[0]
     },
     true, // enable repetition
@@ -62,6 +62,7 @@ static FitSecPkiConfig pki_cfg = {
 
 static const pchar_t * _o_canKeyPath = NULL;
 static const pchar_t * _o_stationIdPath = NULL;
+static const char * _o_stationId = NULL;
 static const char * _o_dc = NULL;
 static int    _o_enr_rep_delay  = 5;
 static int    _o_auth_rep_delay = 5;
@@ -77,7 +78,8 @@ static FSUT * ut = NULL;
 
 static copt_t options[] = {
     { "K",  "canonical-key",        COPT_PATH,     &_o_canKeyPath,    "Canonical private key path" },
-    { "I",  "station-id",           COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
+    { NULL, "canonical-id-path",    COPT_PATH,     &_o_stationIdPath, "Station identifier path" },
+    { NULL, "canonical-id",         COPT_PATH,     &_o_stationId,     "Station identifier path" },
     { "D",  "dc",                   COPT_STR,      &_o_dc,            "Override all DC URLs" },
     { "O",  "certs",                COPT_PATH,     &_o_out,           "Store received certificates" },
     { NULL, "req-validity",         COPT_UINT,     &pki_cfg.reqStorageDuration, "PKI request validity time. During this time request to the same CA will be repeated. Set to 0 to prevent repetition."},
@@ -95,49 +97,54 @@ static copt_t options[] = {
 
 static int _options(MsgGenApp* app, int argc, char* argv[])
 {
-    int rc = 0;
     if (argc == 0) {
+        fprintf(stderr, "\n");
         coptions_help(stderr, "PKI", 0, options, "");
+        return 0;
     }
-    else {
-        rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
-        if (!COPT_ERC(rc)) {
-            if(_o_canKeyPath){
-                const char * ext = cstrpathextension(_o_canKeyPath);
-                int fsize = 32;
-                if(ext){
-                    if(cstrequal(ext, "nist384")){
-                        fsize = 48; pki_cfg.station.alg = FS_NISTP384;
-                    } else if(cstrequal(ext, "bpool384")){
-                        fsize = 48; pki_cfg.station.alg = FS_BRAINPOOLP384R1;
-                    } else if(cstrequal(ext, "bpool256")){
-                        pki_cfg.station.alg = FS_BRAINPOOLP256R1;
-                    } else if(cstrequal(ext, "sm2")){
-                        pki_cfg.station.alg = FS_SM2;
-                    }
-                }
-                uint8_t * e = (uint8_t *)cstrnload((char*)&priv_key[0], sizeof(priv_key), _o_canKeyPath);
-                if(e - &priv_key[0] != fsize){
-                    perror(_o_canKeyPath);
-                    rc = -1;
+    int rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
+    if(rc >= 0){
+        if(_o_canKeyPath){
+            const char * ext = cstrpathextension(_o_canKeyPath);
+            int fsize = 32;
+            if(ext){
+                if(cstrequal(ext, "nist384")){
+                    fsize = 48; pki_cfg.station.alg = FS_NISTP384;
+                } else if(cstrequal(ext, "bpool384")){
+                    fsize = 48; pki_cfg.station.alg = FS_BRAINPOOLP384R1;
+                } else if(cstrequal(ext, "bpool256")){
+                    pki_cfg.station.alg = FS_BRAINPOOLP256R1;
+                } else if(cstrequal(ext, "sm2")){
+                    pki_cfg.station.alg = FS_SM2;
                 }
             }
-            if(_o_stationIdPath){
-                uint8_t * e = (uint8_t *)cstrnload((char*)&station_id[0], sizeof(station_id), _o_stationIdPath);
-                if(e - &station_id[0] != 16){
-                    perror(_o_stationIdPath);
-                    rc = -1;
-                }
+            uint8_t * e = (uint8_t *)cstrnload((char*)&priv_key[0], sizeof(priv_key), _o_canKeyPath);
+            if(e - &priv_key[0] != fsize){
+                perror(_o_canKeyPath);
+                rc = -1;
             }
-            if(_o_out){
-                _o_out = cstrdups(_o_out, 256);
+        }
+        if(_o_stationIdPath){
+            uint8_t * e = (uint8_t *)cstrnload((char*)&station_id[0], sizeof(station_id), _o_stationIdPath);
+            if(e == NULL){
+                perror(_o_stationIdPath);
+                rc = -1;
             }
-            pki_cfg.disablePrivacy = _o_no_privacy;
-            pki_cfg.repetition = _o_repetition;
-            if(0 == _o_repetition){
-                _o_enr_rep_delay = 0;
-                _o_auth_rep_delay = 0;
-            }
+            pki_cfg.station.id_len = e - &station_id[0];
+        }
+        if(_o_stationId){
+            uint8_t * e = (uint8_t *)cstr_hex2bin(station_id, sizeof(station_id), _o_stationId, cstrlen(_o_stationId));
+            pki_cfg.station.id_len = e - &station_id[0];
+        }
+
+        if(_o_out){
+            _o_out = cstrdups(_o_out, 256);
+        }
+        pki_cfg.disablePrivacy = _o_no_privacy;
+        pki_cfg.repetition = _o_repetition;
+        if(0 == _o_repetition){
+            _o_enr_rep_delay = 0;
+            _o_auth_rep_delay = 0;
         }
     }
     return rc;

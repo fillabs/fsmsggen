@@ -10,6 +10,8 @@ extern "C" {
 #endif
 
 #define defaultValidity (600)
+#define min_val_CpmContainerId (1)
+#define max_val_CpmContainerId (16)
 #define min_val_AccelerationConfidence (0)
 #define max_val_AccelerationConfidence (102)
 #define min_val_AccelerationMagnitudeValue (0)

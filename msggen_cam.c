@@ -6,6 +6,7 @@
 #include "msggen.h"
 #include "cmem.h"
 #include "copts.h"
+#include "fsgpsd.h"
 
 #include "payload/CAM.h"
 #include "gn_types.h"
@@ -15,15 +16,14 @@ static void cam_process (MsgGenApp * app, FitSec * e);
 static int cam_options  (MsgGenApp* app, int argc, char* argv[]);
 static size_t cam_fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static void cam_onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
+static void cam_receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort);
 
 static int   cam_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
-
-const struct gps_data_t * get_gps_data();
 
 #define MAX_PATH_POINTS 23
 
 static MsgGenApp _app = {
-    "cam", 0, cam_process, cam_options, cam_fill, cam_onEvent, cam_ut_handler
+    "cam", 0, cam_process, cam_options, cam_fill, cam_onEvent, cam_receive, cam_ut_handler
 };
 
 __INITIALIZER__(initializer_cam) {
@@ -54,12 +54,18 @@ static const char* _o_stationTypes[] = {
 static int _o_secured = 1;
 static int _o_btpA = 0;
 static int _o_activated = 1;
+static float _o_rate = 10; // 10Hz
+static float _o_cam_rate = 10; // 10Hz
 
 static copt_t options[] = {
     { "T",  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
     { "B",  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
     { "C",  "cam-stop",          COPT_IBOOL ,   &_o_activated, "Do not start CAM by default" },
     { NULL, "cam-no-sec",        COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
+    { NULL, "no-sec",            COPT_IBOOL ,   &_o_secured, NULL },
+    { "r",  "rate",              COPT_FLOAT|COPT_NOHELP,    &_o_rate, NULL },
+    { NULL,  "cam-rate",         COPT_FLOAT,     &_o_cam_rate, "Set CAM sending rate [10Hz]" },
+
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
@@ -177,28 +183,32 @@ static LowFrequencyContainer_t _lfc = {
 
 static int cam_options(MsgGenApp* app, int argc, char* argv[])
 {
-    int rc = 0;
     if (argc == 0) {
+        fprintf(stderr, "\n");
         coptions_help(stderr, "CAM", 0, options, "");
-    }
-    else {
-        rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
-        if (rc >= 0) {
-            if (options[0].vptr != _o_stationTypes) {
-                _cam.cam.camParameters.basicContainer.stationType = copts_enum_value(options, 0, _o_stationTypes)-1;
-            }
-        }
-    }
-    // init path points
-    for(int i=0; i<(sizeof(_pathHistoryArray)/sizeof(_pathHistoryArray[0])); i++) {
-        _pathHistoryArrayData[i].idx = i;
-        _pathHistoryArrayData[i].point.pathDeltaTime = &_pathHistoryArrayData[i].deltaTimeValue;
-        _pathHistoryArray[i] = &_pathHistoryArrayData[i].point;
+        return 0;
     }
 
-    if(_cam.cam.camParameters.basicContainer.stationType == TrafficParticipantType_roadSideUnit){
-        _cam.cam.camParameters.highFrequencyContainer.present = HighFrequencyContainer_PR_rsuContainerHighFrequency;
-        _cam.cam.camParameters.highFrequencyContainer.choice.rsuContainerHighFrequency.protectedCommunicationZonesRSU = NULL;
+    int rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
+    if (rc >= 0){
+
+        if (options[0].vptr != _o_stationTypes) {
+            _cam.cam.camParameters.basicContainer.stationType = copts_enum_value(options, 0, _o_stationTypes)-1;
+        }
+
+        if(_o_cam_rate > _o_rate ) _o_cam_rate = _o_rate;
+
+        // init path points
+        for(int i=0; i<(sizeof(_pathHistoryArray)/sizeof(_pathHistoryArray[0])); i++) {
+            _pathHistoryArrayData[i].idx = i;
+            _pathHistoryArrayData[i].point.pathDeltaTime = &_pathHistoryArrayData[i].deltaTimeValue;
+            _pathHistoryArray[i] = &_pathHistoryArrayData[i].point;
+        }
+
+        if(_cam.cam.camParameters.basicContainer.stationType == TrafficParticipantType_roadSideUnit){
+            _cam.cam.camParameters.highFrequencyContainer.present = HighFrequencyContainer_PR_rsuContainerHighFrequency;
+            _cam.cam.camParameters.highFrequencyContainer.choice.rsuContainerHighFrequency.protectedCommunicationZonesRSU = NULL;
+        }
     }
     return rc;
 }
@@ -232,7 +242,12 @@ static GNExtendedHeader _def_eh = {
 static void cam_process (MsgGenApp * app, FitSec * e)
 {
     if(_o_activated){
-        MsgGenApp_Send(e, app); 
+        FSMessageInfo m = {0};
+        GN_PrepareMessage(&m);
+        if(0 == (m.generationTime % (int)floor(1000000/_o_rate))){
+            cam_fill(app, e, &m);
+            GN_SendMessage(app, &m);
+        }
     }
 }
 
@@ -293,55 +308,49 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     eh->shb.srcPosVector.timestamp = (uint32_t)(m->generationTime / 1000);
 
 #ifdef USE_LIBGPS
-    const struct gps_data_t * gps = get_gps_data();
-    if(gps){
-        if( gps->fix.mode >= 2 ){
-            if(isfinite(gps->fix.epy) && isfinite(gps->fix.epx)){
-                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gps->fix.epy * 100.0));
-                if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength >= SemiAxisLength_outOfRange)
-                    _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_outOfRange;
-                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = abs(floor(gps->fix.epx * 100.0));
-                if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength >= SemiAxisLength_outOfRange)
-                    _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_outOfRange;
-                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 0;
-                if(gps->fix.epx < gps->fix.epx){
-                    long n = _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength;
-                    _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = 
-                        _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength;
-                    _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = n;
-                    _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 90;
-                }
-            }else {
-                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_unavailable;
-                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_unavailable;
-                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = Wgs84AngleValue_unavailable;
+    FSGpsData gd;
+    if(libgps_get_data(0, &gd)){
+        if(isfinite(gd.dx) && isfinite(gd.dx)){
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gd.dy * 100.0));
+            if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength >= SemiAxisLength_outOfRange)
+                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_outOfRange;
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = abs(floor(gd.dx * 100.0));
+            if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength >= SemiAxisLength_outOfRange)
+                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_outOfRange;
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 0;
+            if(gd.dx < gd.dx){
+                long n = _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength;
+                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = 
+                    _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength;
+                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = n;
+                _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 90;
             }
-            if(_cam.cam.camParameters.basicContainer.stationType != TrafficParticipantType_roadSideUnit){
-                if(gps->set & SPEED_SET){
-                    /* speed */
-                    _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue = (long)floor(gps->fix.speed * 100.0);
-                    if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue > SpeedValue_outOfRange)
-                        _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue = SpeedValue_outOfRange;
-                    if(isfinite(gps->fix.eps)){
-                        _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence = (long)floor(gps->fix.eps*100.0);
-                        if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence > SpeedConfidence_outOfRange)
-                            _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence = SpeedConfidence_outOfRange;
-                    }else{
-                        _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence = SpeedConfidence_unavailable;
-                    }
-                }
+        }else {
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_unavailable;
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_unavailable;
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = Wgs84AngleValue_unavailable;
+        }
+        if(_cam.cam.camParameters.basicContainer.stationType != TrafficParticipantType_roadSideUnit){
+            /* speed */
+            _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue = gd.speed;
+            if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue > SpeedValue_outOfRange)
+                _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue = SpeedValue_outOfRange;
+            if(isfinite(gd.ds)){
+                _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence = (long)floor(gd.ds*100.0);
+                if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence > SpeedConfidence_outOfRange)
+                    _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence = SpeedConfidence_outOfRange;
+            }else{
+                _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedConfidence = SpeedConfidence_unavailable;
+            }
 
-                if(gps->set & TRACK_SET){
-                    /* heading */
-                    _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingValue = (long)floor(gps->fix.track*10);
-                    if(isfinite(gps->fix.epd)){
-                        _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence = abs((long)floor(gps->fix.epd*10));
-                        if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence > HeadingConfidence_outOfRange)
-                            _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence = HeadingConfidence_outOfRange;
-                    }else{
-                        _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence = HeadingConfidence_unavailable;
-                    }
-                }
+            /* heading */
+            _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingValue = gd.heading;
+            if(isfinite(gd.dh)){
+                _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence = abs((long)floor(gd.dh*10));
+                if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence > HeadingConfidence_outOfRange)
+                    _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence = HeadingConfidence_outOfRange;
+            }else{
+                _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.heading.headingConfidence = HeadingConfidence_unavailable;
             }
         }
     }
@@ -391,6 +400,11 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         }
     }
     return len;
+}
+
+static void cam_receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort)
+{
+    
 }
 
 static int  cam_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)

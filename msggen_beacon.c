@@ -8,9 +8,10 @@ static int _options (MsgGenApp* app, int argc, char* argv[]);
 static size_t _fill  (MsgGenApp* app, FitSec * e, FSMessageInfo* m);
 static void _process (MsgGenApp * app, FitSec * e);
 static void _onEvent (MsgGenApp * app, FitSec* e, void* user, FSEventId event, const FSEventParam* params);
+static void _receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort);
 
 static MsgGenApp _app = {
-    "beacon", MsgGenApp_DefaultApp, _process, _options, _fill, _onEvent
+    "beacon", MsgGenApp_DefaultApp, _process, _options, _fill, _onEvent, _receive
 };
 
 __INITIALIZER__(initializer_beacon) {
@@ -22,20 +23,19 @@ static int _o_secured_beacon = 1;
 static copt_t options[] = {
     { NULL, "beacon",         COPT_BOOL , &_o_beacon,          "Send beacon if CAM disabled" },
     { NULL, "no-sec-beacon",  COPT_IBOOL , &_o_secured_beacon, "Send non-secured beacon" },
+    { NULL, "no-sec",         COPT_IBOOL , &_o_secured_beacon, NULL },
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
 static int _options(MsgGenApp* app, int argc, char* argv[])
 {
-    int rc = 0;
     if (argc == 0) {
+        fprintf(stderr, "\n");
         coptions_help(stderr, "BEACON", 0, options, "");
+        return 0;
     }
-    else {
-        rc = coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
-    }
-    return rc;
+    return coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);
 }
 
 static GNExtendedHeader _def_eh = {
@@ -110,4 +110,9 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
          len = m->messageSize = m->payloadSize;
      }
     return len;
+}
+
+static void _receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t btpPort)
+{
+
 }

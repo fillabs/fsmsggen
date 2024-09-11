@@ -4,6 +4,10 @@
 //#include <windows.h>
 //#endif
 
+#ifdef __GNUC__
+#define __USE_GNU
+#endif
+
 #include <pcap.h>
 
 #ifdef USE_LIBGPS
@@ -23,6 +27,7 @@
 
 #include "msggen.h"
 #include "gn_types.h"
+#include "fsgpsd.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +35,8 @@
 #include <time.h>
 #include <inttypes.h>
 #include <math.h>
+
+#include <netdb.h>
 
 #ifdef WIN32
 #define _MAC
@@ -56,7 +63,6 @@ static float _rate = 10; // 10Hz
 
 static int _gn_src = 0;
 
-pchar_t* storage1 = "POOL_CAM"; // default storage
 char* _curStrTime = NULL;
 pchar_t* _out = "out.pcap";
 pchar_t* _in = NULL;
@@ -72,9 +78,12 @@ static int _o_uppertester = 0;
 static const char* _o_ut_addr = NULL;
 static uint16_t _o_ut_port = 12345;
 static const char * _o_dc = NULL;
-#ifdef USE_LIBGPS
-static const char * _gpsd_server = NULL;
-#endif
+int _gps_ch = -1;
+
+static const char * _out_payload[] = {
+    "raw", "gn"/*, "sec", "btp", "fs"*/
+};
+
 typedef struct ether_header_t ether_header_t;
 __PACKED__(struct ether_header_t{
 
@@ -101,29 +110,33 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
 static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_load(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_value_t* value);
-
+#ifdef USE_LIBGPS
+static int copt_on_gpsd(const copt_t* opt, const char* option, const copt_value_t* value);
+#endif
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
     { "C",  "config",   COPT_CFGFILE,  &cfgfile,      "Config file"         },
 //    { "m",  "type",     COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message type" },
-    { "1",  "load",     COPT_PATH|COPT_CALLBACK, copt_on_load,     "Load certificates or CTL/CRL data from file or directory"   },
     { "n",  "count",    COPT_LONG,     &_msg_count,   "Message count" },
     { "i",  "iface",    COPT_STR,      &_iface,       "Network interface to send messages" },
     { "D",  "iface-list", COPT_BOOL,   &_iface_list,  "List network interfaces"},
     { "I",  "in",       COPT_PATH,     &_in,          "Input PCAP file name" },
-    { "O",  "out",      COPT_PATH,     &_out,         "Output PCAP file name, 'none' for disable" },
+    { "O",  "out",      COPT_PATH,     &_out,         "Output PCAP file name, 'none' for disable, (udp|tcp)://host:port for network stream" },
+    { NULL, "out-payload", COPT_STRENUM,     &_out_payload,         "Output payload type for network stream: raw,gn. Default is raw" },
+#define OPT_IDX_OUT_PAYLOAD 7
     { "r",  "rate",     COPT_FLOAT,    &_rate,        "Message rate in Hz" },
     { "t",  "time",     COPT_STR,      &_curStrTime,  "The ISO representation of starting time" },
     { "p",  "position", COPT_STR  | COPT_CALLBACK, copt_on_position,  "The position in form latitude:longitude" },
 #ifdef USE_LIBGPS
-    { "g",  "gpsd",     COPT_STR,      &_gpsd_server, "Connect to gpsd host:port" },
+    { "g",  "gpsd",     COPT_STR  | COPT_CALLBACK, copt_on_gpsd, "Connect to gpsd host:port" },
 #endif
     { "s",  "srcaddr",  COPT_STR  | COPT_CALLBACK, copt_on_gn_src_addr,  "The GN source address" },
     { "u",  "ut",       COPT_BOOL | COPT_CALLBACK, copt_on_ut_addr, "Start UpperTester" },
-    { "d",  "dc",       COPT_STR  | COPT_CALLBACK, copt_on_set_dc,  "Assign this DC to all CA certificates" },
-    { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
     { "l",  "loopback", COPT_BOOL,     &_o_allow_loopback, "Receive packets sent by itself" },
     { "v",  "verbose",  COPT_BOOL | COPT_CALLBACK, copt_on_verbose,   "Be verbose (allow multiple -vvv)" },
+    { "d",  "dc",       COPT_STR  | COPT_CALLBACK, copt_on_set_dc,  "Assign this DC to all CA certificates" },
+    { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
+    { "1",  "load",     COPT_PATH|COPT_CALLBACK, copt_on_load,     "Load certificates or CTL/CRL data from file or directory"   },
 
     { NULL, NULL, COPT_END, NULL, NULL }
 };
@@ -131,29 +144,26 @@ static copt_t options [] = {
 int loadCertificates(FitSec * e, const pchar_t * _path);
 static int _strpdate(const char* s, struct tm* t);
 
+static struct timeval _t_cur;
 static long _tdelta = 0;
+
+int FS3DPositionFromString(FS3DLocation * pos, const char * str);
 
 static int copt_on_position(const copt_t* opt, const char* option, const copt_value_t* value)
 {
-    char* p, * e;
-    p = value->v_str;
-    position.latitude = strtol(p, &e, 10);
-    if (*e == '.') {
-        // decimal representation
-        double d = strtod(p, &e);
-        position.latitude = (int32_t)floor(d * 10000000.0);
-    }
-    if (e == p || NULL == strchr(":,; /", *e)) return -1;
-    e++;
+    return FS3DPositionFromString(&position, value->v_str) ? 0 : -1;
+}
 
-    position.longitude = strtol(e, &p, 10);
-    if (*p == '.') {
-        double d = strtod(e, &p);
-        position.longitude = (int32_t)floor(d * 10000000.0);
-    }
-    if (e == p || *p != 0) return -1;
+#ifdef USE_LIBGPS
+static int copt_on_gpsd(const copt_t* opt, const char* option, const copt_value_t* value)
+{
+    int ch = libgps_start(value->v_str);
+    if(ch < 0)
+        return -1;
+    _gps_ch = ch;
     return 0;
 }
+#endif
 
 static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value)
 {
@@ -209,7 +219,6 @@ typedef struct load_element_t {
 static cring_t _o_load_elements = {&_o_load_elements, &_o_load_elements};
 static int copt_on_load(const copt_t* opt, const char* option, const copt_value_t* value)
 {
-    storage1 = NULL;
     load_element_t * e = cnew(load_element_t);
     if(e){
         e->path = value->v_str;
@@ -231,26 +240,33 @@ static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_valu
 static MsgGenApp* _applications[10];
 static size_t _applications_count = 0;
 
+void setCurrentPosition(FS3DLocation * pos, FSTime64 * t){
 #ifdef USE_LIBGPS
-struct gps_data_t _gps = {};
-
-const struct gps_data_t * get_gps_data() {
-    if(_gpsd_server){
-        while(gps_waiting(&_gps, 0)){
-            gps_read(&_gps, NULL, 0);
+    if(_gps_ch>=0){
+        FSGpsData data;
+        if(libgps_get_data(_gps_ch, &data)){
+            *pos = data.position;
+            *t = data.time;
+        }else{
+            pos->latitude  = 0;
+            pos->longitude = 0;
+            if(t){
+                *t = timeval2itstime64(&_t_cur) + _FSTime64from32(_tdelta);
+            }
         }
-        return &_gps;
-    }
-    return NULL;
-}
+    } else
 #endif
+    {
+        if(t){
+            *t = timeval2itstime64(&_t_cur) + _FSTime64from32(_tdelta);
+        }
+        *pos = position;
+    }
+}
 
-//static MsgGenApp* _app = NULL;
 void  MsgGenApp_Register(MsgGenApp* app)
 {
     _applications[_applications_count++] = app;
-//    if (_app == NULL) _app = app;
-//    if (app->flags & MsgGenApp_DefaultApp) _app = app;
 }
 
 static MsgGenApp * MsgGenApp_Select(const char* appName)
@@ -263,27 +279,18 @@ static MsgGenApp * MsgGenApp_Select(const char* appName)
     return NULL;
 }
 
-/*
-static int copt_on_msgType(const copt_t* opt, const char* option, const copt_value_t* value)
-{    
-    MsgGenApp * a = MsgGenApp_Select(value->v_str);
-    if(a){
-        _app = a;
-    }
-    return 0;
-}
-*/
-
 static char _error_buffer[PCAP_ERRBUF_SIZE];
 
 typedef struct {
     pcap_t* device;
     pcap_dumper_t* dumper;
+    int out_fd;
 }pcap_handler_t;
 typedef void (proto_handler_fn)(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
 static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
 static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
 static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
+static void _handler_socket(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data);
 static void _handler_read(uint8_t*, const struct pcap_pkthdr*,const uint8_t*);
 
 static proto_handler_fn* _packet_handler = _handler_none;
@@ -301,7 +308,7 @@ static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt
 
 static FSUT* ut = NULL;
 
-static pcap_handler_t h = { NULL, NULL };
+static pcap_handler_t h = { NULL, NULL, 0 };
 
 static const char * _cctates[] = {
     "UNKNOWN",
@@ -407,8 +414,54 @@ int main(int argc, char** argv)
             dev_name = _out;
         }
         if (h.device && _out) {
-            _packet_handler = _handler_file;
-            h.dumper = pcap_dump_open(h.device, _out);
+            pchar_t* host = NULL;
+            struct addrinfo ai_hint = {
+                .ai_family = AF_UNSPEC,
+                .ai_socktype = SOCK_DGRAM
+            };
+            if(cstrnequal("udp://", _out, 6)){
+                host = _out+6;
+            }
+            if(cstrnequal("tcp://", _out, 6)){
+                ai_hint.ai_socktype = SOCK_STREAM;
+                host = _out+6;
+            }
+            if(host){
+                char * port = cstrchr(host, ':');
+                if(port == NULL){
+                    fprintf(stderr, "UDP: port must be specified for UDP stream\n");
+                    return -1;
+                }
+                *(port++) = 0;
+                struct addrinfo * ai_res = NULL;
+                int rc = getaddrinfo (host, port, &ai_hint, &ai_res);
+                if (rc != 0) {
+                    fprintf(stderr, "%s:%s: %s\n", _out, port, gai_strerror(rc));
+                    return -1;
+                }
+                rc = -1;
+                for (struct addrinfo * rp = ai_res; rp != NULL; rp = rp->ai_next) {
+                    rc = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+                    if (rc > 0){
+                        if(0 == connect(rc, rp->ai_addr, rp->ai_addrlen)){
+                            h.out_fd = rc;
+                            break;                  /* Success */
+                        }
+                        close(rc); rc = -1;
+                    }
+                }
+                freeaddrinfo(ai_res);
+                if(rc == -1){
+                    fprintf(stderr, "%s:%s: %s\n", _out, port, gai_strerror(rc));
+                    return -1;
+                }
+                _packet_handler = _handler_socket;
+                h.out_fd = rc;
+                h.dumper = NULL;
+            }else{
+                _packet_handler = _handler_file;
+                h.dumper = pcap_dump_open(h.device, _out);
+            }
         }
     }
     if (h.device == NULL) {
@@ -417,55 +470,30 @@ int main(int argc, char** argv)
     }
     if(0 > pcap_setnonblock(h.device, 1, _error_buffer)){
         mclog_error(PCAP, "%s: %s", dev_name, _error_buffer);
-//        return -1;
     }
-#ifdef USE_LIBGPS
-    if(_gpsd_server){
-        static char _gpsd_default_port[] = "2947";
-        char * port = strrchr(_gpsd_server, ':');
-        if(port){
-            *(port++) = 0;
-        }else{
-            port = &_gpsd_default_port[0];
-        }
-        int rc = gps_open(_gpsd_server, port, &_gps);
-        if(rc != 0){
-            mclog_error(GPSD, "%s:%s : %s\n", _gpsd_server, port, gps_errstr(rc));
-            return -1;
-        }
-        (void)gps_stream(&_gps, WATCH_ENABLE | WATCH_JSON, NULL);
-    }
-#endif
+
+    gettimeofday(&_t_cur, NULL);
+    
     if (_curStrTime) {
         struct tm t;
         if (0 > _strpdate(_curStrTime, &t)) {
             mclog_error(MAIN, "%s: Unknown time format\n", _curStrTime);
             return -1;
         }
-        _tdelta = (long)((time_t)mkgmtime(&t) - time(NULL));
+        _tdelta = (long)((time_t)mkgmtime(&t) - _t_cur.tv_sec);
     }
 
     e = FitSec_New(&cfg1, "1");
 
-    if (_o_secured == 0) {
-        buf[SHIFT_GN] = 0x11; // non-secured GN packet
-        e = NULL;
-    }
-    else {
-        if(storage1){
-            copt_value_t v;
-            v.v_str = storage1;
-            copt_on_load(&options[2], "load", &v);
-        }
-        FSTime32 t = unix2itstime32(time(NULL) + _tdelta);
-        cring_foreach(load_element_t, l, _o_load_elements){
-            _o_dc = l->dc;
-            if( 0 > FitSec_LoadTrustData(e, t, l->path)){
-                return -1;
-            }
+    FSTime32 t = unix2itstime32(_t_cur.tv_sec + _tdelta);
+    cring_foreach(load_element_t, l, _o_load_elements){
+        _o_dc = l->dc;
+        if( 0 > FitSec_LoadTrustData(e, t, l->path)){
+            return -1;
         }
     }
     
+    int arg = 1;
     if (_o_uppertester) {
         mclog_info(UT, "Start UpperTester Engine at %s:%u\n", _o_ut_addr, _o_ut_port);
         ut = FSUT_New(_o_ut_addr, _o_ut_port);
@@ -477,18 +505,19 @@ int main(int argc, char** argv)
         }
         FSUT_RegisterHandler(ut, _UTHandler, e);
         FSUT_Start(ut);
+    }else{
+        if(arg < argc){ 
+            mclog_warning(UT, "UpperTester must be started for script execution. Use -u option\n");
+        }
     }
 
     size_t icmd = 1;
-    int arg = 1;
-    struct timeval t_next, t_add = {0, 1000000 / _rate};
-    gettimeofday(&t_next, NULL);
+    const struct timeval t_add = {0, 1000000 / _rate};
     for (size_t i = 0; i < _msg_count; i++) {
-        timeradd(&t_next, &t_add, &t_next);
-        FSUT_Message * m = NULL;
+        FSUT_Message * um = NULL;
         if(arg < argc){ 
             if(i == icmd){
-                if(0 == strcmp("pause", argv[arg])){
+                if(0 == strcmp("pause", argv[arg])||0 == strcmp("wait", argv[arg])){
                     arg++;
                     if(arg < argc){
                         char * end = argv[arg];
@@ -500,13 +529,12 @@ int main(int argc, char** argv)
                 }else if(0 == strcmp("load", argv[arg])){
                     arg++;
                     if(arg < argc){
-                        uint32_t t = unix2itstime32(time(NULL)) + _tdelta;
+                        uint32_t t = unix2itstime32(_t_cur.tv_sec) + _tdelta;
                         FitSec_LoadTrustData(e, t, argv[arg]);
-//                        FitSec_RevalidateCertificates(e);
                         arg++;
                     }
                 }else{
-                    int r = FSUT_CommandMessage(&m, argc - arg, argv + arg);
+                    int r = FSUT_CommandMessage(&um, argc - arg, argv + arg);
                     if(r <= 0){
                         arg = argc;
                     }else{
@@ -517,9 +545,9 @@ int main(int argc, char** argv)
             }
         }
 
-        FSUT_Proceed(ut, m);
-        if(m){
-            free(m);
+        FSUT_Proceed(ut, um);
+        if(um){
+            free(um);
         }
 
         if (h.dumper == NULL) {
@@ -530,11 +558,14 @@ int main(int argc, char** argv)
             _applications[i]->process(_applications[i], e);
         }
        
-        struct timeval t_now;
-        gettimeofday(&t_now, NULL);
-        timersub(&t_next, &t_now, &t_now);
-        if(( (t_now.tv_sec * 1000000) + t_now.tv_usec) > 0 ){
-            usleep((t_now.tv_sec * 1000000) + t_now.tv_usec);
+        timeradd(&_t_cur, &t_add, &_t_cur);
+        if(_packet_handler != _handler_file){
+            struct timeval t_now;
+            gettimeofday(&t_now, NULL);
+            timersub(&_t_cur, &t_now, &t_now);
+            if(( (t_now.tv_sec * 1000000) + t_now.tv_usec) > 0 ){
+                usleep((t_now.tv_sec * 1000000) + t_now.tv_usec);
+            }
         }
     }
 
@@ -545,8 +576,8 @@ int main(int argc, char** argv)
     pcap_close(h.device);
     
 #ifdef USE_LIBGPS
-    if(_gpsd_server){
-        gps_close(&_gps);
+    if(_gps_ch){
+        libgps_stop(_gps_ch);
     }
 #endif
     FitSec_Free(e);
@@ -554,62 +585,48 @@ int main(int argc, char** argv)
     return 0;
 }
 
+void GN_PrepareMessage(FSMessageInfo * m)
+{
+    m->message = (char*)&buf[SHIFT_SEC];
+    m->messageSize = sizeof(buf) - SHIFT_SEC;
+    m->sign.signerType = FS_SI_AUTO;
+    setCurrentPosition(&m->position, &m->generationTime);
+}
+
+void GN_SendMessage(MsgGenApp * a, FSMessageInfo * m)
+{
+    uint8_t * g5 = ((uint8_t*)m->message) - SHIFT_SEC;
+    if (!_gn_src && m->sign.cert) {
+        FSHashedId8 id = FSCertificate_Digest(m->sign.cert);
+        memcpy(g5 + 6, &id, 6);
+    }
+
+    if (m->payloadType == FS_PAYLOAD_UNSECURED) {
+        g5[SHIFT_GN] = 0x11; // non secured packet
+    }else{
+        g5[SHIFT_GN] = 0x12; // secured packet
+    }
+
+    // inject in pcap
+    struct pcap_pkthdr ph;
+    ph.ts = _t_cur;
+    ph.ts.tv_sec += _tdelta;
+    ph.caplen = ph.len = (uint32_t) (m->messageSize + SHIFT_SEC);
+    mclog_info(MAIN, "%s Msg sent app=%s gt="cPrefixUint64"u (%u bytes)\n",
+            strlocaltime(ph.ts.tv_sec, ph.ts.tv_usec),
+            a->appName, timeval2itstime64(&ph.ts), ph.len);
+    _packet_handler(&h, &ph, g5);
+}
+
 void MsgGenApp_Send(FitSec * e, MsgGenApp * a) 
 {
-    struct pcap_pkthdr ph;
     FSMessageInfo m = {0};
 
-    m.message = (char*)&buf[SHIFT_SEC];
-    m.messageSize = sizeof(buf) - SHIFT_SEC;
-    m.sign.signerType = FS_SI_AUTO;
-#ifdef USE_LIBGPS
-    if(_gpsd_server) {
-        const struct gps_data_t * gps = get_gps_data();
-        if(gps && gps->fix.mode > MODE_NO_FIX) { // only when fix
-            if(isfinite(gps->fix.latitude) && isfinite(gps->fix.longitude)){
-                m.position.latitude  = (int32_t)floor(gps->fix.latitude * 10000000.0);
-                m.position.longitude = (int32_t)floor(gps->fix.longitude * 10000000.0);
-            }
-            ph.ts.tv_sec  = gps->fix.time.tv_sec;
-            ph.ts.tv_usec = gps->fix.time.tv_nsec / 1000;
-        } else {
-            gettimeofday(&ph.ts, NULL);
-            m.position.latitude  = 0;
-            m.position.longitude = 0;
-        }
-    } else
-#endif
-    {
-        gettimeofday(&ph.ts, NULL);
-        m.position = position;
-    }
-    ph.ts.tv_sec += _tdelta;
-    m.generationTime = timeval2itstime64(&ph.ts);
-    if (_changePseudonym) {
-        FitSec_ChangeId(e, FITSEC_AID_ANY);
-    }
+    GN_PrepareMessage(&m);
+
     size_t len = a->fill(a, e, &m);
     if (len > 0) {
-        // fill the src addr
-        if (!_gn_src && m.sign.cert) {
-            FSHashedId8 id = FSCertificate_Digest(m.sign.cert);
-            memcpy(buf + 6, &id, 6);
-        }
-        if (m.payloadType == FS_PAYLOAD_UNSECURED) {
-            buf[SHIFT_GN] = 0x11;
-        }else{
-            buf[SHIFT_GN] = 0x12;
-        }
-        
-        // inject in pcap
-        ph.caplen = ph.len = (uint32_t) (m.messageSize + SHIFT_SEC);
-        mclog_info(MAIN, "%s Msg sent app=%s gt="cPrefixUint64"u (%u bytes)\n",
-                strlocaltime(ph.ts.tv_sec, ph.ts.tv_usec),
-                a->appName, timeval2itstime64(&ph.ts), ph.len);
-
-        _packet_handler(&h, &ph, buf);
-    }else{
-        usleep(1000000 / _rate);
+        GN_SendMessage(a, &m);
     }
 }
 
@@ -621,33 +638,28 @@ static void _handler_none(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8
 static void _handler_file(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
     pcap_dump((uint8_t*)h->dumper, ph, data);
-/*
-    ph->ts.tv_usec += (long)(1000000.0 / _rate);
-    ph->ts.tv_sec += ph->ts.tv_usec / 1000000;
-    ph->ts.tv_usec %= 1000000;
-*/
+}
+
+static void _handler_socket(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
+{
+    size_t len = ph->len;
+    int n = copts_enum_value(options,OPT_IDX_OUT_PAYLOAD,_out_payload);
+    if(n < 0 || n >= carraysize(_out_payload)){
+        printf("ERROR OPT_IDX_OUT_PAYLOAD DEFINITION ");
+        exit(-1);
+    }
+    if(n > 0){
+        data += SHIFT_GN;
+        len -= SHIFT_GN;
+    }
+    if(0 > send(h->out_fd, data, len, 0)){
+        perror("send");
+    }
 }
 
 static void _handler_iface(pcap_handler_t* h, struct pcap_pkthdr* ph, const uint8_t* data)
 {
     pcap_inject(h->device, data, ph->len);
-/*
-    // wait for next hop
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-    ph->ts.tv_usec += (long)(1000000.0 / _rate);
-    ph->ts.tv_sec += ph->ts.tv_usec / 1000000;
-    ph->ts.tv_usec %= 1000000;
-
-    tv.tv_sec += _tdelta;
-//    fprintf(stderr, "CURT is %d:%d sec\n", tv.tv_sec, tv.tv_usec);
-    tv.tv_usec = (ph->ts.tv_sec - tv.tv_sec) * 1000000 + ph->ts.tv_usec - tv.tv_usec;
-//    fprintf(stderr, "WAIT    %ld sec\n", tv.tv_usec);
-//    fprintf(stderr, "sleep %u usec\n", tv.tv_usec);
-    if(tv.tv_usec > 0)
-        usleep(tv.tv_usec);
-*/
 }
 
 static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint8_t* data)
@@ -658,54 +670,81 @@ static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint
         if(*(uint16_t*)(&data[12]) != 0x4789)
             return;
         if (_o_allow_loopback || memcmp(&data[6], &buf[6], 6)) {
+            GNBasicHeader * bh = (GNBasicHeader *)&data[SHIFT_GN];
             FSMessageInfo m;
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
             m.message = (char*)(data + SHIFT_SEC);
             m.messageSize = ph->len - SHIFT_SEC;
-            m.position = position;
-            m.generationTime = timeval2itstime64(&tv);
-            if (FitSec_ParseMessage(e, &m)) {
+            setCurrentPosition(&m.position, &m.generationTime);
+            if(bh->nextHeader == 2) { // secured
+                if (0 == FitSec_ParseMessage(e, &m)) {
+                    // can not parse secured message
+                    mclog_info(RECV, "%s Secured Message parsine error: %s\n",
+                        stritsdate64(m.generationTime), 
+                        FitSec_ErrorMessage(m.status)
+                    );
+                    return;
+                }
+
                 uint32_t flags = FSCertificate_GetState(m.sign.cert);
                 const char * status = (flags & FSCERT_REVOKED) ? "revoked" : 
                                         (flags & FSCERT_INVALID) ? "invalid" :
                                             (flags & FSCERT_TRUSTED) ? "trusted" : "unknown";
                 mclog_info(MAIN, "%s Message received (gt=%s cert="cPrefixUint64"X %s)\n",
-                    strlocaltime(tv.tv_sec, tv.tv_usec), 
+                    stritsdate64(m.generationTime), 
                     stritstime64(m.generationTime),cint64_hton(FSCertificate_Digest(m.sign.cert)),
                     status);
                 if (m.payloadType == FS_PAYLOAD_SIGNED) {
-                    if (FitSec_ValidateSignedMessage(e, &m)) {
-                        const char * p = m.payload;
-                        GNCommonHeader * ch = (GNCommonHeader *)p;
-                        p += sizeof(GNCommonHeader);
-                        GNExtendedHeader * eh = (GNExtendedHeader*)p;
-
-                        switch(ch->headerType >>4 ){
-                        case 1: //beacon
-                            p += sizeof(eh->beacon);
-                            break;
-                        case 2: // GEOUNICAST
-                            p += sizeof(eh->guc);
-                            break;
-                        case 3: // GEOANYCAST
-                            p += sizeof(eh->gbc);
-                            break;
-                        case 4: // GEOBROADCAST
-                            p += sizeof(eh->gbc);
-                            break;
-                        case 5: // TSB
-                            p += sizeof(eh->tsb);
-                            break;
-                        case 6: // LS
-                            if((ch->headerType&0x0F) == 0){
-                                p+= sizeof(eh->lsreq);
-                            }else{
-                                p+= sizeof(eh->lsrep);
-                            }
-                            break;
-                        }
-                        FSUT_SendIndication(ut, FS_UtGnEventInd, p, m.payloadSize-(p-m.payload));
+                    if (!FitSec_ValidateSignedMessage(e, &m)) {
+                        mclog_info(RECV, "%s Secured Message validation error: %s\n",
+                            stritsdate64(m.generationTime), 
+                            FitSec_ErrorMessage(m.status)
+                        );
+                        return;
+                    }
+                }
+            }else{
+                m.payload = m.message;
+                m.payloadSize = m.messageSize;
+                m.payloadType = FS_PAYLOAD_UNSECURED;
+            }
+            GNCommonHeader * ch = (GNCommonHeader *)m.payload;
+            GNExtendedHeader * eh = (GNExtendedHeader*)&ch[1];
+            char * payload = (char *)eh;
+            switch(ch->headerType >>4 ){
+            case 1: //beacon
+                payload += sizeof(eh->beacon);
+                break;
+            case 2: // GEOUNICAST
+                payload += sizeof(eh->guc);
+                break;
+            case 3: // GEOANYCAST
+                payload += sizeof(eh->gbc);
+                break;
+            case 4: // GEOBROADCAST
+                payload += sizeof(eh->gbc);
+                break;
+            case 5: // TSB
+                payload += sizeof(eh->tsb);
+                break;
+            case 6: // LS
+                if((ch->headerType&0x0F) == 0){
+                    payload+= sizeof(eh->lsreq);
+                }else{
+                    payload+= sizeof(eh->lsrep);
+                }
+                break;
+            }
+            FSUT_SendIndication(ut, FS_UtGnEventInd, payload, m.payload + m.payloadSize - payload);
+            if(ch->nextHeader == 0x10 || ch->nextHeader == 0x20){ // BTP A or B
+                BTPHeader * btp = (BTPHeader*)payload;
+                // send to applications
+                payload += sizeof(BTPHeader);
+                m.payloadSize = m.payload + m.payloadSize - payload;
+                m.payload = payload;
+                for(size_t i=0; i<_applications_count; i++){
+                    MsgGenApp* a = _applications[i];
+                    if(a->receive){
+                        a->receive(a, e, &m, cint16_hton(btp->dPort));
                     }
                 }
             }

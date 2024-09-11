@@ -262,6 +262,7 @@ static int _cmd_UtAuth(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtCrl(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtCtl(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv);
+static int _cmd_UtVam(FSUT_Message ** pmsg, int argc, char ** argv);
 
 typedef struct UTHandlerRecord{
     const char * name;
@@ -274,6 +275,7 @@ static const UTHandlerRecord _msgnames[] = {
     {"pseudonym", _cmd_UtChangePseudonym},
     {"cam", _cmd_UtCam },
     {"denm", _cmd_UtDenm },
+    {"vam", _cmd_UtVam },
     {"gn", _cmd_UtGnTrigger },
     {"enrol" , _cmd_UtEnroll},
     {"auth" , _cmd_UtAuth },
@@ -354,19 +356,19 @@ static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv)
     return 0;
 }
 
-static int _cmd_UtCamStart(FSUT_Message ** pmsg, int argc, char ** argv) {
+static int _cmd_UtCamStatus(FSUT_Message ** pmsg, int argc, char ** argv, uint8_t code, uint8_t state) {
     FSUT_Message * m = malloc(sizeof(m->camState));
-    m->camState.code = FS_UtCamTrigger;
-    m->camState.state = 1;
+    m->camState.code = code;
+    m->camState.state = state;
     *pmsg = m;
     return 1;
 }
+
+static int _cmd_UtCamStart(FSUT_Message ** pmsg, int argc, char ** argv) {
+    return _cmd_UtCamStatus(pmsg, argc, argv, FS_UtCamTrigger, 1);
+}
 static int _cmd_UtCamStop(FSUT_Message ** pmsg, int argc, char ** argv) {
-    FSUT_Message * m = malloc(sizeof(m->camState));
-    m->camState.code = FS_UtCamTrigger;
-    m->camState.state = 0;
-    *pmsg = m;
-    return 1;
+    return _cmd_UtCamStatus(pmsg, argc, argv, FS_UtCamTrigger, 0);
 }
 static int _cmd_UtCamRate(FSUT_Message ** pmsg, int argc, char ** argv) {
     return 0;
@@ -459,6 +461,53 @@ static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     if(argc >= 1){
         return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerTlmCtlRequest);
+    }
+    return 0;
+}
+
+static int _cmd_UtVamStart(FSUT_Message ** pmsg, int argc, char ** argv) {
+    return _cmd_UtCamStatus(pmsg, argc, argv, FS_UtVamTrigger, 1);
+}
+
+static int _cmd_UtVamStop(FSUT_Message ** pmsg, int argc, char ** argv) {
+    return _cmd_UtCamStatus(pmsg, argc, argv, FS_UtVamTrigger, 0);
+}
+
+static int _cmd_UtVamCluster(FSUT_Message ** pmsg, int argc, char ** argv, uint8_t code) {
+    FSUT_Message * m = malloc(sizeof(m->vamCluster));
+    m->vamCluster.code = code;
+    m->vamCluster.clasterId = 0;
+    *pmsg = m;
+    if(argc > 1){
+        char * end;
+        unsigned long n = strtoul(argv[1], &end, 10);
+        if(end > argv[1]) {
+            m->vamCluster.clasterId = n;
+            return 2;
+        }
+    }
+    return 1;
+}
+static int _cmd_UtVamJoin(FSUT_Message ** pmsg, int argc, char ** argv) {
+    return _cmd_UtVamCluster(pmsg, argc, argv, FS_UtVamJoin);
+}
+
+static int _cmd_UtVamLead(FSUT_Message ** pmsg, int argc, char ** argv) {
+    return _cmd_UtVamCluster(pmsg, argc, argv, FS_UtVamLeader);
+}
+
+static const UTHandlerRecord _vammsgnames[] = {
+    {"start", _cmd_UtVamStart},
+    {"stop",  _cmd_UtVamStop},
+    {"join",  _cmd_UtVamJoin},
+    {"lead",  _cmd_UtVamLead},
+    {"leader",  _cmd_UtVamLead}
+};
+
+static int _cmd_UtVam(FSUT_Message ** pmsg, int argc, char ** argv)
+{
+    if(argc > 1){
+        return _FSUT_ExecCommand(pmsg, _vammsgnames, arraysize(_vammsgnames), argc - 1, argv + 1);
     }
     return 0;
 }

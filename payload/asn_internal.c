@@ -1,4 +1,3 @@
-#define ASN_INTERNAL_C
 #include <asn_internal.h>
 
 ssize_t

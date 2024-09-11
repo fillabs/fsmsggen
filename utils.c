@@ -273,3 +273,27 @@ void timersub(const struct timeval* tvp, const struct timeval* uvp, struct timev
 	
 
 #endif
+#include <math.h>
+#include <string.h>
+#include "fitsec_types.h"
+static long _strtodegree(const char * s, char ** e)
+{
+  long l = strtol(s, e, 10);
+  if (**e == '.') {
+    // decimal representation
+    double d = strtod(s, e);
+    l = (long)floor(d * 10000000.0);
+  }
+  return l;
+}
+
+int FS3DPositionFromString(FS3DLocation * pos, const char * str){
+    char * e;
+    pos->latitude = _strtodegree(str, &e);
+    if (e == str || ! strchr(":,; /", *e)) return 0;
+    str = e + 1;
+
+    pos->longitude = _strtodegree(str, &e);
+    if (e == str || *e != 0) return 0;
+    return 1;
+}

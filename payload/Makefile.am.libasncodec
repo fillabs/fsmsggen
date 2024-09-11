@@ -28,7 +28,7 @@ ASN_MODULE_SRCS=	\
 	VehicleMovementControlContainer.c	\
 	DENM.c	\
 	DenmPayload.c	\
-	ManagementContainer.c	\
+	DENM-PDU-Description_ManagementContainer.c	\
 	SituationContainer.c	\
 	LocationContainer.c	\
 	ImpactReductionContainer.c	\
@@ -47,6 +47,24 @@ ASN_MODULE_SRCS=	\
 	VruClusterInformationContainer.c	\
 	VruClusterOperationContainer.c	\
 	VruMotionPredictionContainer.c	\
+	OriginatingVehicleContainer.c	\
+	OriginatingRsuContainer.c	\
+	TrailerDataSet.c	\
+	CollectivePerceptionMessage.c	\
+	CpmPayload.c	\
+	CPM-PDU-Descriptions_ManagementContainer.c	\
+	CpmContainerId.c	\
+	WrappedCpmContainer.c	\
+	WrappedCpmContainers.c	\
+	ConstraintWrappedCpmContainers.c	\
+	MessageRateRange.c	\
+	PerceivedObjectContainer.c	\
+	PerceivedObjects.c	\
+	PerceptionRegionContainer.c	\
+	PerceptionRegion.c	\
+	PerceivedObjectIds.c	\
+	SensorInformationContainer.c	\
+	SensorInformation.c	\
 	AccelerationChange.c	\
 	AccelerationConfidence.c	\
 	AccelerationControl.c	\
@@ -447,7 +465,7 @@ ASN_MODULE_HDRS=	\
 	VehicleMovementControlContainer.h	\
 	DENM.h	\
 	DenmPayload.h	\
-	ManagementContainer.h	\
+	DENM-PDU-Description_ManagementContainer.h	\
 	SituationContainer.h	\
 	LocationContainer.h	\
 	ImpactReductionContainer.h	\
@@ -466,6 +484,24 @@ ASN_MODULE_HDRS=	\
 	VruClusterInformationContainer.h	\
 	VruClusterOperationContainer.h	\
 	VruMotionPredictionContainer.h	\
+	OriginatingVehicleContainer.h	\
+	OriginatingRsuContainer.h	\
+	TrailerDataSet.h	\
+	CollectivePerceptionMessage.h	\
+	CpmPayload.h	\
+	CPM-PDU-Descriptions_ManagementContainer.h	\
+	CpmContainerId.h	\
+	WrappedCpmContainer.h	\
+	WrappedCpmContainers.h	\
+	ConstraintWrappedCpmContainers.h	\
+	MessageRateRange.h	\
+	PerceivedObjectContainer.h	\
+	PerceivedObjects.h	\
+	PerceptionRegionContainer.h	\
+	PerceptionRegion.h	\
+	PerceivedObjectIds.h	\
+	SensorInformationContainer.h	\
+	SensorInformation.h	\
 	AccelerationChange.h	\
 	AccelerationConfidence.h	\
 	AccelerationControl.h	\
@@ -897,22 +933,6 @@ ASN_MODULE_HDRS+=constr_TYPE.h
 ASN_MODULE_SRCS+=constr_TYPE.c
 ASN_MODULE_HDRS+=constraints.h
 ASN_MODULE_SRCS+=constraints.c
-ASN_MODULE_HDRS+=ber_decoder.h
-ASN_MODULE_HDRS+=der_encoder.h
-ASN_MODULE_SRCS+=ber_decoder.c
-ASN_MODULE_SRCS+=der_encoder.c
-ASN_MODULE_SRCS+=ANY_ber.c
-ASN_MODULE_SRCS+=BOOLEAN_ber.c
-ASN_MODULE_SRCS+=INTEGER_ber.c
-ASN_MODULE_SRCS+=NULL_ber.c
-ASN_MODULE_SRCS+=NativeInteger_ber.c
-ASN_MODULE_SRCS+=OCTET_STRING_ber.c
-ASN_MODULE_SRCS+=OPEN_TYPE_ber.c
-ASN_MODULE_SRCS+=asn_codecs_prim_ber.c
-ASN_MODULE_SRCS+=constr_CHOICE_ber.c
-ASN_MODULE_SRCS+=constr_SEQUENCE_OF_ber.c
-ASN_MODULE_SRCS+=constr_SEQUENCE_ber.c
-ASN_MODULE_SRCS+=constr_SET_OF_ber.c
 ASN_MODULE_HDRS+=per_decoder.h
 ASN_MODULE_HDRS+=per_encoder.h
 ASN_MODULE_HDRS+=per_support.h
@@ -943,7 +963,7 @@ ASN_MODULE_SRCS+=constr_SEQUENCE_OF_uper.c
 ASN_MODULE_SRCS+=constr_SEQUENCE_uper.c
 ASN_MODULE_SRCS+=constr_SET_OF_uper.c
 
-ASN_MODULE_CFLAGS=-DASN_DISABLE_XER_SUPPORT -DASN_DISABLE_OER_SUPPORT -DASN_DISABLE_APER_SUPPORT -DASN_DISABLE_PRINT_SUPPORT -DASN_DISABLE_RFILL_SUPPORT 
+ASN_MODULE_CFLAGS=-DASN_DISABLE_BER_SUPPORT -DASN_DISABLE_XER_SUPPORT -DASN_DISABLE_OER_SUPPORT -DASN_DISABLE_APER_SUPPORT -DASN_DISABLE_PRINT_SUPPORT -DASN_DISABLE_RFILL_SUPPORT 
 
 lib_LTLIBRARIES+=libasncodec.la
 libasncodec_la_SOURCES=$(ASN_MODULE_SRCS) $(ASN_MODULE_HDRS)

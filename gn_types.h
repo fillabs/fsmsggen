@@ -115,4 +115,10 @@ __PACKED__(union GNExtendedHeader {
     LSRepHeader        lsrep;
 });
 
+typedef struct BTPHeader BTPHeader;
+__PACKED__(struct BTPHeader {
+    uint16_t  dPort;
+    uint16_t  sPort;
+});
+
 #endif

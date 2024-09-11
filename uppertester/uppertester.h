@@ -58,7 +58,9 @@ enum {
     FS_UtPkiTriggerTlmCtlRequest= 0xD5,
     FS_UtPkiTriggerCrlRequest   = 0xD6,
 
-    FS_UtVamTrigger = 0xE0
+    FS_UtVamTrigger = 0xE0,
+    FS_UtVamLeader = 0xE1,
+    FS_UtVamJoin = 0xE2,
 };
 
 __PACKED__(struct FSUTMsg_Initialize {
@@ -139,6 +141,11 @@ __PACKED__(struct FSUTMsg_PkiTrustTrigger {
     char      path[1];
 });
 
+__PACKED__(struct FSUTMsg_VamCluster {
+    uint8_t   code;
+    long      clasterId;
+});
+
 __PACKED__(union FSUT_Message {
     uint8_t                          code;
     struct FSUTMsg_Initialize        initialize;
@@ -159,6 +166,9 @@ __PACKED__(union FSUT_Message {
     struct FSUTMsg_PkiTriggerInd     pkiState;
 
     struct FSUTMsg_PkiTrustTrigger   pkiTrust;
+    
+    struct FSUTMsg_SetCamState       vamState;
+    struct FSUTMsg_VamCluster        vamCluster;
 });
 
 FSUT* FSUT_New(const char* bind_host, int bind_port);
