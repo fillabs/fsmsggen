@@ -196,7 +196,7 @@ static int cam_options(MsgGenApp* app, int argc, char* argv[])
             _cam.cam.camParameters.basicContainer.stationType = copts_enum_value(options, 0, _o_stationTypes)-1;
         }
 
-        if(_o_cam_rate > _o_rate ) _o_cam_rate = _o_rate;
+        if(_o_cam_rate != _o_rate ) _o_rate = _o_cam_rate;
 
         // init path points
         for(int i=0; i<(sizeof(_pathHistoryArray)/sizeof(_pathHistoryArray[0])); i++) {
@@ -244,7 +244,8 @@ static void cam_process (MsgGenApp * app, FitSec * e)
     if(_o_activated){
         FSMessageInfo m = {0};
         GN_PrepareMessage(&m);
-        if(0 == (m.generationTime % (int)floor(1000000/_o_rate))){
+        uint64_t r = m.generationTime % (int)floor(1000000/_o_rate); 
+        if(100000 > r){
             cam_fill(app, e, &m);
             GN_SendMessage(app, &m);
         }
@@ -309,7 +310,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 
 #ifdef USE_LIBGPS
     FSGpsData gd;
-    if(libgps_get_data(0, &gd)){
+    if(0 < libgps_get_data(0, &gd)){
         if(isfinite(gd.dx) && isfinite(gd.dx)){
             _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gd.dy * 100.0));
             if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength >= SemiAxisLength_outOfRange)
