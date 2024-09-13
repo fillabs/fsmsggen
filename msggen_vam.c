@@ -35,6 +35,8 @@ static int _o_join = 0;
 static int _o_leader = 0;
 #define O_CLUSTER_DEFAULT 100 // by default clusterId 100
 static long _o_cluster_id = 0;
+static float _o_rate = 10; // 10Hz
+static float _o_vam_rate = 10; // 10Hz
 
 static Shape_t _vam_cl_info_shape = {
     .present = Shape_PR_circular,
@@ -104,6 +106,8 @@ static copt_t options[] = {
     { NULL, "vam-no-sec",        COPT_IBOOL ,                   &_o_secured,    "Send non-secured cam" },
     { NULL, "no-sec",            COPT_IBOOL | COPT_NOHELP,      &_o_secured,    NULL },
     { NULL, "vam-template",      COPT_PATH ,                    &_o_vam_xer,    "Load this VAM template" },
+    { "r",  "rate",              COPT_FLOAT|COPT_NOHELP,        &_o_rate,       NULL },
+    { NULL,  "vam-rate",         COPT_FLOAT,                    &_o_vam_rate,   "Set VAM sending rate [10Hz]" },
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
@@ -233,6 +237,7 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
                 _vam.vam.vamParameters.vruClusterInformationContainer = &_vam_cl_info_container;
             }
         }
+        if(_o_rate != _o_vam_rate) _o_rate = _o_vam_rate;
 /*    
         _op_DebugInteger = *asn_DEF_Wgs84AngleValue.op;
         asn_DEF_Wgs84AngleValue.op = &_op_DebugInteger;
@@ -272,7 +277,14 @@ static GNExtendedHeader _def_eh = {
 static void _process (MsgGenApp * app, FitSec * e)
 {
     if(_o_activated){
-        MsgGenApp_Send(e, app); 
+        FSMessageInfo m = {0};
+        GN_PrepareMessage(&m);
+        uint64_t r = m.generationTime % (int)floor(1000000/_o_rate); 
+        if(100000 > r){
+            if(0 < _fill(app, e, &m)){
+                GN_SendMessage(app, &m);
+            }
+        }
     }
 }
 

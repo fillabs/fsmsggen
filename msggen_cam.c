@@ -246,8 +246,9 @@ static void cam_process (MsgGenApp * app, FitSec * e)
         GN_PrepareMessage(&m);
         uint64_t r = m.generationTime % (int)floor(1000000/_o_rate); 
         if(100000 > r){
-            cam_fill(app, e, &m);
-            GN_SendMessage(app, &m);
+            if(0 < cam_fill(app, e, &m)){
+                GN_SendMessage(app, &m);
+            }
         }
     }
 }
