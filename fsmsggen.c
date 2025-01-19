@@ -1,5 +1,4 @@
 #define _CRT_SECURE_NO_WARNINGS
-
 //#ifdef _MSC_VER
 //#include <windows.h>
 //#endif
@@ -22,7 +21,7 @@
 #include "cbyteswap.h"
 #include "fitsec.h"
 #include "fitsec_error.h"
-#include "fitsec_time.h"
+#include "citstime.h"
 #include "uppertester/uppertester.h"
 
 #include "msggen.h"
@@ -51,8 +50,6 @@
 #include <sys/time.h>
 #endif
 
-static FitSecConfig cfg1;
-
 static pchar_t* cfgfile = NULL;
 
 #define ITS_UTC_EPOCH 1072915200
@@ -70,14 +67,16 @@ char* _iface = NULL;
 int _iface_list = 0;
 
 static int   _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize);
+#ifndef NO_SECURITY
 static int _changePseudonym = 0;
-static int _o_secured = 1;
+static int _o_secured = DEF_SECURITY_FLAG;
+static const char * _o_dc = NULL;
+#endif
 static int _o_verbose = 0;
 static int _o_allow_loopback = 0;
 static int _o_uppertester = 0;
 static const char* _o_ut_addr = NULL;
 static uint16_t _o_ut_port = 12345;
-static const char * _o_dc = NULL;
 int _gps_ch = -1;
 
 static const char * _out_payload[] = {
@@ -108,8 +107,10 @@ static int copt_on_position(const copt_t* opt, const char* option, const copt_va
 static int copt_on_gn_src_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_verbose(const copt_t* opt, const char* option, const copt_value_t* value);
+#ifndef NO_SECURITY
 static int copt_on_load(const copt_t* opt, const char* option, const copt_value_t* value);
 static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_value_t* value);
+#endif
 #ifdef USE_LIBGPS
 static int copt_on_gpsd(const copt_t* opt, const char* option, const copt_value_t* value);
 #endif
@@ -134,14 +135,42 @@ static copt_t options [] = {
     { "u",  "ut",       COPT_BOOL | COPT_CALLBACK, copt_on_ut_addr, "Start UpperTester" },
     { "l",  "loopback", COPT_BOOL,     &_o_allow_loopback, "Receive packets sent by itself" },
     { "v",  "verbose",  COPT_BOOL | COPT_CALLBACK, copt_on_verbose,   "Be verbose (allow multiple -vvv)" },
+#ifndef NO_SECURITY
     { "d",  "dc",       COPT_STR  | COPT_CALLBACK, copt_on_set_dc,  "Assign this DC to all CA certificates" },
     { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
     { "1",  "load",     COPT_PATH|COPT_CALLBACK, copt_on_load,     "Load certificates or CTL/CRL data from file or directory"   },
-
+#endif
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
+#ifdef NO_SECURITY
+struct FitSec{
+    char name[1];
+};
+
+FitSec * FitSec_New(const FitSecConfig * config, const char * const name) {
+    FitSec * e = cnew_ex(FitSec, 1 + cstrlen(name));
+    cstrcpy(&e->name[0], name);
+    return e;
+}
+void FitSec_Free(FitSec * e) {
+    free(e);
+}
+
+const char * FitSec_Name(const FitSec * e){
+    return &e->name[0];
+}
+const char * FitSec_ErrorMessage(int dummy) {
+    return "Not Supported";
+}
+
+#endif
+
+static FitSecConfig cfg1;
+#ifndef NO_SECURITY
 int loadCertificates(FitSec * e, const pchar_t * _path);
+#endif
+
 static int _strpdate(const char* s, struct tm* t);
 
 static struct timeval _t_cur;
@@ -211,6 +240,7 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
     return 0;
 }
 
+#ifndef NO_SECURITY
 typedef struct load_element_t {
     cring_t ring;
     const char * path;
@@ -236,6 +266,7 @@ static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_valu
     }
     return 0;
 }
+#endif
 
 static MsgGenApp* _applications[10];
 static size_t _applications_count = 0;
@@ -310,6 +341,7 @@ static FSUT* ut = NULL;
 
 static pcap_handler_t h = { NULL, NULL, 0 };
 
+#ifndef NO_SECURITY
 static const char * _cctates[] = {
     "UNKNOWN",
     "TRUSTED",
@@ -334,19 +366,20 @@ static bool _onEvent(FitSec* e, void* user, FSEventId event, const FSEventParam*
     
     return true;
 }
+#endif
 
 int main(int argc, char** argv)
 {
-    FitSec* e;
-
+    FitSec* e = NULL;
 #ifdef _MSC_VER
     SetDllDirectory("C:\\Windows\\System32\\Npcap\\");
 #endif
-
+#ifndef NO_SECURITY
     FitSecConfig_InitDefault(&cfg1);
     cfg1.flags |= FS_ALLOW_CERT_DUPLICATIONS;
     cfg1.cbOnEvent = _onEvent;
     cfg1.cbOnEventUser = NULL;
+#endif
 
     int rc = coptions(argc, argv, COPT_NOERR_UNKNOWN | COPT_NOAUTOHELP | COPT_NOHELP_MSG, options);
     if (!COPT_ERC(rc)) {
@@ -360,7 +393,12 @@ int main(int argc, char** argv)
         }
     }
     if (COPT_ERC(rc)) {
-        coptions_help(stdout, argv[0], 0, options, "Message Generation");
+        coptions_help(stdout, argv[0], 0, options, 
+        "ITS Message Generator"
+#ifdef NO_SECURITY
+        " (without security support)"
+#endif        
+        );
         for (size_t i = 0; i < _applications_count; i++) {
             _applications[i]->options(_applications[i], 0, NULL);
         }
@@ -484,6 +522,7 @@ int main(int argc, char** argv)
     }
 
     e = FitSec_New(&cfg1, "1");
+#ifndef NO_SECURITY
 
     FSTime32 t = unix2itstime32(_t_cur.tv_sec + _tdelta);
     cring_foreach(load_element_t, l, _o_load_elements){
@@ -492,7 +531,7 @@ int main(int argc, char** argv)
             return -1;
         }
     }
-    
+#endif    
     int arg = 1;
     if (_o_uppertester) {
         mclog_info(UT, "Start UpperTester Engine at %s:%u\n", _o_ut_addr, _o_ut_port);
@@ -522,6 +561,7 @@ int main(int argc, char** argv)
                             icmd += floor(_rate * msec ) - 1;
                         arg++;
                     }
+#ifndef NO_SECURITY
                 }else if(0 == strcmp("load", argv[arg])){
                     arg++;
                     if(arg < argc){
@@ -529,6 +569,7 @@ int main(int argc, char** argv)
                         FitSec_LoadTrustData(e, t, argv[arg]);
                         arg++;
                     }
+#endif
                 }else{
                     while(arg < argc){
                         int r = FSUT_CommandMessage(&um, argc - arg, argv + arg);
@@ -584,7 +625,9 @@ int main(int argc, char** argv)
     }
 #endif
     FitSec_Free(e);
+#ifndef NO_SECURITY
     FSMessageInfo_Cleanup(); 
+#endif
     return 0;
 }
 
@@ -599,6 +642,7 @@ void GN_PrepareMessage(FSMessageInfo * m)
 void GN_SendMessage(MsgGenApp * a, FSMessageInfo * m)
 {
     uint8_t * g5 = ((uint8_t*)m->message) - SHIFT_SEC;
+#ifndef NO_SECURITY
     if (!_gn_src && m->sign.cert) {
         FSHashedId8 id = FSCertificate_Digest(m->sign.cert);
         memcpy(g5 + 6, &id, 6);
@@ -609,7 +653,9 @@ void GN_SendMessage(MsgGenApp * a, FSMessageInfo * m)
     }else{
         g5[SHIFT_GN] = 0x12; // secured packet
     }
-
+#else
+    g5[SHIFT_GN] = 0x11; // non secured packet
+#endif
     // inject in pcap
     struct pcap_pkthdr ph;
     ph.ts = _t_cur;
@@ -679,6 +725,7 @@ static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint
             m.messageSize = ph->len - SHIFT_SEC;
             setCurrentPosition(&m.position, &m.generationTime);
             if(bh->nextHeader == 2) { // secured
+#ifndef NO_SECURITY
                 if (0 == FitSec_ParseMessage(e, &m)) {
                     // can not parse secured message
                     mclog_info(RECV, "%s Secured Message parsine error: %s\n",
@@ -705,6 +752,12 @@ static void _handler_read(uint8_t* ptr, const struct pcap_pkthdr* ph, const uint
                         return;
                     }
                 }
+#else
+                mclog_warning(RECV, "%s Secured Messages are unsupported\n",
+                    stritsdate64(m.generationTime)
+                );
+                return;
+#endif
             }else{
                 m.payload = m.message;
                 m.payloadSize = m.messageSize;
@@ -777,6 +830,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
     gettimeofday(&tv, NULL);
     switch (m->code) {
     case FS_UtInitialize: // utInitialize
+#ifndef NO_SECURITY
         if (size >= sizeof(struct FSUTMsg_Initialize)) {
             FitSec_Clean(ptr);
             // load necessary certificates
@@ -802,6 +856,7 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
                 }
             }
         }
+#endif
         m->result.result = 1;
         m->code = FS_UtInitializeResult;
         *psize = sizeof(m->result);
@@ -818,9 +873,11 @@ static int _UTHandler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
         return 1;
     
     case FS_UtChangePseudonym: 
+#ifndef NO_SECURITY
         if (size < sizeof(struct FSUTMsg_ChangePseudonym)) {
             _changePseudonym = 1;
         }
+#endif
         m->result.result = 1;
         m->code = FS_UtChangePseudonymResult;
         *psize = sizeof(m->result);

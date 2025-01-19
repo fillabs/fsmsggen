@@ -27,7 +27,9 @@ __INITIALIZER__(initializer_vam) {
      MsgGenApp_Register(&_app);
 }
 
+#ifndef NO_SECURITY
 static int _o_secured = 1;
+#endif
 static int _o_btpA = 0;
 static int _o_activated = 0;
 static int _o_stationType = 0;
@@ -103,8 +105,10 @@ static copt_t options[] = {
     { "B",  "btpA",              COPT_BOOL | COPT_NOHELP ,      &_o_btpA,       NULL },
     { NULL, "vam-btpA",          COPT_BOOL ,                    &_o_btpA,       "Use BTP A for VAM [use btpB by default]" },
     { "V",  "vam-start",         COPT_BOOL ,                    &_o_activated,  "Start sending VAM by default"},
+#ifndef NO_SECURITY
     { NULL, "vam-no-sec",        COPT_IBOOL ,                   &_o_secured,    "Send non-secured cam" },
     { NULL, "no-sec",            COPT_IBOOL | COPT_NOHELP,      &_o_secured,    NULL },
+#endif
     { NULL, "vam-template",      COPT_PATH ,                    &_o_vam_xer,    "Load this VAM template" },
     { "r",  "rate",              COPT_FLOAT|COPT_NOHELP,        &_o_rate,       NULL },
     { NULL,  "vam-rate",         COPT_FLOAT,                    &_o_vam_rate,   "Set VAM sending rate [10Hz]" },
@@ -295,6 +299,7 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     size_t len;
     m->status = 0;
 
+#ifndef NO_SECURITY
     if (_o_secured) {
         m->payloadType = FS_PAYLOAD_SIGNED;
         m->sign.ssp.aid = 638;
@@ -307,8 +312,9 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             fprintf(stderr, "%-2s PREP %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "PrepareSignedMessage", m->status, FitSec_ErrorMessage(m->status));
             return len;
         }
-    }
-    else {
+    } else
+#endif
+    {
         m->payloadType = FS_PAYLOAD_UNSECURED;
         m->payload = m->message;
     }
@@ -410,13 +416,15 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         m->payloadSize = p - m->payload;
 
         ch->plLength = cint16_hton((unsigned short)(rc.encoded + 4)); // plus BTP
+#ifndef NO_SECURITY
         if (_o_secured) {
             len = FitSec_FinalizeSignedMessage(e, m);
             if (len == 0) {
                 fprintf(stderr, "%-2s SEND %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "FinalizeSignedMessage", m->status, FitSec_ErrorMessage(m->status));
             }
-        }
-        else {
+        } else
+#endif
+        {
             m->messageSize = p - m->message;
         }
     }

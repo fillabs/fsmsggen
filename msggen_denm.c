@@ -47,8 +47,9 @@ static const char * _o_btpTypes[] = {
     "NONE", "any", "btpA", "btpB", NULL
 };
 
+#ifndef NO_SECURITY
 static int _o_secured = 1;
-
+#endif
 static DENM_t denm = {
     // ItsPduHeader
     { 2, MessageId_denm, 0x10101010 },
@@ -72,9 +73,10 @@ static copt_t options[] = {
     { NULL, "denm-negation",    COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate negation message" },
 
     { "B",  "denm-btp-type",    COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [default]" },
+#ifndef NO_SECURITY
     { NULL, "denm-no-sec",      COPT_IBOOL ,   &_o_secured, "Send non-secured messages" },
     { NULL, "no-sec",           COPT_IBOOL ,   &_o_secured, NULL },
-
+#endif
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
@@ -144,6 +146,7 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     size_t len;
     m->status = 0;
 
+#ifndef NO_SECURITY
     if (_o_secured) {
         m->payloadType = FS_PAYLOAD_SIGNED;
         m->sign.ssp.aid = 37;
@@ -156,8 +159,9 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             fprintf(stderr, "%-2s PREP %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "PrepareSignedMessage", m->status, FitSec_ErrorMessage(m->status));
             return len;
         }
-    }
-    else {
+    } else
+#endif
+   {
         m->payloadType = FS_PAYLOAD_UNSECURED;
         m->payload = m->message;
     }
@@ -197,15 +201,18 @@ static size_t denm_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         m->payloadSize = p - m->payload;
 
         ch->plLength = cint16_hton(rc.encoded + 4); // plus BTP
+#ifndef NO_SECURITY
         if (_o_secured) {
             len = FitSec_FinalizeSignedMessage(e, m);
             if (len == 0) {
                 fprintf(stderr, "%-2s SEND %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "FinalizeSignedMessage", m->status, FitSec_ErrorMessage(m->status));
             }
-        }
-        else {
+        } else
+#endif
+        {
             m->messageSize = p - m->message;
         }
+
     }
     return len;
 }

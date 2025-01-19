@@ -18,13 +18,15 @@ __INITIALIZER__(initializer_beacon) {
      MsgGenApp_Register(&_app);
 }
 static int _o_beacon = 0;
+#ifndef NO_SECURITY
 static int _o_secured_beacon = 1;
-
+#endif
 static copt_t options[] = {
     { NULL, "beacon",         COPT_BOOL , &_o_beacon,          "Send beacon if CAM disabled" },
+#ifndef NO_SECURITY
     { NULL, "no-sec-beacon",  COPT_IBOOL , &_o_secured_beacon, "Send non-secured beacon" },
     { NULL, "no-sec",         COPT_IBOOL , &_o_secured_beacon, NULL },
-
+#endif
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
@@ -74,6 +76,7 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 {
     size_t len;
     m->status = 0;
+#ifndef NO_SECURITY
     if (_o_secured_beacon) {
         m->sign.ssp.aid = FITSEC_AID_GNMGMT;
         memset(m->sign.ssp.sspData.opaque, 0, sizeof(m->sign.ssp.sspData.opaque));
@@ -86,7 +89,9 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             return len;
         }
     }
-    else {
+    else
+#endif
+    {
         m->payloadType = FS_PAYLOAD_UNSECURED;
         m->payload = m->message;
     }
@@ -100,13 +105,15 @@ static size_t _fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
      eh->beacon.srcPosVector.timestamp = (m->generationTime / 10000000);
 
      m->payloadSize =((const char*)&((&eh->beacon)[1])) - m->payload;
+#ifndef NO_SECURITY
      if (_o_secured_beacon) {
          len = FitSec_FinalizeSignedMessage(e, m);
          if (len <= 0) {
              fprintf(stderr, "%-2s PREP %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "FinalizeSignedMessage", m->status, FitSec_ErrorMessage(m->status));
          }
-     }
-     else {
+     }else
+#endif
+     {
          len = m->messageSize = m->payloadSize;
      }
     return len;

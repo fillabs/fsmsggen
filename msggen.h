@@ -26,7 +26,12 @@ struct MsgGenApp {
 void  MsgGenApp_Register(MsgGenApp * app);
 void  MsgGenApp_Send(FitSec * e, MsgGenApp * a);
 
+#ifndef NO_SECURITY
 int FitSec_LoadTrustData(FitSec * e, FSTime32 curTime, const pchar_t * _path);
+#define DEF_SECURITY_FLAG 1
+#else
+#define DEF_SECURITY_FLAG 0
+#endif
 
 void GN_PrepareMessage(FSMessageInfo * m);
 void GN_SendMessage(MsgGenApp * a, FSMessageInfo * m);

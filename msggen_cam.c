@@ -51,7 +51,9 @@ static const char* _o_stationTypes[] = {
     NULL
 };
 
+#ifndef NO_SECURITY
 static int _o_secured = 1;
+#endif
 static int _o_btpA = 0;
 static int _o_activated = 1;
 static float _o_rate = 10; // 10Hz
@@ -61,8 +63,10 @@ static copt_t options[] = {
     { "T",  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
     { "B",  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
     { "C",  "cam-stop",          COPT_IBOOL ,   &_o_activated, "Do not start CAM by default" },
+#ifndef NO_SECURITY
     { NULL, "cam-no-sec",        COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
     { NULL, "no-sec",            COPT_IBOOL ,   &_o_secured, NULL },
+#endif
     { "r",  "rate",              COPT_FLOAT|COPT_NOHELP,    &_o_rate, NULL },
     { NULL,  "cam-rate",         COPT_FLOAT,     &_o_cam_rate, "Set CAM sending rate [10Hz]" },
 
@@ -265,6 +269,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
     size_t len;
     m->status = 0;
 
+#ifndef NO_SECURITY
     if (_o_secured) {
         m->payloadType = FS_PAYLOAD_SIGNED;
         m->sign.ssp.aid = 36;
@@ -277,8 +282,9 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             fprintf(stderr, "%-2s PREP %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "PrepareSignedMessage", m->status, FitSec_ErrorMessage(m->status));
             return len;
         }
-    }
-    else {
+    } else
+#endif
+    {
         m->payloadType = FS_PAYLOAD_UNSECURED;
         m->payload = m->message;
     }
@@ -391,13 +397,16 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
         m->payloadSize = p - m->payload;
 
         ch->plLength = cint16_hton((unsigned short)(rc.encoded + 4)); // plus BTP
+#ifndef NO_SECURITY
         if (_o_secured) {
             len = FitSec_FinalizeSignedMessage(e, m);
             if (len == 0) {
                 fprintf(stderr, "%-2s SEND %s:\t ERROR: 0x%08X %s\n", FitSec_Name(e), "FinalizeSignedMessage", m->status, FitSec_ErrorMessage(m->status));
             }
         }
-        else {
+        else
+#endif        
+        {
             m->messageSize = p - m->message;
         }
     }
