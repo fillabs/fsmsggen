@@ -110,6 +110,7 @@ __PACKED__(union GNExtendedHeader {
     GNTSBHeader        tsb;
     GUCHeader          guc;
     GBCHeader          gbc;
+    GBCHeader          gac;
     GNBeaconHeader     beacon;
     LSReqHeader        lsreq;
     LSRepHeader        lsrep;

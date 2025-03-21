@@ -60,9 +60,9 @@ static float _o_rate = 10; // 10Hz
 static float _o_cam_rate = 10; // 10Hz
 
 static copt_t options[] = {
-    { "T",  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
-    { "B",  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
-    { "C",  "cam-stop",          COPT_IBOOL ,   &_o_activated, "Do not start CAM by default" },
+    { NULL,  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
+    { NULL,  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
+    { NULL,  "no-cam",            COPT_IBOOL ,   &_o_activated, "Do not start CAM by default" },
 #ifndef NO_SECURITY
     { NULL, "cam-no-sec",        COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
     { NULL, "no-sec",            COPT_IBOOL ,   &_o_secured, NULL },

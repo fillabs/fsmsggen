@@ -133,7 +133,7 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
             pki_cfg.station.id_len = e - &station_id[0];
         }
         if(_o_stationId){
-            uint8_t * e = (uint8_t *)cstr_hex2bin(station_id, sizeof(station_id), _o_stationId, cstrlen(_o_stationId));
+            uint8_t * e = (uint8_t *)cstr_hex2bin((char*)station_id, sizeof(station_id), _o_stationId, cstrlen(_o_stationId));
             pki_cfg.station.id_len = e - &station_id[0];
         }
 

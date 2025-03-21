@@ -75,8 +75,8 @@ static const char * _o_dc = NULL;
 static int _o_verbose = 0;
 static int _o_allow_loopback = 0;
 static int _o_uppertester = 0;
-static const char* _o_ut_addr = NULL;
-static uint16_t _o_ut_port = 12345;
+static char* _o_ut_addr = NULL;
+//static uint16_t _o_ut_port = 12345;
 int _gps_ch = -1;
 
 static const char * _out_payload[] = {
@@ -117,7 +117,6 @@ static int copt_on_gpsd(const copt_t* opt, const char* option, const copt_value_
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
     { "C",  "config",   COPT_CFGFILE,  &cfgfile,      "Config file"         },
-//    { "m",  "type",     COPT_STR|COPT_CALLBACK, copt_on_msgType, "Message type" },
     { "n",  "count",    COPT_LONG,     &_msg_count,   "Message count" },
     { "i",  "iface",    COPT_STR,      &_iface,       "Network interface to send messages" },
     { "D",  "iface-list", COPT_BOOL,   &_iface_list,  "List network interfaces"},
@@ -218,6 +217,8 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
     else {
         _o_uppertester = 1;
         if (value->v_boolean != 1) {
+            _o_ut_addr = value->v_str;
+/*        
             char* d = cstrrchr(value->v_str, ':');
             if (d) {
                 _o_ut_port = atoi(d + 1);
@@ -235,7 +236,9 @@ static int copt_on_ut_addr(const copt_t* opt, const char* option, const copt_val
                     }
                 }
             }
+            */
         }
+
     }
     return 0;
 }
@@ -534,8 +537,8 @@ int main(int argc, char** argv)
 #endif    
     int arg = 1;
     if (_o_uppertester) {
-        mclog_info(UT, "Start UpperTester Engine at %s:%u\n", _o_ut_addr, _o_ut_port);
-        ut = FSUT_New(_o_ut_addr, _o_ut_port);
+        mclog_info(UT, "Start UpperTester Engine at %s\n", _o_ut_addr?_o_ut_addr:" port 12345");
+        ut = FSUT_New(_o_ut_addr, NULL);
         for (size_t i = 0; i < _applications_count; i++) {
             if(_applications[i]->utHandler){
                 mclog_info(UT, "    register %s\n", _applications[i]->appName);
@@ -573,7 +576,10 @@ int main(int argc, char** argv)
                 }else{
                     while(arg < argc){
                         int r = FSUT_CommandMessage(&um, argc - arg, argv + arg);
-                        if(r <= 0){
+                        if(r < 0){
+                            mclog_warning(UT, "Command line scripting error at argument %d \n", 255+r);
+                        }else if(r == -255 || r == 0){
+                            // unknown command, just continue
                             arg++;
                         }else{
                             if(ut){
@@ -589,7 +595,7 @@ int main(int argc, char** argv)
             }
         }
 
-        FSUT_Proceed(ut, um);
+        FSUT_Proceed(ut, um, NULL);
         if(um){
             free(um);
         }
