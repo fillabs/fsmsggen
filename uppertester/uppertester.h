@@ -5,6 +5,8 @@
 #include <inttypes.h>
 typedef struct FSUT FSUT;
 #define FSUT_MAX_MSG_SIZE 128
+#define FSUT_DEFAULT_PORT 12345
+
 
 typedef union  FSUT_Message FSUT_Message;
 
@@ -94,6 +96,52 @@ __PACKED__(struct FSUTMsg_ChangeSpeed {
     uint8_t code;
     int16_t speed;
 });
+__PACKED__(struct FSUTMsg_SetAccelerationControlStatus {
+    uint8_t code;
+    uint8_t status;
+});
+__PACKED__(struct FSUTMsg_SetExteriorLightsStatus {
+    uint8_t code;
+    uint8_t status;
+});
+__PACKED__(struct FSUTMsg_ChangeHeading {
+    uint8_t  code;
+    uint16_t heading;
+});
+__PACKED__(struct FSUTMsg_SetDriveDirection {
+    uint8_t code;
+    uint8_t direction; // 0 - forward, 1 - Backward, 2 - unavailable
+});
+__PACKED__(struct FSUTMsg_ChangeYawRate {
+    uint8_t code;
+    int16_t yawRate;
+});
+__PACKED__(struct FSUTMsg_SetStationType {
+    uint8_t code;
+    uint8_t type;
+});
+__PACKED__(struct FSUTMsg_SetVehicleRole {
+    uint8_t code;
+    uint8_t role;
+});
+__PACKED__(struct FSUTMsg_SetEmbarkationStatus {
+    uint8_t code;
+    uint8_t status;
+});
+__PACKED__(struct FSUTMsg_SetPtActivation {
+    uint8_t code;
+    uint8_t type;
+    uint8_t length;
+    uint8_t data[];
+});
+__PACKED__(struct FSUTMsg_SetDangerousGoods {
+    uint8_t code;
+    uint8_t status;
+});
+__PACKED__(struct FSUTMsg_SetLightBarSiren {
+    uint8_t code;
+    uint8_t status;
+});
 
 __PACKED__(struct FSUTMsg_DenmTrigger {
     uint8_t  code;
@@ -128,7 +176,7 @@ __PACKED__(struct FSUTMsg_DenmTerminate {
 __PACKED__(struct FSUTMsg_Indication {
     uint8_t  code;
     uint16_t pduLength;
-    uint8_t  pdu[0];
+    uint8_t  pdu[];
 });
 
 __PACKED__(struct FSUTMsg_PkiTriggerInd {
@@ -146,6 +194,47 @@ __PACKED__(struct FSUTMsg_VamCluster {
     long      clasterId;
 });
 
+__PACKED__(struct FSUTMsg_GeoUnicast {
+    uint8_t   code;
+    uint8_t   dst_addr[8];
+    uint16_t  lifetime;
+    uint8_t   trafficClass;
+    uint16_t  payloadLength;
+    uint8_t   payload[1];
+});
+
+__PACKED__(struct FSUTMsg_GeoBroadcast {
+    uint8_t   code;
+    uint8_t   shape;
+    uint16_t  lifetime;
+    uint8_t   trafficClass;
+    uint8_t   reserved[3];
+    uint32_t  latitude;
+    uint32_t  longitude;
+    uint16_t  a;
+    uint16_t  b;
+    uint16_t  angle;
+    uint16_t  payloadLength;
+    uint8_t   payload[1];
+});
+
+__PACKED__(struct FSUTMsg_SHB {
+    uint8_t   code;
+    uint8_t   trafficClass;
+    uint16_t  payloadLength;
+    uint8_t   payload[1];
+});
+
+__PACKED__(struct FSUTMsg_TSB {
+    uint8_t   code;
+    uint8_t   hopNumber;
+    uint16_t  lifetime;
+    uint8_t   trafficClass;
+    uint16_t  payloadLength;
+    uint8_t   payload[1];
+});
+
+
 __PACKED__(union FSUT_Message {
     uint8_t                          code;
     struct FSUTMsg_Initialize        initialize;
@@ -154,8 +243,19 @@ __PACKED__(union FSUT_Message {
     struct FSUTMsg_ChangePosition    changePosition;
     struct FSUTMsg_ChangePseudonym   changePseudonym;
     // CAM
-    struct FSUTMsg_ChangeCurvature   changeCurvature;
-    struct FSUTMsg_ChangeSpeed       changeSpeed;
+    struct FSUTMsg_ChangeCurvature              changeCurvature;
+    struct FSUTMsg_ChangeSpeed                  changeSpeed;
+    struct FSUTMsg_SetAccelerationControlStatus setAccStatus;
+    struct FSUTMsg_SetExteriorLightsStatus      setExtLight;
+    struct FSUTMsg_ChangeHeading                changeHeading;
+    struct FSUTMsg_SetDriveDirection            setDriveDirection;
+    struct FSUTMsg_ChangeYawRate                changeYawRate;
+    struct FSUTMsg_SetStationType               setStationType;
+    struct FSUTMsg_SetVehicleRole               setVehicleRole;
+    struct FSUTMsg_SetEmbarkationStatus         setEmbarkationStatus;
+    struct FSUTMsg_SetPtActivation              setPtActivation;
+    struct FSUTMsg_SetDangerousGoods            setDangerousGoods;
+    struct FSUTMsg_SetLightBarSiren             setLightBarSiren;
     //DENM
     struct FSUTMsg_DenmTrigger       denmTrigger;
     struct FSUTMsg_DenmTerminate     denmTerminate;
@@ -169,9 +269,14 @@ __PACKED__(union FSUT_Message {
     
     struct FSUTMsg_SetCamState       vamState;
     struct FSUTMsg_VamCluster        vamCluster;
+
+    struct FSUTMsg_GeoUnicast        guc;
+    struct FSUTMsg_GeoBroadcast      gbc;
+    struct FSUTMsg_SHB               shb;
+    struct FSUTMsg_TSB               tsb;
 });
 
-FSUT* FSUT_New(const char* bind_host, int bind_port);
+FSUT* FSUT_New(const char* local_addr, const char* remote_addr);
 void  FSUT_Free(FSUT* ut);
 
 /** @return   -1 - error. do not send answer
@@ -185,9 +290,10 @@ int   FSUT_Start(FSUT* ut);
 void  FSUT_Stop(FSUT* ut);
 
 int   FSUT_Run(FSUT* ut);
-int   FSUT_Proceed(FSUT* ut, FSUT_Message * m);
+int   FSUT_Proceed(FSUT* ut, FSUT_Message * m, struct timeval* ptv);
 
 int   FSUT_onUTMessage(FSUT* ut, const char* buf, size_t size);
+int   FSUT_SendMessage(FSUT* ut, const FSUT_Message * msg, size_t size); // size can be 0 to use default value
 int   FSUT_SendIndication(FSUT* ut, uint8_t code, const char* buf, size_t size);
 void  FSUT_EnqueueIndication(FSUT* ut, uint8_t code, const char* buf, size_t size);
 

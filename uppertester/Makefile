@@ -7,8 +7,10 @@ testdir      = tests
 alibs        = $(PROJECT)
 solibs       = $(PROJECT)
 
-sources       := uppertester.c
+sources       := uppertester.c uppertester_cmd.c
 headers       := uppertester.h
 packages      := cshared
+
+postdirs      := itsut
 
 include $(CSHAREDDIR)/common.mk
