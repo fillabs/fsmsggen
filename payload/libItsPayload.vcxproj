@@ -461,24 +461,8 @@
     <ClCompile Include="OCTET_STRING.c" />
     <ClCompile Include="BIT_STRING.c" />
     <ClCompile Include="asn_codecs_prim.c" />
-    <ClCompile Include="ber_tlv_length.c" />
-    <ClCompile Include="ber_tlv_tag.c" />
     <ClCompile Include="constr_TYPE.c" />
     <ClCompile Include="constraints.c" />
-    <ClCompile Include="ber_decoder.c" />
-    <ClCompile Include="der_encoder.c" />
-    <ClCompile Include="ANY_ber.c" />
-    <ClCompile Include="BOOLEAN_ber.c" />
-    <ClCompile Include="INTEGER_ber.c" />
-    <ClCompile Include="NULL_ber.c" />
-    <ClCompile Include="NativeInteger_ber.c" />
-    <ClCompile Include="OCTET_STRING_ber.c" />
-    <ClCompile Include="OPEN_TYPE_ber.c" />
-    <ClCompile Include="asn_codecs_prim_ber.c" />
-    <ClCompile Include="constr_CHOICE_ber.c" />
-    <ClCompile Include="constr_SEQUENCE_OF_ber.c" />
-    <ClCompile Include="constr_SEQUENCE_ber.c" />
-    <ClCompile Include="constr_SET_OF_ber.c" />
     <ClCompile Include="per_decoder.c" />
     <ClCompile Include="per_encoder.c" />
     <ClCompile Include="per_support.c" />
@@ -947,12 +931,8 @@
     <ClInclude Include="asn_internal.h" />
     <ClInclude Include="asn_bit_data.h" />
     <ClInclude Include="BIT_STRING.h" />
-    <ClInclude Include="ber_tlv_length.h" />
-    <ClInclude Include="ber_tlv_tag.h" />
     <ClInclude Include="constr_TYPE.h" />
     <ClInclude Include="constraints.h" />
-    <ClInclude Include="ber_decoder.h" />
-    <ClInclude Include="der_encoder.h" />
     <ClInclude Include="per_decoder.h" />
     <ClInclude Include="per_encoder.h" />
     <ClInclude Include="per_support.h" />
@@ -1061,7 +1041,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1078,7 +1058,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1097,7 +1077,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);PDU=EtsiTs103097Data;ASN_PDU_COLLECTION;ASN_PDU_COLLECTION;_CRT_SECURE_NO_WARNINGS;ASN_DISABLE_OER_SUPPORT;ASN_DISABLE_APER_SUPPORT;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.;../asn1</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -139,7 +139,7 @@ static int _usr_to_sinaddr(const char * addr, struct sockaddr_in * a)
         char * e;
         unsigned long n = strtoul(q+1, &e, 0);
         if(*e == 0 && n <= 0xFFFF){
-            a->sin_port = cint16_hton(n);
+            a->sin_port = cint16_hton((unsigned short)n);
         }
         if(addr == q){
             return 0;

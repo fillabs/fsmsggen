@@ -35,8 +35,9 @@
 #include <inttypes.h>
 #include <math.h>
 
+#ifdef __GNUC__
 #include <netdb.h>
-
+#endif
 #ifdef WIN32
 #define _MAC
  #include <windows.h>
@@ -396,12 +397,12 @@ int main(int argc, char** argv)
         }
     }
     if (COPT_ERC(rc)) {
-        coptions_help(stdout, argv[0], 0, options, 
-        "ITS Message Generator"
+        const char* _o_prgname = "ITS Message Generator"
 #ifdef NO_SECURITY
-        " (without security support)"
-#endif        
-        );
+            " (without security support)"
+#endif
+        ;
+        coptions_help(stdout, argv[0], 0, options, _o_prgname);
         for (size_t i = 0; i < _applications_count; i++) {
             _applications[i]->options(_applications[i], 0, NULL);
         }

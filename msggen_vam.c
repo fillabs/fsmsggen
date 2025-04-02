@@ -1,3 +1,4 @@
+#include <math.h>
 #include "msggen.h"
 #include "cmem.h"
 #include "copts.h"
@@ -8,7 +9,6 @@
 #include "gn_types.h"
 #include "../uppertester/uppertester.h"
 #include "fsgpsd.h"
-#include <math.h>
 
 
 static void _process (MsgGenApp * app, FitSec * e);

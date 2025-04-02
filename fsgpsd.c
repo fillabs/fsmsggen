@@ -18,6 +18,11 @@ static size_t _gps_cnt = 0;
 static pthread_t _thr;
 static pthread_mutex_t _mtx = PTHREAD_MUTEX_INITIALIZER;
 
+#if (GPSD_API_MAJOR_VERSION > 9)
+#define GPSD_HAS_FIX(DATA) ((DATA).fix.status > 0)
+#else
+#define GPSD_HAS_FIX(DATA) ((DATA).status > 0)
+#endif
 int libgps_get_data(int ch, FSGpsData * data)
 {
     int ret = -1;
@@ -25,7 +30,7 @@ int libgps_get_data(int ch, FSGpsData * data)
         pthread_mutex_lock(&_mtx);
         if(_gps[ch].gps_fd > 0){
             ret  =0 ;
-            if(_gps[ch].status > 0) { // only when fix
+            if(GPSD_HAS_FIX(_gps[ch])) { // only when fix
                 if(isfinite(_gps[ch].fix.latitude) && isfinite(_gps[ch].fix.longitude)){
                     data->position.latitude  = (int32_t)floor(_gps[ch].fix.latitude * 10000000.0);
                     data->position.longitude = (int32_t)floor(_gps[ch].fix.longitude * 10000000.0);
