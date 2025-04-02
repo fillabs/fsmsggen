@@ -299,4 +299,5 @@ void  FSUT_EnqueueIndication(FSUT* ut, uint8_t code, const char* buf, size_t siz
 
 int   FSUT_CommandMessage(FSUT_Message ** pmsg, int argc, char ** argv);
 
+const char * FSUT_CommandHelp(const char * msg);
 #endif

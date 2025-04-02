@@ -21,6 +21,9 @@ int main (int argc, char ** argv) {
     int rc = coptions(argc, argv, COPT_NOERR_UNKNOWN | COPT_NOAUTOHELP | COPT_NOHELP_MSG, options);
     if (COPT_ERC(rc)) {
         coptions_help(stdout, argv[0], 0, options,  "ITS Uppertester command utility");
+        if (rc== COPT_EHELP) {
+            printf("%s", FSUT_CommandHelp(NULL));
+        }
         return 1;
     }
 

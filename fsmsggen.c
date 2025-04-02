@@ -406,6 +406,9 @@ int main(int argc, char** argv)
         for (size_t i = 0; i < _applications_count; i++) {
             _applications[i]->options(_applications[i], 0, NULL);
         }
+        if(rc == COPT_EHELP) {
+            printf("\nCommands:\n%s", FSUT_CommandHelp(NULL));
+        }
         return - 1;
     }
     argc = rc;

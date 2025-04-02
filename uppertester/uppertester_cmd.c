@@ -3,17 +3,21 @@
 #include <cmem.h>
 #include <cstr.h>
 #include <cring.h>
+#include <stdio.h>
 
 typedef struct UTHandlerRecord{
     const char * name;
     int (*create)(FSUT_Message ** pmsg, int argc, char ** argv);
+    const char * help;
 } UTHandlerRecord;
 
 static int _FSUT_ExecCommand_RC(FSUT_Message ** pmsg, const UTHandlerRecord * cmds, size_t ccnt, int argc, char ** argv, int rc_if_not_found)
 {
-    for(int i=0; i<ccnt; i++){
-        if(0 == strcmp(argv[0], cmds[i].name)){
-            return cmds[i].create(pmsg, argc, argv);
+    if(argc > 0){
+        for(int i=0; i<ccnt; i++){
+            if(0 == strcmp(argv[0], cmds[i].name)){
+                return cmds[i].create(pmsg, argc, argv);
+            }
         }
     }
     return rc_if_not_found;
@@ -21,10 +25,7 @@ static int _FSUT_ExecCommand_RC(FSUT_Message ** pmsg, const UTHandlerRecord * cm
 
 int _FSUT_ExecCommand(FSUT_Message ** pmsg, const UTHandlerRecord * cmds, size_t ccnt, int argc, char ** argv)
 {
-    if(argc > 0){
-        return _FSUT_ExecCommand_RC(pmsg, cmds, ccnt, argc, argv, -255);
-    }
-    return -256;
+    return _FSUT_ExecCommand_RC(pmsg, cmds, ccnt, argc, argv, -255);
 }
 
 int _FSUT_ExecCommandSet(FSUT_Message ** pmsg, const UTHandlerRecord * cmds, size_t ccnt, int argc, char ** argv)
@@ -76,42 +77,83 @@ static int _cmd_UtLightbar(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtSiren(FSUT_Message ** pmsg, int argc, char ** argv);
 
 static const UTHandlerRecord _msgnames[] = {
-    {"initialize", _cmd_UtInitialize},
-    {"position", _cmd_UtChangePosition},
-    {"pseudonym", _cmd_UtChangePseudonym},
-    {"cam", _cmd_UtCam },
-    {"denm", _cmd_UtDenm },
-    {"vam", _cmd_UtVam },
-    {"gn", _cmd_UtGnTrigger },
-    {"enrol" , _cmd_UtEnroll},
-    {"auth" , _cmd_UtAuth },
-    {"crl" , _cmd_UtCrl },
-    {"ctl" , _cmd_UtCtl },
-    {"ectl" , _cmd_UtECtl },
+    {"initialize", _cmd_UtInitialize,     "<hex digest|0> - initialize IUT with given AT certificate or with any certificate if zero given"},
+    {"position", _cmd_UtChangePosition,   "<latitude delta> <longitude delta> - change IUT position by given deltas"},
+    {"pseudonym", _cmd_UtChangePseudonym, "change IUT AT certificate to any available"},
+    {"cam", _cmd_UtCam,                   "<start|stop|rate <Hz> > - start/stop CAM generation or change CAM rate"},
+    {"denm", _cmd_UtDenm,                 "<send|update|stop|terminate - unsupported yet"},
+    {"vam", _cmd_UtVam,                   "<start|stop|join|lead|leader>"},
+    {"gn", _cmd_UtGnTrigger,              "<beacon|guc|gbc|gac|shb|tsb>"},
+    {"enrol" , _cmd_UtEnroll,             ""},
+    {"auth" , _cmd_UtAuth,                ""},
+    {"crl" , _cmd_UtCrl,                  ""},
+    {"ctl" , _cmd_UtCtl,                  ""},
+    {"ectl" , _cmd_UtECtl,                ""},
     
-    {"beacon" , _cmd_UtBeacon },
-    {"guc" , _cmd_UtGUC },
-    {"gbc" , _cmd_UtGBC },
-    {"gac" , _cmd_UtGAC },
-    {"shb" , _cmd_UtSHB },
-    {"tsb" , _cmd_UtTSB },
+    {"beacon" , _cmd_UtBeacon,            "<start|stop>"},
+    {"guc" , _cmd_UtGUC,                  "<addr> [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]"},
+    {"gbc" , _cmd_UtGBC,                  "<circle|rect|ellipse> <latitude:longitude> <a> [b] [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]"},
+    {"gac" , _cmd_UtGAC,                  "<circle|rect|ellipse> <latitude:longitude> <a> [b] [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]"},
+    {"shb" , _cmd_UtSHB,                  "[tc <trafficClass>] [pl <hex payload>]"},
+    {"tsb" , _cmd_UtTSB,                  "[lf <lifetime>] [nh <hop number>] [tc <trafficClass>] [pl <hex payload>]"},
 
-    {"curv" ,         _cmd_UtCurvature },
-    {"speed" ,        _cmd_UtSpeed },
-    {"heading" ,      _cmd_UtHeading },
-    {"acceleration" , _cmd_UtAcceleration },
-    {"light" ,        _cmd_UtLight },
-    {"direction" ,    _cmd_UtDirection },
-    {"yaw" ,          _cmd_UtDirection },
-    
-    {"station" ,      _cmd_UtStationType },
-    {"role" ,         _cmd_UtVehicleRole },
-    {"embarkation" ,  _cmd_UtEmbarkationStatus },
-    {"pta" ,          _cmd_UtPtActivation },
-    {"dgoods" ,       _cmd_UtDangerousGoods },
-    {"lightbar" ,     _cmd_UtLightbar },
-    {"siren" ,        _cmd_UtSiren },  
+    {"curv" ,         _cmd_UtCurvature,         "unsupported yet "},
+    {"speed" ,        _cmd_UtSpeed,             "unsupported yet "},
+    {"heading" ,      _cmd_UtHeading,           "unsupported yet "},
+    {"acceleration" , _cmd_UtAcceleration,      "unsupported yet "},
+    {"light" ,        _cmd_UtLight,             "unsupported yet "},
+    {"direction" ,    _cmd_UtDirection,         "unsupported yet "},
+    {"yaw" ,          _cmd_UtDirection,         "unsupported yet "},
+
+    {"station" ,      _cmd_UtStationType,       "unsupported yet "},
+    {"role" ,         _cmd_UtVehicleRole,       "unsupported yet "},
+    {"embarkation" ,  _cmd_UtEmbarkationStatus, "unsupported yet "},
+    {"pta" ,          _cmd_UtPtActivation,      "unsupported yet "},
+    {"dgoods" ,       _cmd_UtDangerousGoods,    "unsupported yet "},
+    {"lightbar" ,     _cmd_UtLightbar,          "unsupported yet "},
+    {"siren" ,        _cmd_UtSiren,             "unsupported yet "},  
 };
+
+static const char * _help = 
+    "initialize <hex digest|0>                     - initialize IUT with given AT certificate or with any certificate if zero given\n"
+    "position   <latitude delta> <longitude delta> [altitude delta]\n"
+    "                                              - change IUT position by given deltas\n"
+    "pseudonym                                     - change IUT AT certificate to any available\n"
+    "cam start                                     - start CA service\n"
+    "cam stop                                      - stop CA service\n"
+    "cam rate <Hz>                                 - change CA rate\n"
+    "denm <send|update|stop|terminate>             - unsupported yet\n"
+    "vam start                                     - start VRU service\n"
+    "vam stop                                      - stop VRU service\n"
+    "vam join                                      - activate VRU join claster\n"
+    "vam lead|leader                               - operate as VRU cluster leader\n"
+    "gn <beacon|guc|gbc|gac|shb|tsb> [params...]   - send geonetworking packed with given params. See below for possible parameters\n"
+    "enrol [EA hex digest|EA name]                 - start enrolment process with given EA or any available if EA not given\n"
+    "auth  [AA hex digest|AA name]                 - start authorization process with given AA or any available if AA not given\n"
+    "crl|ctl|ectl [url]                            - download CRL/CTL/ECTL\n"
+    "beacon <start|stop|send>                      - start/stop beacon sending or send 1 beacon packet\n"
+    "guc <addr> [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]\n"
+    "                                              - send GeoUniCast packet to given address [LS is not working yet]\n"
+    "gbc <circle|rect|ellipse> <latitude:longitude> <a> [b] [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]\n"
+    "                                              - send GeoBroadcast packet to given area\n"
+    "gac <circle|rect|ellipse> <latitude:longitude> <a> [b] [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]\n"
+    "                                              - send GeoAnycast packet to given area\n"
+    "shb [tc <trafficClass>] [pl <hex payload>]    - send Single Hop Broadcast packet\n"
+    "tsb [lf <lifetime>] [nh <hop number>] [tc <trafficClass>] [pl <hex payload>] - send TSB packet\n"
+;
+
+const char * FSUT_CommandHelp(const char * cmd)
+{
+    if(cmd){
+        for (size_t i=0; i< arraysize(_msgnames); i++){
+            if(cstrequal(cmd, _msgnames[i].name)){
+                return _msgnames[i].help;
+            }
+        }
+        return "Unknown command";
+    }
+    return _help;
+}
 
 int FSUT_CommandMessage(FSUT_Message ** pmsg, int argc, char ** argv)
 {
@@ -183,13 +225,13 @@ static int _cmd_read_hexbuf(void* plen, uint8_t * buf, size_t maxsize, int argc,
     return -255;
 }
 
-static int _cmd_read_lat_lon(void * plat, void * plon, char * v)
+static int _cmd_read_lat_lon(void * plat, void * plon, const char * v)
 {
-    char * e = NULL;
-    long lat = strtol(v, &e, 10);
+    const char * e = NULL;
+    long lat = strtol(v, (char**)&e, 10);
     if(e > v && *e == ':'){
         v = e+1;
-        long lon = strtol(v, &e, 10);
+        long lon = strtol(v, (char**)&e, 10);
         if(e > v && *e == 0){
             _pack_int32(plat, lat);
             _pack_int32(plon, lon);
@@ -201,16 +243,22 @@ static int _cmd_read_lat_lon(void * plat, void * plon, char * v)
 
 static int _cmd_UtInitialize(FSUT_Message ** pmsg, int argc, char ** argv)
 {
-    if(argc > 1){
+    if(argc > 0){
         FSUT_Message * m = malloc(sizeof(m->initialize));
         m->initialize.code = FS_UtInitialize;
-        char * end = argv[1];
-        m->initialize.digest = strtoull(argv[1], &end, 16);
-        if(end > argv[1]){
-            m->initialize.digest = cint64_hton(m->initialize.digest);
-            *pmsg = m;
+        m->initialize.digest = 0;
+        *pmsg = m;
+        if(argc > 1){
+            char * end = argv[1];
+            m->initialize.digest = strtoull(argv[1], &end, 16);
+            if(end > argv[1]){
+                m->initialize.digest = cint64_hton(m->initialize.digest);
             return 2;
+            return 2;
+                return 2;
+            }
         }
+        return 1;
     }
     return -255;
 }
@@ -223,17 +271,16 @@ static int _cmd_UtChangePosition(FSUT_Message ** pmsg, int argc, char ** argv)
         FSUT_Message * m = malloc(sizeof(m->changePosition));
         m->changePosition.code = FS_UtChangePosition;
         end = argv[1];
-        m->changePosition.deltaLatitude = strtoul(argv[1], &end, 0);
+        m->changePosition.deltaLatitude = strtol(argv[1], &end, 0);
         if(end  > argv[1]){
             end = argv[2];
-            m->changePosition.deltaLongitude = strtoul(argv[2], &end, 0);
+            m->changePosition.deltaLongitude = strtol(argv[2], &end, 0);
             if(end  > argv[2]){
                 if(argc > 3){
                     end = argv[3];
-                    m->changePosition.deltaAltitude = strtoul(argv[3], &end, 0);
-                    if(end  <= argv[3])
-                        goto err;
-                    ret++;
+                    m->changePosition.deltaAltitude = strtol(argv[3], &end, 0);
+                    if(0 == *end)
+                        ret++;
                 }
                 *pmsg = m;
                 return ret;
@@ -246,13 +293,10 @@ err:
 
 static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv)
 {
-    if(argc > 1){
-        FSUT_Message * m = malloc(sizeof(m->changePseudonym));
-        m->changePseudonym.code = FS_UtChangePseudonym;
-        *pmsg = m;
-        return 1;
-    }
-    return -255;
+    FSUT_Message * m = malloc(sizeof(m->changePseudonym));
+    m->changePseudonym.code = FS_UtChangePseudonym;
+    *pmsg = m;
+    return 1;
 }
 
 static int _cmd_UtCamStatus(FSUT_Message ** pmsg, int argc, char ** argv, uint8_t code, uint8_t state) {
@@ -338,20 +382,24 @@ static int _cmd_UtCtl(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerRcaCtlRequest);
 }
+
 static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerTlmCtlRequest);
 }
 
-static int _cmd_UtVamStart(FSUT_Message ** pmsg, int argc, char ** argv) {
+static int _cmd_UtVamStart(FSUT_Message ** pmsg, int argc, char ** argv)
+{
     return _cmd_UtCamStatus(pmsg, argc, argv, FS_UtVamTrigger, 1);
 }
 
-static int _cmd_UtVamStop(FSUT_Message ** pmsg, int argc, char ** argv) {
+static int _cmd_UtVamStop(FSUT_Message ** pmsg, int argc, char ** argv)
+{
     return _cmd_UtCamStatus(pmsg, argc, argv, FS_UtVamTrigger, 0);
 }
 
-static int _cmd_UtVamCluster(FSUT_Message ** pmsg, int argc, char ** argv, uint8_t code) {
+static int _cmd_UtVamCluster(FSUT_Message ** pmsg, int argc, char ** argv, uint8_t code)
+{
     FSUT_Message * m = malloc(sizeof(m->vamCluster));
     m->vamCluster.code = code;
     m->vamCluster.clasterId = 0;
@@ -359,14 +407,16 @@ static int _cmd_UtVamCluster(FSUT_Message ** pmsg, int argc, char ** argv, uint8
     if(argc > 1){
         char * end;
         unsigned long n = strtoul(argv[1], &end, 0);
-        if(end > argv[1]) {
+        if(*end == 0) {
             m->vamCluster.clasterId = n;
             return 2;
         }
     }
     return 1;
 }
-static int _cmd_UtVamJoin(FSUT_Message ** pmsg, int argc, char ** argv) {
+
+static int _cmd_UtVamJoin(FSUT_Message ** pmsg, int argc, char ** argv)
+{
     return _cmd_UtVamCluster(pmsg, argc, argv, FS_UtVamJoin);
 }
 
@@ -476,12 +526,15 @@ static const UTHandlerRecord _gbcargs[] = {
 // gbc <circle|rect|ellipse> ...
 static int _cmd_UtGBC(FSUT_Message ** pmsg, int argc, char ** argv)
 {
-    FSUT_Message * m = malloc(FSUT_MAX_MSG_SIZE);
-    memset(m, 0, FSUT_MAX_MSG_SIZE);
-    m->code = FS_UtGnTrigger_geoBroadcast;
-    *pmsg = m;
-    
-    return 1 + _FSUT_ExecCommand(&m, _gbcargs, arraysize(_gbcargs), argc - 1, argv + 1);
+    if(argc > 1){
+        FSUT_Message * m = malloc(FSUT_MAX_MSG_SIZE);
+        memset(m, 0, FSUT_MAX_MSG_SIZE);
+        m->code = FS_UtGnTrigger_geoBroadcast;
+        *pmsg = m;
+        
+        return 1 + _FSUT_ExecCommand(&m, _gbcargs, arraysize(_gbcargs), argc - 1, argv + 1);
+    }
+    return -255;
 }
 
 
@@ -532,7 +585,6 @@ static int _cmd_UtGBC_circle(FSUT_Message ** pmsg, int argc, char ** argv)
 //     [pl <hexpayload>]
 static int _cmd_UtGBC_rect(FSUT_Message ** pmsg, int argc, char ** argv)
 {
-
     if(argc > 4){
         FSUT_Message * m = (*pmsg);
         m->gbc.shape = 1;
