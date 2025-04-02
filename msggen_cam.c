@@ -189,7 +189,7 @@ static int cam_options(MsgGenApp* app, int argc, char* argv[])
 {
     if (argc == 0) {
         fprintf(stderr, "\n");
-        coptions_help(stderr, "CAM", 0, options, "");
+        coptions_help_ex(stderr, NULL, 0, options, "CAM options:", NULL, NULL);
         return 0;
     }
 

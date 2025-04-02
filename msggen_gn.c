@@ -42,7 +42,7 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
 {
     if (argc == 0) {
         fprintf(stderr, "\n");
-        coptions_help(stderr, "GN", 0, options, "");
+        coptions_help_ex(stderr, NULL, 0, options, "GeoNet options:", NULL, NULL);
         return 0;
     }
     return coptions(argc, argv, COPT_NOREORDER | COPT_NOAUTOHELP | COPT_NOERR_UNKNOWN | COPT_NOERR_MSG, options);

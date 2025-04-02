@@ -94,7 +94,7 @@ static int denm_options(MsgGenApp* app, int argc, char* argv[])
 {
     if (argc == 0) {
         fprintf(stderr, "\n");
-        coptions_help(stderr, "DENM", 0, options, "");
+        coptions_help_ex(stderr, NULL, 0, options, "DENM options:", NULL, NULL);
         return 0;
     }
     // init DENM

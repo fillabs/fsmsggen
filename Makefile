@@ -17,7 +17,7 @@ ifeq (,$(FITSEC_SRC))
 endif
 
 bins          := fsmsggen
-sources       := fsmsggen.c msggen_cam.c msggen_denm.c msggen_beacon.c msggen_vam.c utils.c fsgpsd.c
+sources       := fsmsggen.c msggen_cam.c msggen_denm.c msggen_gn.c msggen_vam.c utils.c fsgpsd.c
 packages      := libgps cshared pcap thread curl
 includes      := $(FITSEC_SRC) $(FSPKI_SRC) $(FSCRYPTDIR) payload uppertester
 predirs       := payload uppertester
