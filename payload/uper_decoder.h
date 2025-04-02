@@ -5,8 +5,8 @@
 #ifndef	_UPER_DECODER_H_
 #define	_UPER_DECODER_H_
 
-#include "asn_application.h"
-#include "uper_support.h"
+#include <asn_application.h>
+#include <uper_support.h>
 
 #ifdef __cplusplus
 extern "C" {

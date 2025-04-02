@@ -5,8 +5,8 @@
 #ifndef	_UPER_SUPPORT_H_
 #define	_UPER_SUPPORT_H_
 
-#include "asn_system.h"		/* Platform-specific types */
-#include "per_support.h"
+#include <asn_system.h>		/* Platform-specific types */
+#include <per_support.h>
 
 #ifdef __cplusplus
 extern "C" {

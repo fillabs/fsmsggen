@@ -40,10 +40,12 @@ endif
 
 Makefile.am.libasncodec: $(ASN1_SRC) 
 	$(ASN1C) $(addprefix -pdu=,$(ASN1_PDU)) $(ASN1_SRC)
+	@sed -i 's| -S [^ ]*/skeletons||g' *.h *.c
 	touch $@
 
-regen: FORCE
+regen:
 	$(ASN1C) $(addprefix -pdu=,$(ASN1_PDU)) $(ASN1_SRC)
+	@sed -i 's| -S [^ ]*/skeletons||g' *.h *.c
 
 libItsPayload.vcxproj.list: Makefile.am.libasncodec
 	rm -f $@
