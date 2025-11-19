@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define FSMSGGEN_C
 //#ifdef _MSC_VER
 //#include <windows.h>
 //#endif
@@ -80,6 +81,8 @@ static char* _o_ut_addr = NULL;
 //static uint16_t _o_ut_port = 12345;
 int _gps_ch = -1;
 
+static unsigned long _o_stationId = DEFAULT_STATION_ID;
+
 static const char * _out_payload[] = {
     "raw", "gn"/*, "sec", "btp", "fs"*/
 };
@@ -115,6 +118,28 @@ static int copt_on_set_dc(const copt_t* opt, const char* option, const copt_valu
 #ifdef USE_LIBGPS
 static int copt_on_gpsd(const copt_t* opt, const char* option, const copt_value_t* value);
 #endif
+
+const char* _o_stationTypes[] = {
+    "",
+    "unknown",      // 0
+    "pedestrian",   // 1
+    "cyclist",      // 2
+    "moped",        // 3
+    "motorcycle",   // 4
+    "passengerCar", // 5
+    "bus",          // 6
+    "lightTruck",   // 7
+    "heavyTruck",   // 8
+    "trailer",         // 9
+    "special", // 10
+    "tram",            // 11
+    "",                // 12
+    "",                // 13
+    "",                // 14
+    "rsu",            // 15
+    NULL
+};
+
 static copt_t options [] = {
     { "h?", "help",     COPT_HELP,     NULL,          "Print this help page"},
     { "C",  "config",   COPT_CFGFILE,  &cfgfile,      "Config file"         },
@@ -125,7 +150,7 @@ static copt_t options [] = {
     { "O",  "out",      COPT_PATH,     &_out,         "Output PCAP file name, 'none' for disable, (udp|tcp)://host:port for network stream" },
     { NULL, "out-payload", COPT_STRENUM,     &_out_payload,         "Output payload type for network stream: raw,gn. Default is raw" },
 #define OPT_IDX_OUT_PAYLOAD 7
-    { "r",  "rate",     COPT_FLOAT,    &_rate,        "Message rate in Hz" },
+    { "r",  "rate",     COPT_FLOAT,    &_rate,        "Default message rate in Hz" },
     { "t",  "time",     COPT_STR,      &_curStrTime,  "The ISO representation of starting time" },
     { "p",  "position", COPT_STR  | COPT_CALLBACK, copt_on_position,  "The position in form latitude:longitude" },
 #ifdef USE_LIBGPS
@@ -140,7 +165,10 @@ static copt_t options [] = {
     { "N",  "no-sec",   COPT_IBOOL ,   &_o_secured,   "Send non-secured packets" },
     { "1",  "load",     COPT_PATH|COPT_CALLBACK, copt_on_load,     "Load certificates or CTL/CRL data from file or directory"   },
 #endif
-    { NULL, NULL, COPT_END, NULL, NULL }
+    { "I",  "station-id",        COPT_UINT ,     &_o_stationId, "ITS atation ID for message header. Default is 0x10101010" },
+    { NULL, "station-type",      COPT_STRENUM ,  &_o_stationTypes, "ITS Station type: [unknown]"},
+
+{ NULL, NULL, COPT_END, NULL, NULL }
 };
 
 #ifdef NO_SECURITY
@@ -278,7 +306,7 @@ static size_t _applications_count = 0;
 void setCurrentPosition(FS3DLocation * pos, FSTime64 * t){
 #ifdef USE_LIBGPS
     if(_gps_ch>=0){
-        FSGpsData data;
+        FSGpsData data = {};
         if(libgps_get_data(_gps_ch, &data)){
             *pos = data.position;
             *t = data.time;

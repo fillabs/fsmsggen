@@ -8,3 +8,8 @@ install
 fitsec2
 fspki
 .vs/
+*.log
+*.pcap
+*.pcapng
+data/
+PVS-Studio.*

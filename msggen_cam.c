@@ -1,7 +1,7 @@
 #ifdef USE_LIBGPS
 #include <gps.h>
-#include <math.h>
 #endif
+#include <math.h>
 
 #include "msggen.h"
 #include "cmem.h"
@@ -30,26 +30,7 @@ __INITIALIZER__(initializer_cam) {
      MsgGenApp_Register(&_app);
 }
 
-static const char* _o_stationTypes[] = {
-    "",
-    "unknown",      // 0
-    "pedestrian",   // 1
-    "cyclist",      // 2
-    "moped",        // 3
-    "motorcycle",   // 4
-    "passengerCar", // 5
-    "bus",          // 6
-    "lightTruck",   // 7
-    "heavyTruck",   // 8
-    "trailer",         // 9
-    "special", // 10
-    "tram",            // 11
-    "",                // 12
-    "",                // 13
-    "",                // 14
-    "rsu",            // 15
-    NULL
-};
+extern const char* _o_stationTypes[];
 
 #ifndef NO_SECURITY
 static int _o_secured = 1;
@@ -59,25 +40,11 @@ static int _o_activated = 1;
 static float _o_rate = 10; // 10Hz
 static float _o_cam_rate = 10; // 10Hz
 
-static copt_t options[] = {
-    { NULL,  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
-    { NULL,  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
-    { NULL,  "no-cam",            COPT_IBOOL ,   &_o_activated, "Do not start CAM by default" },
-#ifndef NO_SECURITY
-    { NULL, "cam-no-sec",        COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
-    { NULL, "no-sec",            COPT_IBOOL ,   &_o_secured, NULL },
-#endif
-    { "r",  "rate",              COPT_FLOAT|COPT_NOHELP,    &_o_rate, NULL },
-    { NULL,  "cam-rate",         COPT_FLOAT,     &_o_cam_rate, "Set CAM sending rate [10Hz]" },
-
-    { NULL, NULL, COPT_END, NULL, NULL }
-};
-
 static CAM_t _cam  = {
     .header = {
         .protocolVersion = 2,
         .messageId = MessageId_cam,
-        .stationId = 0
+        .stationId = DEFAULT_STATION_ID
     },
     .cam = {
         .generationDeltaTime = 0,
@@ -132,6 +99,21 @@ static CAM_t _cam  = {
             }
         }
     }
+};
+
+static copt_t options[] = {
+    { NULL,  "cam-station-type",  COPT_STRENUM ,  _o_stationTypes, "Station Type [unknown]" },
+    { NULL,  "cam-btpA",          COPT_BOOL ,    &_o_btpA, "Use BTP A [use btpB by default]" },
+    { NULL,  "no-cam",            COPT_IBOOL ,   &_o_activated, "Do not start CAM by default" },
+#ifndef NO_SECURITY
+    { NULL, "cam-no-sec",        COPT_IBOOL ,   &_o_secured, "Send non-secured cam" },
+    { NULL, "no-sec",            COPT_IBOOL ,   &_o_secured, NULL },
+#endif
+    { "r",  "rate",              COPT_FLOAT|COPT_NOHELP,    &_o_rate, NULL },
+    { "I",  "station-id",        COPT_UINT|COPT_NOHELP ,     &_cam.header.stationId, NULL },
+    { NULL,  "cam-rate",         COPT_FLOAT,     &_o_cam_rate, "Set CAM sending rate [10Hz]" },
+
+    { NULL, NULL, COPT_END, NULL, NULL }
 };
 
 typedef struct PathPointEx {
@@ -209,7 +191,7 @@ static int cam_options(MsgGenApp* app, int argc, char* argv[])
             _pathHistoryArray[i] = &_pathHistoryArrayData[i].point;
         }
 
-        if(_cam.cam.camParameters.basicContainer.stationType == TrafficParticipantType_roadSideUnit){
+        if(_cam.cam.camParameters.basicContainer.stationType == TrafficParticipantType_infrastructure){
             _cam.cam.camParameters.highFrequencyContainer.present = HighFrequencyContainer_PR_rsuContainerHighFrequency;
             _cam.cam.camParameters.highFrequencyContainer.choice.rsuContainerHighFrequency.protectedCommunicationZonesRSU = NULL;
         }
@@ -318,11 +300,11 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
 #ifdef USE_LIBGPS
     FSGpsData gd;
     if(0 < libgps_get_data(0, &gd)){
-        if(isfinite(gd.dx) && isfinite(gd.dx)){
-            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gd.dy * 100.0));
+        if(isfinite(gd.dx) && isfinite(gd.dy)){
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = abs(floor(gd.dy * 10.0));
             if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength >= SemiAxisLength_outOfRange)
                 _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisLength = SemiAxisLength_outOfRange;
-            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = abs(floor(gd.dx * 100.0));
+            _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = abs(floor(gd.dx * 10.0));
             if(_cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength >= SemiAxisLength_outOfRange)
                 _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_outOfRange;
             _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = 0;
@@ -338,7 +320,7 @@ static size_t cam_fill(MsgGenApp* app, FitSec * e, FSMessageInfo* m)
             _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMinorAxisLength = SemiAxisLength_unavailable;
             _cam.cam.camParameters.basicContainer.referencePosition.positionConfidenceEllipse.semiMajorAxisOrientation = Wgs84AngleValue_unavailable;
         }
-        if(_cam.cam.camParameters.basicContainer.stationType != TrafficParticipantType_roadSideUnit){
+        if(_cam.cam.camParameters.basicContainer.stationType != TrafficParticipantType_infrastructure){
             /* speed */
             _cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue = gd.speed;
             if(_cam.cam.camParameters.highFrequencyContainer.choice.basicVehicleContainerHighFrequency.speed.speedValue > SpeedValue_outOfRange)

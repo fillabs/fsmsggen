@@ -290,10 +290,23 @@ static long _strtodegree(const char * s, char ** e)
 int FS3DPositionFromString(FS3DLocation * pos, const char * str){
     char * e;
     pos->latitude = _strtodegree(str, &e);
-    if (e == str || ! strchr(":,; /", *e)) return 0;
-    str = e + 1;
-
-    pos->longitude = _strtodegree(str, &e);
-    if (e == str || *e != 0) return 0;
-    return 1;
+    if(e > str && strchr(":,; /", *e)){
+      str = e + 1;
+      pos->longitude = _strtodegree(str, &e);
+      if(e > str){
+        pos->elevation = 0;
+        if(*e){
+          if(strchr(":,; /", *e)){
+            str = e + 1;
+            pos->elevation = strtol(str, &e, 10);
+          }else{
+            return 0;
+          }
+        }
+        if(*e == 0){
+          return 1;
+        }
+      }
+    }
+    return 0;
 }

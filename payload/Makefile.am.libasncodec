@@ -37,6 +37,7 @@ ASN_MODULE_SRCS=	\
 	RoadWorksContainerExtended.c	\
 	StationaryVehicleContainer.c	\
 	AlacarteContainer.c	\
+	PerceivedEvent.c	\
 	Termination.c	\
 	VAM.c	\
 	ItsPduHeaderVam.c	\
@@ -47,24 +48,25 @@ ASN_MODULE_SRCS=	\
 	VruClusterInformationContainer.c	\
 	VruClusterOperationContainer.c	\
 	VruMotionPredictionContainer.c	\
-	OriginatingVehicleContainer.c	\
-	OriginatingRsuContainer.c	\
-	TrailerDataSet.c	\
 	CollectivePerceptionMessage.c	\
 	CpmPayload.c	\
 	CPM-PDU-Descriptions_ManagementContainer.c	\
 	CpmContainerId.c	\
 	WrappedCpmContainer.c	\
 	WrappedCpmContainers.c	\
-	ConstraintWrappedCpmContainers.c	\
 	MessageRateRange.c	\
 	PerceivedObjectContainer.c	\
 	PerceivedObjects.c	\
 	PerceptionRegionContainer.c	\
 	PerceptionRegion.c	\
 	PerceivedObjectIds.c	\
+	ReportingType.c	\
+	Ratio.c	\
 	SensorInformationContainer.c	\
 	SensorInformation.c	\
+	OriginatingVehicleContainer.c	\
+	OriginatingRsuContainer.c	\
+	TrailerDataSet.c	\
 	AccelerationChange.c	\
 	AccelerationConfidence.c	\
 	AccelerationControl.c	\
@@ -73,8 +75,8 @@ ASN_MODULE_SRCS=	\
 	AccelerationValue.c	\
 	AccessTechnologyClass.c	\
 	AccidentSubCauseCode.c	\
-	AdverseWeatherCondition-AdhesionSubCauseCode.c	\
-	AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.c	\
+	AdhesionSubCauseCode.c	\
+	AdverseWeatherCondition-WindSubCauseCode.c	\
 	AdverseWeatherCondition-PrecipitationSubCauseCode.c	\
 	AdverseWeatherCondition-VisibilitySubCauseCode.c	\
 	AirHumidity.c	\
@@ -163,6 +165,7 @@ ASN_MODULE_SRCS=	\
 	LongitudinalLanePositionConfidence.c	\
 	MatrixIncludedComponents.c	\
 	MessageId.c	\
+	MultiplicativeFactor.c	\
 	NumberOfOccupants.c	\
 	ObjectPerceptionQuality.c	\
 	ObjectDimensionValue.c	\
@@ -197,7 +200,7 @@ ASN_MODULE_SRCS=	\
 	RelevanceDistance.c	\
 	RelevanceTrafficDirection.c	\
 	RequestResponseIndication.c	\
-	RescueAndRecoveryWorkInProgressSubCauseCode.c	\
+	RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode.c	\
 	RoadSectionId.c	\
 	RoadType.c	\
 	RoadworksSubCauseCode.c	\
@@ -474,6 +477,7 @@ ASN_MODULE_HDRS=	\
 	RoadWorksContainerExtended.h	\
 	StationaryVehicleContainer.h	\
 	AlacarteContainer.h	\
+	PerceivedEvent.h	\
 	Termination.h	\
 	VAM.h	\
 	ItsPduHeaderVam.h	\
@@ -484,24 +488,25 @@ ASN_MODULE_HDRS=	\
 	VruClusterInformationContainer.h	\
 	VruClusterOperationContainer.h	\
 	VruMotionPredictionContainer.h	\
-	OriginatingVehicleContainer.h	\
-	OriginatingRsuContainer.h	\
-	TrailerDataSet.h	\
 	CollectivePerceptionMessage.h	\
 	CpmPayload.h	\
 	CPM-PDU-Descriptions_ManagementContainer.h	\
 	CpmContainerId.h	\
 	WrappedCpmContainer.h	\
 	WrappedCpmContainers.h	\
-	ConstraintWrappedCpmContainers.h	\
 	MessageRateRange.h	\
 	PerceivedObjectContainer.h	\
 	PerceivedObjects.h	\
 	PerceptionRegionContainer.h	\
 	PerceptionRegion.h	\
 	PerceivedObjectIds.h	\
+	ReportingType.h	\
+	Ratio.h	\
 	SensorInformationContainer.h	\
 	SensorInformation.h	\
+	OriginatingVehicleContainer.h	\
+	OriginatingRsuContainer.h	\
+	TrailerDataSet.h	\
 	AccelerationChange.h	\
 	AccelerationConfidence.h	\
 	AccelerationControl.h	\
@@ -510,8 +515,8 @@ ASN_MODULE_HDRS=	\
 	AccelerationValue.h	\
 	AccessTechnologyClass.h	\
 	AccidentSubCauseCode.h	\
-	AdverseWeatherCondition-AdhesionSubCauseCode.h	\
-	AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.h	\
+	AdhesionSubCauseCode.h	\
+	AdverseWeatherCondition-WindSubCauseCode.h	\
 	AdverseWeatherCondition-PrecipitationSubCauseCode.h	\
 	AdverseWeatherCondition-VisibilitySubCauseCode.h	\
 	AirHumidity.h	\
@@ -600,6 +605,7 @@ ASN_MODULE_HDRS=	\
 	LongitudinalLanePositionConfidence.h	\
 	MatrixIncludedComponents.h	\
 	MessageId.h	\
+	MultiplicativeFactor.h	\
 	NumberOfOccupants.h	\
 	ObjectPerceptionQuality.h	\
 	ObjectDimensionValue.h	\
@@ -634,7 +640,7 @@ ASN_MODULE_HDRS=	\
 	RelevanceDistance.h	\
 	RelevanceTrafficDirection.h	\
 	RequestResponseIndication.h	\
-	RescueAndRecoveryWorkInProgressSubCauseCode.h	\
+	RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode.h	\
 	RoadSectionId.h	\
 	RoadType.h	\
 	RoadworksSubCauseCode.h	\
@@ -935,6 +941,27 @@ ASN_MODULE_HDRS+=constr_TYPE.h
 ASN_MODULE_SRCS+=constr_TYPE.c
 ASN_MODULE_HDRS+=constraints.h
 ASN_MODULE_SRCS+=constraints.c
+ASN_MODULE_HDRS+=xer_support.h
+ASN_MODULE_HDRS+=xer_decoder.h
+ASN_MODULE_HDRS+=xer_encoder.h
+ASN_MODULE_SRCS+=xer_support.c
+ASN_MODULE_SRCS+=xer_decoder.c
+ASN_MODULE_SRCS+=xer_encoder.c
+ASN_MODULE_SRCS+=ANY_xer.c
+ASN_MODULE_SRCS+=BIT_STRING_xer.c
+ASN_MODULE_SRCS+=BOOLEAN_xer.c
+ASN_MODULE_SRCS+=INTEGER_xer.c
+ASN_MODULE_SRCS+=NULL_xer.c
+ASN_MODULE_SRCS+=NativeEnumerated_xer.c
+ASN_MODULE_SRCS+=NativeInteger_xer.c
+ASN_MODULE_SRCS+=OBJECT_IDENTIFIER_xer.c
+ASN_MODULE_SRCS+=OCTET_STRING_xer.c
+ASN_MODULE_SRCS+=OPEN_TYPE_xer.c
+ASN_MODULE_SRCS+=asn_codecs_prim_xer.c
+ASN_MODULE_SRCS+=constr_CHOICE_xer.c
+ASN_MODULE_SRCS+=constr_SEQUENCE_OF_xer.c
+ASN_MODULE_SRCS+=constr_SEQUENCE_xer.c
+ASN_MODULE_SRCS+=constr_SET_OF_xer.c
 ASN_MODULE_HDRS+=per_decoder.h
 ASN_MODULE_HDRS+=per_encoder.h
 ASN_MODULE_HDRS+=per_support.h
@@ -966,7 +993,7 @@ ASN_MODULE_SRCS+=constr_SEQUENCE_OF_uper.c
 ASN_MODULE_SRCS+=constr_SEQUENCE_uper.c
 ASN_MODULE_SRCS+=constr_SET_OF_uper.c
 
-ASN_MODULE_CFLAGS=-DASN_DISABLE_BER_SUPPORT -DASN_DISABLE_XER_SUPPORT -DASN_DISABLE_OER_SUPPORT -DASN_DISABLE_APER_SUPPORT -DASN_DISABLE_PRINT_SUPPORT -DASN_DISABLE_RFILL_SUPPORT 
+ASN_MODULE_CFLAGS=-DASN_DISABLE_BER_SUPPORT -DASN_DISABLE_OER_SUPPORT -DASN_DISABLE_APER_SUPPORT -DASN_DISABLE_PRINT_SUPPORT -DASN_DISABLE_RFILL_SUPPORT 
 
 lib_LTLIBRARIES+=libasncodec.la
 libasncodec_la_SOURCES=$(ASN_MODULE_SRCS) $(ASN_MODULE_HDRS)

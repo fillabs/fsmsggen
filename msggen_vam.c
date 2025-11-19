@@ -130,7 +130,7 @@ static VAM_t _vam = {
     .header = {
         .protocolVersion = 3,
         .messageId = MessageId_vam,
-        .stationId = 0x10101010
+        .stationId = DEFAULT_STATION_ID
     },
     .vam = {
         .generationDeltaTime = 0,

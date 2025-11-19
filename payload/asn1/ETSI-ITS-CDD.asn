@@ -1,18 +1,4 @@
-/** draft 003 of the CDD module for TS 102 894-1 V2.3.1 integrating:
--   ITSWG1(24)000011r8 All updated CAM containers
--   ITSWG1(24)000002r1 CAM CR for Very Low Frequency Container
--   ITSWG1(24)000132r1 Comments to CDD (RTS/ITS-001982 v0.0.2 (TS 102 894-2 ) )
--   ITSWG1(24)000148r1 Comment to SCC for CC 100
--   ITSWG1(24)000156r1_Add_data_structures_and_element_related_behaviour_prediction.docx
--   ITS(24)055022 Performance class bit - change request to CDD Release 1 (V1.3.1)
--   Correcting an error in DF PolygonalLine
-
-Note: the above information will be deleted before publication! 
-*/
-
---! @options: no-fields-header
-
-ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) 102894 cdd (2) major-version-4 (4) minor-version-2 (2)}
+ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) 102894 cdd (2) major-version-4 (4) minor-version-3 (3)}
 
 DEFINITIONS AUTOMATIC TAGS ::=
 
@@ -188,13 +174,13 @@ AccessTechnologyClass ::= ENUMERATED {
  * - 3 - `accidentInvolvingLorry`             - in case the accident involves a lorry,
  * - 4 - `accidentInvolvingBus`               - in case the accident involves a bus,
  * - 5 - `accidentInvolvingHazardousMaterials`- in case the accident involves hazardous material,
- * - 6 - `accidentOnOppositeLane`             - in case the accident happens on opposite lanes,
+ * - 6 - `accidentOnOppositeLane-deprecated`  - deprecated,
  * - 7 - `unsecuredAccident`                  - in case the accident is not secured,
  * - 8 - `assistanceRequested`                - in case rescue and assistance are requested,
  * - 9-255                                    - reserved for future usage. 
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 6 deprecated in V2.4.1
  */
 AccidentSubCauseCode ::= INTEGER {
     unavailable                         (0),
@@ -203,13 +189,13 @@ AccidentSubCauseCode ::= INTEGER {
     accidentInvolvingLorry              (3),
     accidentInvolvingBus                (4),
     accidentInvolvingHazardousMaterials (5),
-    accidentOnOppositeLane              (6),
+    accidentOnOppositeLane-deprecated   (6),
     unsecuredAccident                   (7),
     assistanceRequested                 (8)
 } (0..255)
 
 /**
- * This DE represents the value of the sub cause code of the @ref CauseCode `adverseWeatherCondition-Adhesion`. 
+ * This DE represents the value of the sub cause code of the @ref CauseCode `adhesion`. 
  * 
  * The value shall be set to:
  * - 0 - `unavailable`     - in case information on the cause of the low road adhesion is unavailable,
@@ -220,15 +206,17 @@ AccidentSubCauseCode ::= INTEGER {
  * - 5 - `iceOnRoad`       - in case the low road adhesion is due to ice on the road,
  * - 6 - `blackIceOnRoad`  - in case the low road adhesion is due to black ice on the road,
  * - 7 - `oilOnRoad`       - in case the low road adhesion is due to oil on the road,
- * - 8 - `looseChippings`  - in case the low road adhesion is due to loose gravel or stone fragments detached from a road surface or from a hazard,
+ * - 8 - `looseChippings`  - in case the low road adhesion is due to loose gravel or stone fragments on the road,
  * - 9 - `instantBlackIce` - in case the low road adhesion is due to instant black ice on the road surface,
  * - 10 - `roadsSalted`    - when the low road adhesion is due to salted road,
- * - 11-255                - are reserved for future usage.
+ * - 11 - `flooding`       - in case low road adhesion is due to flooding of the road,
+ * - 12 - `waterOnRoad`    - in case low road adhesion is due to a shallow layer of standing water on the road (not flooding). 
+ * - 12-255                - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, name changed to AdhesionSubCauseCode in V2.4.1, value 11 moved from hazardousLocation-SurfaceCondition to this DE and value 12 added in V2.4.1 
  */
-AdverseWeatherCondition-AdhesionSubCauseCode ::= INTEGER {
+AdhesionSubCauseCode ::= INTEGER {
     unavailable      (0),
     heavyFrostOnRoad (1),
     fuelOnRoad       (2),
@@ -239,33 +227,35 @@ AdverseWeatherCondition-AdhesionSubCauseCode ::= INTEGER {
     oilOnRoad        (7),
     looseChippings   (8),
     instantBlackIce  (9),
-    roadsSalted      (10)
+    roadsSalted      (10),
+    flooding         (11),
+    waterOnRoad      (12) 
 } (0..255)
 
 /**
- * This DE represents the value of the sub cause codes of the @ref CauseCode `adverseWeatherCondition-ExtremeWeatherCondition`.
+ * This DE represents the value of the sub cause codes of the @ref CauseCode `adverseWeatherCondition-Wind`.
  *
  * The value shall be set to:
- * - 0 - `unavailable` - in case information on the type of extreme weather condition is unavailable,
- * - 1 - `strongWinds` - in case the type of extreme weather condition is strong wind,
- * - 2 - `damagingHail`- in case the type of extreme weather condition is damaging hail,
- * - 3 - `hurricane`   - in case the type of extreme weather condition is hurricane,
- * - 4 - `thunderstorm`- in case the type of extreme weather condition is thunderstorm,
- * - 5 - `tornado`     - in case the type of extreme weather condition is tornado,
- * - 6 - `blizzard`    - in case the type of extreme weather condition is blizzard.
- * - 7-255             - are reserved for future usage.
+ * - 0 - `unavailable`             - in case information on the type of wind is unavailable,
+ * - 1 - `strongWinds`             - in case the type of wind is strong wind such as gale or storm (e.g. Beaufort scale number 9-11),
+ * - 2 - `damagingHail-deprecated` - deprecated since not representing a wind related event,
+ * - 3 - `hurricane`               - in case the type of storm is hurricane (e.g. Beaufort scale number 12),
+ * - 4 - `thunderstorm`            - in case the type of storm is thunderstorm,
+ * - 5 - `tornado`                 - in case the type of storm is tornado,
+ * - 6 - `blizzard`                - in case the type of storm is blizzard.
+ * - 7-255                         - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, DE renamed in V2.4.1, value 2 deprecated, description of value 1 and 3  amended in V2.4.1
  */
-AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode ::= INTEGER {
-    unavailable  (0),
-    strongWinds  (1),
-    damagingHail (2),
-    hurricane    (3),
-    thunderstorm (4),
-    tornado      (5),
-    blizzard     (6)
+AdverseWeatherCondition-WindSubCauseCode ::= INTEGER {
+    unavailable             (0),
+    strongWinds             (1),
+    damagingHail-deprecated (2),
+    hurricane               (3),
+    thunderstorm            (4),
+    tornado                 (5),
+    blizzard                (6)
 } (0..255)
 
 /**
@@ -273,19 +263,19 @@ AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode ::= INTEGER {
  *
  * The value shall be set to:
  * - 0 - `unavailable`   - in case information on the type of precipitation is unavailable,
- * - 1 - `heavyRain`     - in case the type of precipitation is heavy rain,
- * - 2 - `heavySnowfall` - in case the type of precipitation is heavy snow fall,
- * - 3 - `softHail`      - in case the type of precipitation is soft hail.
+ * - 1 - `rain`          - in case the type of precipitation is rain,
+ * - 2 - `snowfall`      - in case the type of precipitation is snowfall,
+ * - 3 - `hail`          - in case the type of precipitation is hail.
  * - 4-255               - are reserved for future usage
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, values 1,2,3 renamed in V2.4.1
  */
 AdverseWeatherCondition-PrecipitationSubCauseCode ::= INTEGER {
-    unavailable   (0),
-    heavyRain     (1),
-    heavySnowfall (2),
-    softHail      (3)
+    unavailable  (0),
+    rain         (1),
+    snowfall     (2),
+    hail         (3)
 } (0..255)
 
 /**
@@ -295,24 +285,24 @@ AdverseWeatherCondition-PrecipitationSubCauseCode ::= INTEGER {
  * - 0 - `unavailable`    - in case information on the cause of low visibility is unavailable,
  * - 1 - `fog`            - in case the cause of low visibility is fog,
  * - 2 - `smoke`          - in case the cause of low visibility is smoke,
- * - 3 - `heavySnowfall`  - in case the cause of low visibility is heavy snow fall,
- * - 4 - `heavyRain`      - in case the cause of low visibility is heavy rain,
- * - 5 - `heavyHail`      - in case the cause of low visibility is heavy hail,
+ * - 3 - `snowfall`       - in case the cause of low visibility is snow fall,
+ * - 4 - `rain`           - in case the cause of low visibility is rain,
+ * - 5 - `hail`           - in case the cause of low visibility is hail,
  * - 6 - `lowSunGlare`    - in case the cause of low visibility is sun glare,
  * - 7 - `sandstorms`     - in case the cause of low visibility is sand storm,
  * - 8 - `swarmsOfInsects`- in case the cause of low visibility is swarm of insects.
  * - 9-255                - are reserved for future usage
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, values 3, 4, 5 renamed in V2.4.1
  */
 AdverseWeatherCondition-VisibilitySubCauseCode ::= INTEGER {
     unavailable     (0),
     fog             (1),
     smoke           (2),
-    heavySnowfall   (3),
-    heavyRain       (4),
-    heavyHail       (5),
+    snowfall        (3),
+    rain            (4),
+    hail            (5),
     lowSunGlare     (6),
     sandstorms      (7),
     swarmsOfInsects (8)
@@ -671,23 +661,23 @@ CartesianAngularVelocityComponentValue ::= INTEGER {
  * - 0                                                     - reserved for future use,
  * - 1  - `trafficCondition`                               - in case the type of event is an abnormal traffic condition,
  * - 2  - `accident`                                       - in case the type of event is a road accident,
- * - 3  - `roadworks`                                      - in case the type of event is roadwork,
- * - 4                                                     - reserved for future usage,
+ * - 3  - `roadworks`                                      - in case the type of event is roadworks, based on authoritative information,
+ * - 4  - `detectedRoadworks`                              - in case the type of event is roadworks, based on non-authoritative information such as factual detections, 
  * - 5  - `impassability`                                  - in case the  type of event is unmanaged road blocking, referring to any
  *                                                           blocking of a road, partial or total, which has not been adequately
  *                                                           secured and signposted,
- * - 6  - `adverseWeatherCondition-Adhesion`               - in case the  type of event is low adhesion,
+ * - 6  - `adhesion`                                       - in case the  type of event is low adhesion of the road surface,
  * - 7  - `aquaplaning`                                    - danger of aquaplaning on the road,
  * - 8                                                     - reserved for future usage,
- * - 9  - `hazardousLocation-SurfaceCondition`             - in case the type of event is abnormal road surface condition,
+ * - 9  - `hazardousLocation-SurfaceCondition`             - in case the type of event is abnormal road surface condition not covered by `adhesion`
  * - 10 - `hazardousLocation-ObstacleOnTheRoad`            - in case the type of event is obstacle on the road,
  * - 11 - `hazardousLocation-AnimalOnTheRoad`              - in case the type of event is animal on the road,
  * - 12 - `humanPresenceOnTheRoad`                         - in case the type of event is presence of human vulnerable road user on the road,
  * - 13                                                    - reserved for future usage,
  * - 14 - `wrongWayDriving`                                - in case the type of the event is vehicle driving in wrong way,
- * - 15 - `rescueAndRecoveryWorkInProgress`                - in case the type of event is rescue and recovery work for accident or for a road hazard in progress,
+ * - 15 - `rescueRecoveryAndMaintenanceWorkInProgress`     - in case the type of event is rescue, recovery and maintenance work for accident or for a road hazard in progress,
  * - 16                                                    - reserved for future usage,
- * - 17 - `adverseWeatherCondition-ExtremeWeatherCondition`- in case the type of event is extreme weather condition,
+ * - 17 - `adverseWeatherCondition-Wind                   `- in case the type of event is wind,
  * - 18 - `adverseWeatherCondition-Visibility`             - in case the type of event is low visibility,
  * - 19 - `adverseWeatherCondition-Precipitation`          - in case the type of event is precipitation,
  * - 20 - `violence`                                       - in case the the type of event is human violence on or near the road,
@@ -711,21 +701,23 @@ CartesianAngularVelocityComponentValue ::= INTEGER {
  * - 101-255                                               - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1, value 28 added in V2.2.1, definition of values 12 and 95 changed in V2.2.1
+ * @revision: V1.3.1, value 20 and 100 added in V2.1.1, value 28 added in V2.2.1, definition of values 12 and 95 changed in V2.2.1,
+ *            name and/or definition of values 3, 6, 9, 15 and 17 changed in V2.4.1, value 4 assigned in V2.4.1
  */
 CauseCodeType ::= INTEGER {
     trafficCondition                                (1),
     accident                                        (2),
     roadworks                                       (3),
+    detectedRoadworks                               (4),
     impassability                                   (5),
-    adverseWeatherCondition-Adhesion                (6),
+    adhesion                                        (6),
     aquaplaning                                     (7),
     hazardousLocation-SurfaceCondition              (9),
     hazardousLocation-ObstacleOnTheRoad             (10),
     hazardousLocation-AnimalOnTheRoad               (11),
     humanPresenceOnTheRoad                          (12),
     wrongWayDriving                                 (14),
-    rescueAndRecoveryWorkInProgress                 (15),
+    rescueRecoveryAndMaintenanceWorkInProgress      (15),
     adverseWeatherCondition-ExtremeWeatherCondition (17),
     adverseWeatherCondition-Visibility              (18),
     adverseWeatherCondition-Precipitation           (19),
@@ -873,10 +865,12 @@ ClusterLeaveReason ::= INTEGER {
  * - 5 - `collisionRiskWithPedestrian`    - in case the type of detected collision risk involves at least one pedestrian, 
  * - 6 - `collisionRiskWithCyclist`       - in case the type of detected collision risk involves at least one cyclist (and no pedestrians),
  * - 7 - `collisionRiskWithMotorVehicle`  - in case the type of detected collision risk involves at least one motor vehicle (and no pedestrians or cyclists),
- * - 8-255                                - are reserved for future usage.
+ * - 8 - `erraticDriving`                 - in case the collision risk is due a vehicle exhibiting inconsistent and unpredictable actions like swerving, abrupt lane changes, and inconsistent speed.
+ * - 9 - `recklessDriving`                - in case the collision risk is due a vehicle exhibiting aggressive manoeuvres like tailgating and sudden lane changes and which ignores traffic rules. 
+ * - 10-255                               - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1, values 5-7 assigned in V2.2.1
+ * @revision: V1.3.1, values 5-7 assigned in V2.2.1, values 8-9 added in V2.4.1
  */
 CollisionRiskSubCauseCode ::= INTEGER {
     unavailable                   (0), 
@@ -886,7 +880,9 @@ CollisionRiskSubCauseCode ::= INTEGER {
     vulnerableRoadUser            (4),
     collisionRiskWithPedestrian   (5), 
     collisionRiskWithCyclist      (6), 
-    collisionRiskWithMotorVehicle (7) 
+    collisionRiskWithMotorVehicle (7), 
+    erraticDriving                (8),
+    recklessDriving               (9) 
 }(0..255)
 
 /** 
@@ -927,15 +923,15 @@ CoordinateConfidence ::= INTEGER {
  *
  * The value shall be set to: 
  * - `-100` in case of full negative correlation,
- * - `n` (`n > -100` and `n < 0`) if the correlation is negative and equal to n x 100,
+ * - `n` (`n > -100` and `n < 0`) if the correlation is negative and equal to n/100,
  * - `0` in case of no correlation,
- * - `n` (`n > 0` and `n < 100`) if the correlation is positive and equal to n x 100,
+ * - `n` (`n > 0` and `n < 100`) if the correlation is positive and equal to n/100,
  * - `100` in case of full positive correlation,
  * - `101` in case the correlation information is unavailable. 
  *
  * @unit: the value is scaled by 100
  * @category: Basic information
- * @revision: Created in V2.1.1
+ * @revision: Created in V2.1.1, corrected the value to n/100 on V2.4.1
 */
 CorrelationCellValue ::= INTEGER {
     full-negative-correlation    (-100),     
@@ -1105,10 +1101,11 @@ DangerousGoodsBasic::= ENUMERATED {
  * - 5 - `aebEngaged`                       - in case Autonomous Emergency Braking (AEB) system is engaged,
  * - 6 - `brakeWarningEngaged`              - in case brake warning is engaged,
  * - 7 - `collisionRiskWarningEngaged`      - in case collision risk warning is engaged,
- * - 8-255                                  - reserved for future usage.
+ * - 8 - `riskMitigationFunctionEngaged`    - in case the Risk Mitigation Function according to UNECE Regulation 79 is engaged,
+ * - 9-255                                  - reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 8 assigned in V2.4.1
  */
 DangerousSituationSubCauseCode ::= INTEGER {
     unavailable                     (0), 
@@ -1118,7 +1115,8 @@ DangerousSituationSubCauseCode ::= INTEGER {
     absEngaged                      (4), 
     aebEngaged                      (5), 
     brakeWarningEngaged             (6), 
-    collisionRiskWarningEngaged     (7)
+    collisionRiskWarningEngaged     (7),
+    riskMitigationFunctionEngaged   (8)
 } (0..255)
 
 /**
@@ -1553,64 +1551,67 @@ HazardousLocation-DangerousCurveSubCauseCode ::= INTEGER {
  * This DE represents the value of the sub cause code of the @ref CauseCode `hazardousLocation-ObstacleOnTheRoad`. 
  * 
  * The value shall be set to:
- * - 0 - `unavailable`    - in case further detailed information on the detected obstacle is unavailable,
- * - 1 - `shedLoad`       - in case detected obstacle is large amount of obstacles (shedload),
- * - 2 - `partsOfVehicles`- in case detected obstacles are parts of vehicles,
- * - 3 - `partsOfTyres`   - in case the detected obstacles are parts of tyres,
- * - 4 - `bigObjects`     - in case the detected obstacles are big objects,
- * - 5 - `fallenTrees`    - in case the detected obstacles are fallen trees,
- * - 6 - `hubCaps`        - in case the detected obstacles are hub caps,
- * - 7 - `waitingVehicles`- in case the detected obstacles are waiting vehicles.
+ * - 0 - `unavailable`                - in case further detailed information on the detected obstacle is unavailable,
+ * - 1 - `shedLoad`                   - in case detected obstacle is large amount of obstacles (shedload),
+ * - 2 - `partsOfVehicles`            - in case detected obstacles are parts of vehicles,
+ * - 3 - `partsOfTyres`               - in case the detected obstacles are parts of tyres,
+ * - 4 - `bigObjects`                 - in case the detected obstacles are big objects,
+ * - 5 - `fallenTrees`                - in case the detected obstacles are fallen trees,
+ * - 6 - `hubCaps`                    - in case the detected obstacles are hub caps,
+ * - 7 - `waitingVehicles-deprecated` - deprecated since not representing an obstacle and already covered by StationaryVehicleSubCauseCode.
  * - 8-255                - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 7 deprecated in V2.4.1
  */
 HazardousLocation-ObstacleOnTheRoadSubCauseCode ::= INTEGER {
-    unavailable     (0), 
-    shedLoad        (1), 
-    partsOfVehicles (2), 
-    partsOfTyres    (3), 
-    bigObjects      (4), 
-    fallenTrees     (5), 
-    hubCaps         (6), 
-    waitingVehicles (7)
+    unavailable                (0), 
+    shedLoad                   (1), 
+    partsOfVehicles            (2), 
+    partsOfTyres               (3), 
+    bigObjects                 (4), 
+    fallenTrees                (5), 
+    hubCaps                    (6), 
+    waitingVehicles-deprecated (7)
 } (0..255)
 
 /**
  * This DE represents the value of the sub cause code of the @ref CauseCode `hazardousLocation-SurfaceCondition`. 
  * 
 The value shall be set to:
- * - 0  - `unavailable`     - in case further detailed information on the road surface condition is unavailable,
- * - 1  - `rockfalls`       - in case rock falls are detected on the road surface,
- * - 2  - `earthquakeDamage`- in case the road surface is damaged by earthquake,
- * - 3  - `sewerCollapse`   - in case of sewer collapse on the road surface,
- * - 4  - `subsidence`      - in case road surface is damaged by subsidence,
- * - 5  - `snowDrifts`      - in case road surface is damaged due to snow drift,
- * - 6  - `stormDamage`     - in case road surface is damaged by strong storm,
- * - 7  - `burstPipe`       - in case road surface is damaged due to pipe burst,
- * - 8  - `volcanoEruption` - in case road surface is damaged due to volcano eruption,
- * - 9  - `fallingIce`      - in case road surface damage is due to falling ice,
- * - 10 - `fire`            - in case there is fire on or near to the road surface,
- * - 11 - `flooding`        - in case the road surface is flooded.
- * - 12-255                 - are reserved for future usage.
+ * - 0  - `unavailable`                  - in case further detailed information on the road surface condition is unavailable,
+ * - 1  - `rockfalls`                    - in case rock falls have fallen on the road surface,
+ * - 2  - `earthquakeDamage-deprecated`  - deprecated since it is covered by 1 rockfalls and 4 subsidence,
+ * - 3  - `sinkhole`                     - in case of a partial collapse of the road surface that creates a depression (hole) in the pavement,
+ * - 4  - `subsidence`                   - in case road surface is damaged by subsidence,
+ * - 5  - `snowDrifts-deprecated`        - deprecated since not representing a road damage,
+ * - 6  - `stormDamage-deprecated`       - deprecated since not representing a road damage,
+ * - 7  - `burstPipe-deprecated`         - deprecated since not representing a road damage,
+ * - 8  - `lava           `              - in case road surface is damaged due to  lava on the road,
+ * - 9  - `fallingIce-deprecated`        - deprecated since not representing a road damage,
+ * - 10 - `fire`                         - in case there is fire on or near to the road surface,
+ * - 11 - `flooding-deprecated`          - deprecated since not representing a road damage.
+ * - 12 - `wearAndTear`                  - in case the road surface is damaged by wear and tear.
+ * - 13-255                              - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1, value 11 added in V2.3.1
+ * @revision: V1.3.1, value 10 added in V2.1.1, value 11 added in V2.3.1, 
+              name and definition of value 3 and 8 changed in V2.4.1, values 2, 5, 6, 7, 9 and 11 deprecated in V2.4.1, vaue 12 added in V2.4.1
  */
 HazardousLocation-SurfaceConditionSubCauseCode ::= INTEGER {
-    unavailable      (0), 
-    rockfalls        (1), 
-    earthquakeDamage (2), 
-    sewerCollapse    (3), 
-    subsidence       (4), 
-    snowDrifts       (5), 
-    stormDamage      (6), 
-    burstPipe        (7), 
-    volcanoEruption  (8), 
-    fallingIce       (9), 
-    fire             (10),
-    flooding         (11)   
+    unavailable                 (0), 
+    rockfalls                   (1), 
+    earthquakeDamage-deprecated (2), 
+    sinkhole                    (3), 
+    subsidence                  (4), 
+    snowDrifts-deprecated       (5), 
+    stormDamage-deprecated      (6), 
+    burstPipe-deprecated        (7), 
+    lava                        (8), 
+    fallingIce-deprecated       (9), 
+    fire                        (10),
+    flooding-deprecated         (11),
+    wearAndTear                 (12)      
 } (0..255)
 
 /**
@@ -1738,18 +1739,20 @@ HumanPresenceOnTheRoadSubCauseCode ::= INTEGER {
  * This DE represents the value of the sub cause codes of the @ref CauseCode "humanProblem".
  * 
  * The value shall be set to:
- * - 0 - `unavailable`    - in case further detailed information on human health problem is unavailable,
- * - 1 - `glycemiaProblem`- in case human problem is due to glycaemia problem,
- * - 2 - `heartProblem`   - in case human problem is due to heart problem.
- * - 3-255                - reserved for future usage.
+ * - 0 - `unavailable`        - in case further detailed information on human health problem is unavailable,
+ * - 1 - `glycemiaProblem`    - in case human problem is due to glycaemia problem,
+ * - 2 - `heartProblem`       - in case human problem is due to heart problem,
+ * - 3 - `unresponsiveDriver` - in case an unresponsive driver is detected.
+ * - 3-255                    - reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 3 assigned in V2.4.1
  */
 HumanProblemSubCauseCode ::= INTEGER {
-    unavailable     (0), 
-    glycemiaProblem (1), 
-    heartProblem    (2)
+    unavailable        (0), 
+    glycemiaProblem    (1), 
+    heartProblem       (2),
+    unresponsiveDriver (3)
 } (0..255)
 
 /** 
@@ -2287,10 +2290,12 @@ MatrixIncludedComponents::= BIT STRING{
  *  - 18 - `mim`               - for Marshalling Infrastructure Message as specified in ETSI TS TS 103 882 [11],
  *  - 19 - `mvm`               - for Marshalling Vehicle Message as specified in ETSI TS TS 103 882 [11],
  *  - 20 - `mcm`               - reserved for Manoeuvre Coordination Message,
- *  - 21-255                   - reserved for future usage.
+ *  - 21 - `pim`               - reserved for Parking Information Message, 
+ *  - 22-255                   - reserved for future usage.
  *
  * @category: Communication information
- * @revision: Created in V2.1.1 from @ref ItsPduHeader. Value 3 re-assigned to poim and value 7 and 8 reserved in V2.2.1, values 18 and 19 assigned in V2.3.1
+ * @revision: Created in V2.1.1 from @ref ItsPduHeader. Value 3 re-assigned to poim and value 7 and 8 reserved in V2.2.1, values 18 and 19 assigned in V2.3.1, 
+              value 21 assigned in V2.4.1
  */
 MessageId::= INTEGER { 
     denm              (1),  
@@ -2312,8 +2317,38 @@ MessageId::= INTEGER {
     dsm               (17), 
     mim               (18),
     mvm               (19),
-    mcm               (20)
+    mcm               (20),
+    pim               (21)
 } (0..255)
+
+/**
+ * This DE provides a factor to be multiplied with a DE that represents a measure of something, to extend the range/change the unit. 
+ * The DE that is multiplied is to be specified outside of the context of this DE, e.g. in a facility layer service specification.
+ *
+ * The value shall be set to:
+ * - `tenth`      - to indicate a factor of 0,1,        
+ * - `half`       - to indicate a factor of 0,5,        
+ * - `two`        - to indicate a factor of 2,        
+ * - `three`      - to indicate a factor of 3,        
+ * - `five`       - to indicate a factor of 5,        
+ * - `tenth`      - to indicate a factor of 10,        
+ * - `fifthy`     - to indicate a factor of 50,        
+ * - `hundred`    - to indicate a factor of 100,        
+ *
+ * @category: Basic information
+ * @revision: Created in V2.4.1
+ */
+MultiplicativeFactor::= ENUMERATED { 
+    tenth,
+    half, 
+    two,
+    three,
+    five,
+    ten,
+    fifty,
+    hundred,
+    ...
+}
 
 /**
  * This DE represents the number of occupants in a vehicle.
@@ -2353,13 +2388,13 @@ ObjectPerceptionQuality ::= INTEGER {
  * This DE represents a single dimension of an object.
  *
  * The value shall be set to:
- * - `n` (`n > 0` and `n < 255`) if the  accuracy is equal to or less than n x 0,1 m, and more than (n-1) x 0,1 m,
- * - `255` if the accuracy is out of range i.e. greater than 25,4 m,
- * - `256` if the data is unavailable.
+ * - `n` (`n > 0` and `n < 255`) if the dimension is equal to or less than n x 0,1 m, and more than (n-1) x 0,1 m,
+ * - `255` if the dimension is out of range i.e. greater than 25,4 m,
+ * - `256` if the dimension is unavailable.
  *
  * @unit 0,1 m
  * @category: Basic information
- * @revision: Created in V2.1.1 
+ * @revision: Created in V2.1.1, corrected the wording in V2.4.1 
 */
 ObjectDimensionValue ::= INTEGER { 
     outOfRange              (255),
@@ -2489,13 +2524,15 @@ ParkingAreaArrangementType ::= INTEGER {
  * - `8` to indicate that it is reserved for VIPs,
  * - `9` to indicate that it is reserved for pre-booked reservations only,
  * - `10` to indicate that it is not reserved and can still be reserved,
- * - `11` to indicate that it cannot be reserved,
+ * - `11` to indicate that a reservation type is not applicable, i.e. that it cannot be reserved,
  * - `12` to indicate that it reserved for drop-off and pick-up of vehicles for automated valet parking,
  * - `13` to indicate that it is reserved for vehicles with a permit,
- * - 14-31  - reserved for future usage. 
+ * - `14` to indicate that it is an (often unmarked / undesignated, but still not prohibited) space/area which is reserved for use only on occasions 
+          when all official marked parking spaces to which it blocks the access (if any), are already occupied at the moment of arrival.
+ * - 15-31  - reserved for future usage. 
  *
  * @category: Road topology information
- * @revision: Created in V2.3.1
+ * @revision: Created in V2.3.1, value 14 assigned in V2.4.1.
 */
 ParkingReservationType ::= INTEGER { 
    disabled                         (0), 
@@ -2511,7 +2548,8 @@ ParkingReservationType ::= INTEGER {
    freeToBeReserved                 (10),
    reservationNotPossible           (11),
    automatedValetparking            (12), 
-   permit                           (13)
+   permit                           (13),
+   unmarked                         (14)
 }(0..31)
 
 
@@ -2965,32 +3003,32 @@ RequestResponseIndication ::= ENUMERATED {
 }
 
 /**
- * This DE represents the value of the sub cause codes of the @ref CauseCode `rescueAndRecoveryWorkInProgress` 
+ * This DE represents the value of the sub cause codes of the @ref CauseCode `RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode` 
  * 
  * The value shall be set to:
- * - 0 `unavailable`              - in case further detailed information on rescue and recovery work is unavailable,
- * - 1 `emergencyVehicles`        - in case rescue and/or safeguarding work is ongoing by emergency vehicles, i.e. by vehicles that have the absolute right of way,
- * - 2 `rescueHelicopterLanding`  - in case rescue helicopter is landing,
- * - 3 `policeActivityOngoing`    - in case police activity is ongoing (only to be used if a more specific sub cause than (1) is needed),
- * - 4 `medicalEmergencyOngoing`  - in case medical emergency recovery is ongoing (only to be used if a more specific sub cause than (1) is needed),
- * - 5 `childAbductionInProgress` - in case a child kidnapping alarm is activated and rescue work is ongoing (only to be used if a more specific sub cause than (1) is needed),
- * - 6 `prioritizedVehicle`       - in case rescue and/or safeguarding work is ongoing by prioritized vehicles, i.e. by vehicles that have priority but not the absolute right of way,
- * - 7 `rescueAndRecoveryVehicle` - in case technical rescue work is ongoing by rescue and recovery vehicles.
+ * - 0 `unavailable`                         - in case further detailed information on rescue and recovery work is unavailable,
+ * - 1 `emergencyVehicles`                   - in case rescue and/or safeguarding work is ongoing by emergency vehicles, i.e. by vehicles that have the absolute right of way,
+ * - 2 `rescueHelicopterLanding`             - in case rescue helicopter is landing,
+ * - 3 `policeActivityOngoing`               - in case police activity is ongoing (only to be used if a more specific sub cause than (1) is needed),
+ * - 4 `medicalEmergencyOngoing`             - in case medical emergency recovery is ongoing (only to be used if a more specific sub cause than (1) is needed),
+ * - 5 `childAbductionInProgress-deprecated` - deprecated,
+ * - 6 `prioritizedVehicle`                  - in case rescue and/or safeguarding work is ongoing by prioritized vehicles, i.e. by vehicles that have priority but not the absolute right of way,
+ * - 7 `rescueAndRecoveryVehicle`            - in case technical rescue work is ongoing by rescue and recovery vehicles.
  * - 8-255: reserved for future usage.
 
  *
  * @category: Traffic information
- * @revision: V1.3.1, named values 6 and 7 added in V2.2.1
+ * @revision: V1.3.1, named values 6 and 7 added in V2.2.1, DE renamed and value 5 deprecated in V2.4.1
  */
-RescueAndRecoveryWorkInProgressSubCauseCode ::= INTEGER {
-   unavailable              (0), 
-   emergencyVehicles        (1), 
-   rescueHelicopterLanding  (2), 
-   policeActivityOngoing    (3), 
-   medicalEmergencyOngoing  (4), 
-   childAbductionInProgress (5),
-   prioritizedVehicle       (6),
-   rescueAndRecoveryVehicle (7)
+RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode  ::= INTEGER {
+   unavailable                         (0), 
+   emergencyVehicles                   (1), 
+   rescueHelicopterLanding             (2), 
+   policeActivityOngoing               (3), 
+   medicalEmergencyOngoing             (4), 
+   childAbductionInProgress-deprecated (5),
+   prioritizedVehicle                  (6),
+   rescueAndRecoveryVehicle            (7)
 } (0..255)
 
 
@@ -3031,31 +3069,34 @@ RoadType ::= ENUMERATED {
  * 
 The value shall be set to:
  * - 0 `unavailable`                 - in case further detailed information on roadworks is unavailable,
- * - 1 `majorRoadworks`              - in case a major roadworks is ongoing,
- * - 2 `roadMarkingWork`             - in case a road marking work is ongoing,
- * - 3 `slowMovingRoadMaintenance`   - in case slow moving road maintenance work is ongoing,
- * - 4 `shortTermStationaryRoadworks`- in case a short term stationary roadwork is ongoing,
- * - 5 `streetCleaning`              - in case a vehicle street cleaning work is ongoing,
- * - 6 `winterService`               - in case winter service work is ongoing,
- * - 7 `setupPhase`                  - in case the work zone is being setup,
- * - 8 `remodellingPhase`            - in case the work zone is being changed, 
- * - 9 `dismantlingPhase`            - in case the work zone is being dismantled after finished work.
- * - 10-255                          - are reserved for future usage.
+ * - 1 `roadOrCarriagewayClosure`    - in case roadworks are ongoing which comprise the closure of the entire road or of one entire carriageway,
+ * - 2 `roadMarkingWork-deprecated`  - deprecated since covered by 3 or 4,
+ * - 3 `movingLaneClosure`           - in case moving roadworks are ongoing, which comprise the closure of a lane,
+ * - 4 `stationaryLaneClosure`       - in case stationary roadworks are ongoing, which comprise the closure of one or multiple lanes but not of the carriageway/road,
+ * - 5 `streetCleaning-deprecated`   - deprecated since not pertinent to roadworks and already covered by SlowVehicleSubCauseCode,
+ * - 6 `winterService-deprecated`    - deprecated since not pertinent to roadworks and already covered by SlowVehicleSubCauseCode,
+ * - 7 `setupPhase`                  - in case the work zone is being setup which, may comprise the closure of one or multiple lanes but the carriageway/road is not closed, 
+ * - 8 `remodellingPhase`            - in case the work zone is being changed, which may comprise the closure of one or multiple lanes but the carriageway/road is not closed, 
+ * - 9 `dismantlingPhase`            - in case the work zone is being dismantled after finished works, which comprised the closure of one or multiple lanes 
+                                       but the carriageway/road was not closed,
+ * - 10 `carriagewayCrossover`       - in case the work zone includes lanes that are re-directed to another carriageway. 
+ * - 11-255                          - are reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1, values 7-9 added in V2.3.1
+ * @revision: V1.3.1, values 7-9 added in V2.3.1, values 1, 3, 4 renamed in V2.4.1, value 2, 5 und 6 deprecated in V2.4.1, value 10 added in V2.4.1
  */
 RoadworksSubCauseCode ::= INTEGER {
     unavailable                  (0), 
-    majorRoadworks               (1),
-    roadMarkingWork              (2), 
-    slowMovingRoadMaintenance    (3), 
-    shortTermStationaryRoadworks (4), 
-    streetCleaning               (5), 
-    winterService                (6),
+    roadOrCarriagewayClosure     (1),
+    roadMarkingWork-deprecated   (2), 
+    movingLaneClosure            (3), 
+    stationaryLaneClosure        (4), 
+    streetCleaning-deprecated    (5), 
+    winterService-deprecated     (6),
     setupPhase                   (7),
     remodellingPhase             (8),
-    dismantlingPhase             (9)
+    dismantlingPhase             (9),
+    carriagewayCrossover         (10)
 } (0..255)
 
 /**
@@ -3230,31 +3271,32 @@ SignalViolationSubCauseCode ::= INTEGER {
  * This DE represents the sub cause codes of the @ref CauseCode "slowVehicle".
  * 
  * The value shall be set to:
- * - 0 `unavailable`                    - in case further detailed information on slow vehicle driving event is
- *                                        unavailable,
- * - 1 `maintenanceVehicle`             - in case of a slow driving maintenance vehicle on the road,
- * - 2 `vehiclesSlowingToLookAtAccident`- in case vehicle is temporally slowing down to look at accident, spot, etc.,
- * - 3 `abnormalLoad`                   - in case an abnormal loaded vehicle is driving slowly on the road,
- * - 4 `abnormalWideLoad`               - in case an abnormal wide load vehicle is driving slowly on the road,
- * - 5 `convoy`                         - in case of slow driving convoy on the road,
- * - 6 `snowplough`                     - in case of slow driving snow plough on the road,
- * - 7 `deicing`                        - in case of slow driving de-icing vehicle on the road,
- * - 8 `saltingVehicles`                - in case of slow driving salting vehicle on the road.
- * - 9-255                              - are reserved for future usage.
+ * - 0 `unavailable`                            - in case further detailed information on slow vehicle driving event is unavailable,
+ * - 1 `maintenanceVehicle`                     - in case of a slow driving maintenance vehicle on the road (incl. winter maintenance without detailed status),
+ * - 2 `vehiclesSlowingToLookAtAccident`        - in case vehicle is temporally slowing down to look at accident, spot, etc.,
+ * - 3 `abnormalLoad`                           - in case an abnormal loaded vehicle is driving slowly on the road,
+ * - 4 `abnormalWideLoad`                       - in case an abnormal wide load vehicle is driving slowly on the road,
+ * - 5 `convoy`                                 - in case of slow driving convoy on the road,
+ * - 6 `winterMaintenanceSnowplough             - in case of slow driving snow plough on the road,
+ * - 7 `deicing-deprecated`                     - deprecated since covered by 8 `winterMaintenanceAdhesionImprovement`,
+ * - 8 `winterMaintenanceAdhesionImprovement`   - in case of a slow driving winter maintenance vehicle applying measures to improve the driving conditions 
+                                                  and adhesion on winter roads, including improving grip (by applying sand or grit), de-icing (by applying salt or brine),
+                                                  or anti-icing (by applying brine to prevent buildup of ice and snow). 
+ * - 9-255                                      - are reserved for future usage.
  * 
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 7 deprecated and name of 6 and 8 changed and semantics of 8 refined in V2.4.1
  */
 SlowVehicleSubCauseCode ::= INTEGER {
-    unavailable                     (0), 
-    maintenanceVehicle              (1), 
-    vehiclesSlowingToLookAtAccident (2), 
-    abnormalLoad                    (3), 
-    abnormalWideLoad                (4), 
-    convoy                          (5), 
-    snowplough                      (6), 
-    deicing                         (7), 
-    saltingVehicles                 (8)
+    unavailable                          (0), 
+    maintenanceVehicle                   (1), 
+    vehiclesSlowingToLookAtAccident      (2), 
+    abnormalLoad                         (3), 
+    abnormalWideLoad                     (4), 
+    convoy                               (5), 
+    winterMaintenanceSnowplough          (6), 
+    deicing-deprecated                   (7), 
+    winterMaintenanceAdhesionImprovement (8)  
 } (0..255)
 
 /**
@@ -3485,26 +3527,26 @@ StationarySince ::= ENUMERATED {
  * This DE provides the value of the sub cause codes of the @ref CauseCode "stationaryVehicle". 
  * 
  * The value shall be set to:
- * - 0 `unavailable`           - in case further detailed information on stationary vehicle is unavailable,
- * - 1 `humanProblem`          - in case stationary vehicle is due to health problem of driver or passenger,
- * - 2 `vehicleBreakdown`      - in case stationary vehicle is due to vehicle break down,
- * - 3 `postCrash`             - in case stationary vehicle is caused by collision,
- * - 4 `publicTransportStop`   - in case public transport vehicle is stationary at bus stop,
- * - 5 `carryingDangerousGoods`- in case the stationary vehicle is carrying dangerous goods,
- * - 6 `vehicleOnFire`         - in case of vehicle on fire.
+ * - 0 `unavailable`             - in case further detailed information on stationary vehicle is unavailable,
+ * - 1 `humanProblem-deprecated` - deprecated since covered by DE HumanProblemSubCauseCode,
+ * - 2 `vehicleBreakdown`        - in case stationary vehicle is due to vehicle break down,
+ * - 3 `postCrash`               - in case stationary vehicle is caused by collision,
+ * - 4 `publicTransportStop`     - in case public transport vehicle is stationary at bus stop,
+ * - 5 `carryingDangerousGoods`  - in case the stationary vehicle is carrying dangerous goods,
+ * - 6 `vehicleOnFire`           - in case of vehicle on fire.
  * - 7-255 reserved for future usage.
  *
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 6 added in V2.1.1, value 1 deprecated in V2.4.1
  */
 StationaryVehicleSubCauseCode ::= INTEGER {
-    unavailable            (0), 
-    humanProblem           (1), 
-    vehicleBreakdown       (2), 
-    postCrash              (3), 
-    publicTransportStop    (4), 
-    carryingDangerousGoods (5), 
-    vehicleOnFire          (6)
+    unavailable             (0), 
+    humanProblem-deprecated (1), 
+    vehicleBreakdown        (2), 
+    postCrash               (3), 
+    publicTransportStop     (4), 
+    carryingDangerousGoods  (5), 
+    vehicleOnFire           (6)
 } (0..255)
 
 /**
@@ -3530,50 +3572,12 @@ StationID ::= INTEGER(0..4294967295)
  * This DE represents the type of technical context the ITS-S is integrated in.
  * The station type depends on the integration environment of ITS-S into vehicle, mobile devices or at infrastructure.
  * 
- * The value shall be set to:
- * - 0 `unknown`          - information about the ITS-S context is not provided,
- * - 1 `pedestrian`       - ITS-S carried by human being not using a mechanical device for their trip (VRU profile 1),
- * - 2 `cyclist`          - ITS-S mounted on non-motorized unicycles, bicycles , tricycles, quadracycles (VRU profile 2),
- * - 3 `moped`            - ITS-S mounted on light motor vehicles with less than four wheels as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] 
-                            class L1, L2 (VRU Profile 3),
- * - 4 `motorcycles`      - ITS-S mounted on motor vehicles with less than four wheels as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] 
-                            class L3, L4, L5, L6, L7 (VRU Profile 3),
- * - 5 `passengerCar`     - ITS-S mounted on small passenger vehicles as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] class M1,
- * - 6 `bus`              - ITS-S mounted on large passenger vehicles as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] class M2, M3,
- * - 7 `lightTruck`       - ITS-S mounted on light Goods Vehicles as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] class N1,
- * - 8 `heavyTruck`       - ITS-S mounted on Heavy Goods Vehicles as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] class N2 and N3,
- * - 9 `trailer`          - ITS-S mounted on an unpowered vehicle that is intended to be towed by a powered vehicle as defined in 
-                            UNECE/TRANS/WP.29/78/Rev.4 [16] class O,
- * - 10 `specialVehicles` - ITS-S mounted on vehicles which have special purposes other than the above (e.g. moving road works vehicle),
- * - 11 `tram`            - ITS-S mounted on a vehicle which runs on tracks along public streets,
- * - 12 `lightVruVehicle` - ITS-S carried by a human being traveling on light vehicle , incl. possible use of roller skates or skateboards (VRU profile 2),
- * - 13 `animal`          - ITS-S carried by an animal presenting a safety risk to other road users e.g. domesticated dog in a city or horse (VRU Profile 4),
- * - 14                   - reserved for future usage,
- * - 15 `roadSideUnit`    - ITS-S mounted on an infrastructure typically positioned outside of the drivable roadway (e.g. on a gantry, on a pole, 
-                            on a stationary road works trailer); the infrastructure is static during the entire operation period of the ITS-S (e.g. no stop and go activity),
- * - 16-255               - are reserved for future usage.
+ * The value shall be set to the corresponding value of the integration environment of DE TrafficParticipantType
  * 
- * @note: this DE is kept for backwards compatibility reasons only. It is recommended to use the @ref TrafficParticipantType instead.
  * @category: Communication information.
- * @revision: revised in V2.1.1 (named values 12 and 13 added and note to value 9 deleted)
+ * @revision: revised in V2.1.1 (named values 12 and 13 added and note to value 9 deleted). Deleted note and type set equal to TrafficParticipantType in V2.4.1.
  */
-StationType ::= INTEGER {
-    unknown         (0), 
-    pedestrian      (1), 
-    cyclist         (2), 
-    moped           (3), 
-    motorcycle      (4), 
-    passengerCar    (5), 
-    bus             (6), 
-    lightTruck      (7), 
-    heavyTruck      (8), 
-    trailer         (9), 
-    specialVehicle  (10), 
-    tram            (11), 
-    lightVruVehicle (12), 
-    animal          (13), 
-    roadSideUnit    (15)
-} (0..255)
+StationType ::= TrafficParticipantType
 
 /**
  * This DE indicates the steering wheel angle confidence value which represents the estimated absolute accuracy for a  steering wheel angle value with a confidence level of 95 %.
@@ -3743,12 +3747,12 @@ TrafficConditionSubCauseCode ::= INTEGER {
  * - 12 `lightVruVehicle` - human being traveling on light vehicle, incl. possible use of roller skates or skateboards (VRU profile 2),
  * - 13 `animal`          - animal presenting a safety risk to other road users e.g. domesticated dog in a city or horse (VRU Profile 4),
  * - 14 `agricultural`    - agricultural and forestry vehicles as defined in UNECE/TRANS/WP.29/78/Rev.4 [16] class T,
- * - 15 `roadSideUnit`    - infrastructure typically positioned outside of the drivable roadway (e.g. on a gantry, on a pole, 
-                            on a stationary road works trailer); the infrastructure is static during the entire operation period of the ITS-S (e.g. no stop and go activity),
+ * - 15 `infrastructure`  - infrastructure typically positioned outside of the drivable roadway (e.g. on a gantry, on a pole, on a stationary road works trailer, 
+                            or in a traffic control center); the infrastructure is static during the entire operation period of the ITS-S (e.g. no stop and go activity),
  * - 16-255               - are reserved for future usage.
  * 
  * @category: Communication information.
- * @revision: Created in V2.1.1 based on StationType
+ * @revision: Created in V2.1.1 based on StationType, Changed name and definition of value 15 in V2.4.1 
  */
 TrafficParticipantType ::= INTEGER {
     unknown         (0), 
@@ -3766,7 +3770,7 @@ TrafficParticipantType ::= INTEGER {
     lightVruVehicle (12), 
     animal          (13),
     agricultural    (14), 
-    roadSideUnit    (15)
+    infrastructure  (15)
 } (0..255)
 
 /**
@@ -3909,15 +3913,15 @@ TurningRadius ::= INTEGER {
  * @revision: Created in V2.2.1, extension 3-7 added in V2.3.1
  */
 UsageIndication ::= ENUMERATED { 
-    noIndication(0),
-    specialUse (1),
+    noIndication    (0),
+    specialUse      (1),
     rescueOperation (2),
     ...,
-    railroad (3),
-    fixedRoute (4),
+    railroad        (3),
+    fixedRoute      (4),
     restrictedRoute (5),
-    adasAd (6),
-    navigation (7)
+    adasAd          (6),
+    navigation      (7)
 }
 
 /** 
@@ -3945,34 +3949,34 @@ VDS ::= IA5String (SIZE(6))
  * This DE represents the value of the sub cause codes of the @ref CauseCode `vehicleBreakdown`. 
  * 
  * The value shall be set to:
- * - 0 `unavailable`         - in case further detailed information on cause of vehicle break down is unavailable,
- * - 1 `lackOfFuel`          - in case vehicle break down is due to lack of fuel,
- * - 2 `lackOfBatteryPower`  - in case vehicle break down is caused by lack of battery power,
- * - 3 `engineProblem`       - in case vehicle break down is caused by an engine problem,
- * - 4 `transmissionProblem` - in case vehicle break down is caused by transmission problem,
- * - 5 `engineCoolingProblem`- in case vehicle break down is caused by an engine cooling problem,
- * - 6 `brakingSystemProblem`- in case vehicle break down is caused by a braking system problem,
- * - 7 `steeringProblem`     - in case vehicle break down is caused by a steering problem,
- * - 8 `tyrePuncture`        - in case vehicle break down is caused by tyre puncture,
- * - 9 `tyrePressureProblem` - in case low tyre pressure in detected,
- * - 10 `vehicleOnFire`      - in case the vehicle is on fire.
- * - 11-255                  - are reserved for future usage.
+ * - 0 `unavailable`              - in case further detailed information on cause of vehicle break down is unavailable,
+ * - 1 `lackOfFuel`               - in case vehicle break down is due to lack of fuel,
+ * - 2 `lackOfBatteryPower`       - in case vehicle break down is caused by lack of battery power,
+ * - 3 `engineProblem`            - in case vehicle break down is caused by an engine problem,
+ * - 4 `transmissionProblem`      - in case vehicle break down is caused by transmission problem,
+ * - 5 `engineCoolingProblem`     - in case vehicle break down is caused by an engine cooling problem,
+ * - 6 `brakingSystemProblem`     - in case vehicle break down is caused by a braking system problem,
+ * - 7 `steeringProblem`          - in case vehicle break down is caused by a steering problem,
+ * - 8 `tyrePuncture-deprecated`  - deprecated since covered by `tyrePressureProblem`,
+ * - 9 `tyrePressureProblem`      - in case low tyre pressure in detected,
+ * - 10 `vehicleOnFire`           - in case the vehicle is on fire.
+ * - 11-255                       - are reserved for future usage.
  *
  * @category: Traffic information
-
+ * @revision: V1.3.1, value 10 assigned in V2.1.1, value 8 deprecated in V2.4.1
  */
 VehicleBreakdownSubCauseCode ::= INTEGER {
-    unavailable          (0), 
-    lackOfFuel           (1), 
-    lackOfBatteryPower   (2), 
-    engineProblem        (3), 
-    transmissionProblem  (4), 
-    engineCoolingProblem (5), 
-    brakingSystemProblem (6), 
-    steeringProblem      (7), 
-    tyrePuncture         (8), 
-    tyrePressureProblem  (9), 
-    vehicleOnFire        (10)
+    unavailable             (0), 
+    lackOfFuel              (1), 
+    lackOfBatteryPower      (2), 
+    engineProblem           (3), 
+    transmissionProblem     (4), 
+    engineCoolingProblem    (5), 
+    brakingSystemProblem    (6), 
+    steeringProblem         (7), 
+    tyrePuncture-deprecated (8), 
+    tyrePressureProblem     (9), 
+    vehicleOnFire           (10)
 } (0..255)
 
 /** 
@@ -4293,11 +4297,12 @@ VruSubProfilePedestrian ::= INTEGER {
  * - 7 `pedelec`               - to indicate a pedelec and rider to which no more-specific profile applies,
  * - 8 `speed-pedelec`         - to indicate a speed-pedelec and rider.
  * - 9 `roadbike`              - to indicate a road bicycle (or road pedelec) and rider,
- * - 10 `childrensbike`        - to indicate a childrenï¿½s bicycle (or childrenï¿½s pedelec) and rider,
- * - 11 to 15                  - are reserved for future usage. 
+ * - 10 `childrensbike`        - to indicate a children´s bicycle (or children´s pedelec) and rider,
+ * - 11 `racebike`             - to indicate a race bicycle (according to local applicable regulations) and rider. 
+ * - 12 to 15                  - are reserved for future usage. 
  *
  * @category: VRU information
- * @revision: Created in V2.1.1, values 9 and 10 assigned in V2.2.1
+ * @revision: Created in V2.1.1, values 9 and 10 assigned in V2.2.1, value 11 assigned in V2.4.1
  */
 VruSubProfileBicyclist ::= INTEGER {
     unavailable          (0), 
@@ -4310,7 +4315,8 @@ VruSubProfileBicyclist ::= INTEGER {
     pedelec              (7), 
     speed-pedelec        (8),
     roadbike             (9),
-    childrensbike        (10)
+    childrensbike        (10),
+    racebike             (11)
 }(0..15)
 
 /**
@@ -4494,18 +4500,18 @@ WMInumber ::= IA5String (SIZE(1..3))
  * This DE represents the sub cause codes of the @ref CauseCode `wrongWayDriving` .
  * 
  * The value shall be set to:
- * - 0 `unavailable`    - in case further detailed information on wrong way driving event is unavailable,
- * - 1 `wrongLane`      - in case vehicle is driving on a lane for which it has no authorization to use,
- * - 2 `wrongDirection` - in case vehicle is driving in a direction that it is not allowed,
- * - 3-255              - reserved for future usage.
+ * - 0 `unavailable`           - in case further detailed information on wrong way driving event is unavailable,
+ * - 1 `wrongLane-deprecated`   - deprecated since not pertinent to wrong way driving,
+ * - 2 `wrongDirection`        - in case vehicle is driving in a direction that it is not allowed,
+ * - 3-255                     - reserved for future usage.
  * 
  * @category: Traffic information
- * @revision: V1.3.1
+ * @revision: V1.3.1, value 1 deprecated in V2.4.1
  */
 WrongWayDrivingSubCauseCode ::= INTEGER {
-    unavailable    (0), 
-    wrongLane      (1), 
-    wrongDirection (2)
+    unavailable           (0), 
+    wrongLane-deprecated  (1), 
+    wrongDirection        (2)
 } (0..255)
 
 /**
@@ -4563,14 +4569,13 @@ YawRateConfidence ::= ENUMERATED {
  * - `32 766` to indicate that the yaw rate is greater than 327.65 degrees/second to the left,
  * - `32 767` to indicate that the information is not available.
  * 
- * The yaw rate value shall be a raw data value, i.e. not filtered, smoothed or otherwise modified.
  * The reading instant should be the same as for the vehicle acceleration.
  * 
  * @note: The empty load vehicle is defined in ISO 1176 [8], clause 4.6.
  * 
  * @unit: 0,01 degree per second. 
  * @category: Vehicle Information
- * @revision: Desription revised in V2.1.1 (the meaning of 32766 has changed slightly). 
+ * @revision: Description revised in V2.1.1 (the meaning of 32766 has changed slightly). Requirement on raw data deleted in V2.4.1
 */
 YawRateValue ::= INTEGER {
     negativeOutOfRange (-32766), 
@@ -4947,23 +4952,23 @@ CauseCode ::= SEQUENCE {
  * The following options are available:
  * - 0                                                        - reserved for future use,
  * - 1  - `trafficCondition1`                                 - in case the type of event is an abnormal traffic condition,
- * - 2  - `accident2`                                         - in case the type of event is a road accident,
- * - 3  - `roadworks3`                                        - in case the type of event is roadwork,
- * - 4                                                        - reserved for future usage,
+ * - 2  - `accident2`                                         - in case the type of event is a road accident, 
+ * - 3  - `roadworks3`                                        - in case the type of event is roadwork, based on authoritative information,
+ * - 4  - `detectedRoadworks4`                                - in case the type of event is roadworks, based on non-authoritative information such as factual detections,
  * - 5  - `impassability5`                                    - in case the  type of event is unmanaged road blocking, referring to any
  *                                                              blocking of a road, partial or total, which has not been adequately secured and signposted,
- * - 6  - `adverseWeatherCondition-Adhesion6`                 - in case the  type of event is low adhesion,
+ * - 6  - `adhesion6`                                         - in case the  type of event is low adhesion of the road surface,
  * - 7  - `aquaplaning7`                                      - danger of aquaplaning on the road,
  * - 8                                                        - reserved for future usage,
- * - 9  - `hazardousLocation-SurfaceCondition9`               - in case the type of event is abnormal road surface condition,
+ * - 9  - `hazardousLocation-SurfaceCondition9`               - in case the type of event is abnormal road surface condition not covered by `adhesion6`, 
  * - 10 - `hazardousLocation-ObstacleOnTheRoad10`             - in case the type of event is obstacle on the road,
  * - 11 - `hazardousLocation-AnimalOnTheRoad11`               - in case the type of event is animal on the road,
  * - 12 - `humanPresenceOnTheRoad`                            - in case the type of event is presence of human vulnerable road user on the road,
  * - 13                                                       - reserved for future usage,
  * - 14 - `wrongWayDriving14`                                 - in case the type of the event is vehicle driving in wrong way,
- * - 15 - `rescueAndRecoveryWorkInProgress15`                 - in case the type of event is rescue and recovery work for accident or for a road hazard in progress,
+ * - 15 - `rescueRecoveryAndMaintenanceWorkInProgress15`      - in case the type of event is rescue, recovery and maintenance work for accident or for a road hazard in progress,
  * - 16                                                       - reserved for future usage,
- * - 17 - `adverseWeatherCondition-ExtremeWeatherCondition17` - in case the type of event is extreme weather condition,
+ * - 17 - `adverseWeatherCondition-Wind17`                    - in case the type of event is wind,
  * - 18 - `adverseWeatherCondition-Visibility18`              - in case the type of event is low visibility,
  * - 19 - `adverseWeatherCondition-Precipitation19`           - in case the type of event is precipitation,
  * - 20 - `violence20`                                        - in case the the type of event is human violence on or near the road,
@@ -4989,15 +4994,16 @@ CauseCode ::= SEQUENCE {
  * @note: this DF is defined for use as part of CauseCodeV2. It is recommended to use CauseCodeV2.
  * @category: Traffic information
  * @revision: Created in V2.1.1, the type of impassability5 changed to ImpassabilitySubCauseCode in V2.2.1, value 28 added in V2.2.1, definition of value 12 and 95 changed in V2.2.1
+ *            name and/or definition of values 3, 6, 9, 15 and 17 changed in V2.4.1, value 4 assigned in V2.4.1
  */
 CauseCodeChoice::= CHOICE {
     reserved0                                          SubCauseCodeType,
     trafficCondition1                                  TrafficConditionSubCauseCode,
     accident2                                          AccidentSubCauseCode,
     roadworks3                                         RoadworksSubCauseCode,
-    reserved4                                          SubCauseCodeType,
+    detectedRoadworks4                                 SubCauseCodeType,
     impassability5                                     ImpassabilitySubCauseCode,
-    adverseWeatherCondition-Adhesion6                  AdverseWeatherCondition-AdhesionSubCauseCode,
+    adhesion6                                          AdhesionSubCauseCode,
     aquaplaning7                                       SubCauseCodeType,
     reserved8                                          SubCauseCodeType,
     hazardousLocation-SurfaceCondition9                HazardousLocation-SurfaceConditionSubCauseCode,
@@ -5006,9 +5012,9 @@ CauseCodeChoice::= CHOICE {
     humanPresenceOnTheRoad12                           HumanPresenceOnTheRoadSubCauseCode,
     reserved13                                         SubCauseCodeType,
     wrongWayDriving14                                  WrongWayDrivingSubCauseCode,
-    rescueAndRecoveryWorkInProgress15                  RescueAndRecoveryWorkInProgressSubCauseCode,
+    rescueRecoveryAndMaintenanceWorkInProgress15       RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode,
     reserved16                                         SubCauseCodeType,
-    adverseWeatherCondition-ExtremeWeatherCondition17  AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode,
+    adverseWeatherCondition-Wind17                     AdverseWeatherCondition-WindSubCauseCode,
     adverseWeatherCondition-Visibility18               AdverseWeatherCondition-VisibilitySubCauseCode,
     adverseWeatherCondition-Precipitation19            AdverseWeatherCondition-PrecipitationSubCauseCode,
     violence20                                         SubCauseCodeType,
@@ -5422,13 +5428,14 @@ DigitalMap ::= SEQUENCE (SIZE(1..256)) OF ReferencePosition
  * @field semiMinorAxisLength: half length of the minor axis of the ellipse located in the X-Y Plane.
  *
  * @field orientation: the optional orientation of the major axis of the ellipse, measured with 
- * positive values turning around the z-axis using the right-hand rule, starting from the X-axis. 
+ * positive values turning around the z-axis using the right-hand rule, starting from the X-axis.
+ * If absent, the orientation is equal to the value zero. 
  * 
  * @field height: the optional height, present if the shape is a right elliptical cylinder extending 
  * in the positive Z-axis.
  *
  * @category: GeoReference information
- * @revision: Created in V2.1.1, the type of the field orientation changed and the description revised in V2.2.1
+ * @revision: Created in V2.1.1, the type of the field orientation changed and the description revised in V2.2.1, added note on orientation in V2.4.1
 */
 
 EllipticalShape  ::= SEQUENCE {
@@ -6134,7 +6141,7 @@ MapReferences::= SEQUENCE (SIZE(1..8,...)) OF MapReference
 
 
 /**
- * This DE indicates a message rate.
+ * This DF indicates a message rate.
  *
  * @field mantissa: indicates the mantissa.
  *
@@ -7059,15 +7066,16 @@ RadialShapeDetails ::= SEQUENCE {
  * 
  * @field semiBreadth: represents half the breadth of the rectangle located in the X-Y Plane.
  *
- * @field orientation: represents the optional orientation of the length of the rectangle, 
+ * @field orientation: represents the optional orientation of the longer side of the rectangle, 
  * measured with positive values turning around the Z-axis using the right-hand rule, starting from
- * the X-axis. 
+ * the X-axis. If absent, the orientation is equal to the value zero.
  *
  * @field height: represents the optional height, present if the shape is a right rectangular prism 
  * with height extending in the positive Z-axis.
  *
  * @category GeoReference information
- * @revision: created in V2.1.1, centerPoint renamed to shapeReferencePoint, the type of the field orientation changed and description revised in V2.2.1
+ * @revision: created in V2.1.1, centerPoint renamed to shapeReferencePoint, the type of the field orientation changed 
+ *            and description revised in V2.2.1, added sentence on absence in V2.4.1
  */
 RectangularShape ::= SEQUENCE { 
     shapeReferencePoint   CartesianPosition3d OPTIONAL,

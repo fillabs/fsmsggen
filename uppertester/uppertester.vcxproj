@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="uppertester.c" />
+    <ClCompile Include="uppertester_cmd.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="uppertester.h" />

@@ -1,4 +1,4 @@
-CPM-PDU-Descriptions { itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) cpm (1) major-version-1 (1) minor-version-1(1)}
+CPM-PDU-Descriptions { itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) cpm (1) major-version-2 (2) minor-version-1(1)}
 
 DEFINITIONS AUTOMATIC TAGS ::=
 
@@ -7,23 +7,23 @@ BEGIN
 IMPORTS
 
 ItsPduHeader, MessageRateHz, MessageSegmentationInfo, OrdinalNumber1B,  ReferencePosition, StationType, TimestampIts
-FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (102894) cdd (2) major-version-4 (4) minor-version-2 (2)}
+FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (102894) cdd (2) major-version-4 (4) minor-version-3 (3)}
 WITH SUCCESSORS
 
 OriginatingRsuContainer, OriginatingVehicleContainer
-FROM CPM-OriginatingStationContainers {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) originatingStationContainers (2) major-version-1 (1) minor-version-1(1)}
+FROM CPM-OriginatingStationContainers {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) originatingStationContainers (2) major-version-2 (2) minor-version-1(1)}
 WITH SUCCESSORS
 
 SensorInformationContainer
-FROM CPM-SensorInformationContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) sensorInformationContainer (3) major-version-1 (1) minor-version-1(1)}
+FROM CPM-SensorInformationContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) sensorInformationContainer (3) major-version-2 (2) minor-version-1(1)}
 WITH SUCCESSORS
 
 PerceptionRegionContainer
-FROM CPM-PerceptionRegionContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) perceptionRegionContainer (5) major-version-1 (1) minor-version-1(1)}
+FROM CPM-PerceptionRegionContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) perceptionRegionContainer (5) major-version-2 (2) minor-version-1(1)}
 WITH SUCCESSORS
 
 PerceivedObjectContainer
-FROM CPM-PerceivedObjectContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) perceivedObjectContainer (4) major-version-1 (1) minor-version-1(1)}
+FROM CPM-PerceivedObjectContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) perceivedObjectContainer (4) major-version-2 (2) minor-version-1(1)}
 WITH SUCCESSORS
 
 ;
@@ -39,7 +39,7 @@ WITH SUCCESSORS
  *
 */
 CollectivePerceptionMessage ::= SEQUENCE {
-    header     ItsPduHeader (WITH COMPONENTS {... , protocolVersion (2), messageId(cpm)}),
+    header     ItsPduHeader (WITH COMPONENTS {... , protocolVersion (3), messageId(cpm)}),
     payload    CpmPayload
 }
 
@@ -55,7 +55,7 @@ CollectivePerceptionMessage ::= SEQUENCE {
 */
 CpmPayload ::= SEQUENCE {
     managementContainer   ManagementContainer,
-    cpmContainers         ConstraintWrappedCpmContainers,
+    cpmContainers         WrappedCpmContainers,
     ...
 }
 
@@ -102,7 +102,7 @@ CPM-CONTAINER-ID-AND-TYPE ::= CLASS {
  * This DE represents the identifier of the container type. 
  *
 */
-CpmContainerId ::= INTEGER (1..16)
+CpmContainerId ::= INTEGER (1..16) -- comment: increase range or make extensible.
 
 /**
  * These value assignements represent specific values of the container type identifier. 
@@ -145,13 +145,6 @@ WrappedCpmContainer ::= SEQUENCE {
  * This DF represents a list of CPM containers, each with their type identifier. 
 */
 WrappedCpmContainers::= SEQUENCE SIZE(1..8,...) OF WrappedCpmContainer 
-
-/**
- * This DF represents a list of CPM containers, each with their type identifier with an additional constraint. 
-*/
-ConstraintWrappedCpmContainers ::= WrappedCpmContainers
-    ((WITH COMPONENT (WITH COMPONENTS {..., containerId (ALL EXCEPT 1)})) |
-    (WITH COMPONENT (WITH COMPONENTS {..., containerId (ALL EXCEPT 2)})))
 
 /**
  * This DF  represents the planned or expected range of the message generation rate.

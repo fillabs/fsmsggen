@@ -17,7 +17,8 @@ ifeq (,$(FITSEC_SRC))
 endif
 
 bins          := fsmsggen
-sources       := fsmsggen.c msggen_cam.c msggen_denm.c msggen_gn.c msggen_vam.c utils.c fsgpsd.c
+sources       := msggen_cam.c msggen_denm.c msggen_gn.c msggen_vam.c msggen_cpm.c utils.c fsmsggen.c 
+sources_libgps:= fsgpsd.c
 packages      := libgps cshared pcap thread curl
 includes      := $(FITSEC_SRC) $(FSPKI_SRC) $(FSCRYPTDIR) payload uppertester
 predirs       := payload uppertester
@@ -33,5 +34,9 @@ else
  libs          = $(outdir)/libuppertester.a $(outdir)/libitspayload.a -lm 
  defines  += NO_SECURITY
 endif
-
+post := setcap
 include $(CSHAREDDIR)/common.mk
+
+setcap:
+	sudo setcap cap_net_raw,cap_net_admin=eip $(binnames)
+

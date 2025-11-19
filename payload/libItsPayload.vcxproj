@@ -19,11 +19,52 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AdhesionSubCauseCode.c" />
+    <ClCompile Include="AdverseWeatherCondition-WindSubCauseCode.c" />
+    <ClCompile Include="ANY_xer.c" />
+    <ClCompile Include="asn_codecs_prim_xer.c" />
+    <ClCompile Include="ber_tlv_length.c" />
+    <ClCompile Include="ber_tlv_tag.c" />
+    <ClCompile Include="BIT_STRING_xer.c" />
+    <ClCompile Include="BOOLEAN_xer.c" />
     <ClCompile Include="CAM.c" />
     <ClCompile Include="CamPayload.c" />
     <ClCompile Include="CamParameters.c" />
+    <ClCompile Include="CollectivePerceptionMessage.c" />
+    <ClCompile Include="constr_CHOICE_xer.c" />
+    <ClCompile Include="constr_SEQUENCE_OF_xer.c" />
+    <ClCompile Include="constr_SEQUENCE_xer.c" />
+    <ClCompile Include="constr_SET_OF_xer.c" />
+    <ClCompile Include="CPM-PDU-Descriptions_ManagementContainer.c" />
+    <ClCompile Include="CpmContainerId.c" />
+    <ClCompile Include="CpmPayload.c" />
+    <ClCompile Include="DENM-PDU-Description_ManagementContainer.c" />
+    <ClCompile Include="ENUMERATED.c" />
+    <ClCompile Include="ENUMERATED_uper.c" />
     <ClCompile Include="HighFrequencyContainer.c" />
+    <ClCompile Include="INTEGER_xer.c" />
     <ClCompile Include="LowFrequencyContainer.c" />
+    <ClCompile Include="MessageRateRange.c" />
+    <ClCompile Include="MultiplicativeFactor.c" />
+    <ClCompile Include="NativeEnumerated_xer.c" />
+    <ClCompile Include="NativeInteger_xer.c" />
+    <ClCompile Include="NULL_xer.c" />
+    <ClCompile Include="OBJECT_IDENTIFIER_xer.c" />
+    <ClCompile Include="OCTET_STRING_xer.c" />
+    <ClCompile Include="OPEN_TYPE_xer.c" />
+    <ClCompile Include="OriginatingRsuContainer.c" />
+    <ClCompile Include="OriginatingVehicleContainer.c" />
+    <ClCompile Include="PerceivedEvent.c" />
+    <ClCompile Include="PerceivedObjectContainer.c" />
+    <ClCompile Include="PerceivedObjectIds.c" />
+    <ClCompile Include="PerceivedObjects.c" />
+    <ClCompile Include="PerceptionRegion.c" />
+    <ClCompile Include="PerceptionRegionContainer.c" />
+    <ClCompile Include="Ratio.c" />
+    <ClCompile Include="ReportingType.c" />
+    <ClCompile Include="RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode.c" />
+    <ClCompile Include="SensorInformation.c" />
+    <ClCompile Include="SensorInformationContainer.c" />
     <ClCompile Include="SpecialVehicleContainer.c" />
     <ClCompile Include="BasicVehicleContainerHighFrequency.c" />
     <ClCompile Include="BasicVehicleContainerLowFrequency.c" />
@@ -36,6 +77,9 @@
     <ClCompile Include="SafetyCarContainer.c" />
     <ClCompile Include="RSUContainerHighFrequency.c" />
     <ClCompile Include="ExtensionContainerId.c" />
+    <ClCompile Include="TrailerDataSet.c" />
+    <ClCompile Include="WrappedCpmContainer.c" />
+    <ClCompile Include="WrappedCpmContainers.c" />
     <ClCompile Include="WrappedExtensionContainer.c" />
     <ClCompile Include="WrappedExtensionContainers.c" />
     <ClCompile Include="TwoWheelerContainer.c" />
@@ -48,7 +92,6 @@
     <ClCompile Include="VehicleMovementControlContainer.c" />
     <ClCompile Include="DENM.c" />
     <ClCompile Include="DenmPayload.c" />
-    <ClCompile Include="ManagementContainer.c" />
     <ClCompile Include="SituationContainer.c" />
     <ClCompile Include="LocationContainer.c" />
     <ClCompile Include="ImpactReductionContainer.c" />
@@ -75,8 +118,6 @@
     <ClCompile Include="AccelerationValue.c" />
     <ClCompile Include="AccessTechnologyClass.c" />
     <ClCompile Include="AccidentSubCauseCode.c" />
-    <ClCompile Include="AdverseWeatherCondition-AdhesionSubCauseCode.c" />
-    <ClCompile Include="AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.c" />
     <ClCompile Include="AdverseWeatherCondition-PrecipitationSubCauseCode.c" />
     <ClCompile Include="AdverseWeatherCondition-VisibilitySubCauseCode.c" />
     <ClCompile Include="AirHumidity.c" />
@@ -199,7 +240,6 @@
     <ClCompile Include="RelevanceDistance.c" />
     <ClCompile Include="RelevanceTrafficDirection.c" />
     <ClCompile Include="RequestResponseIndication.c" />
-    <ClCompile Include="RescueAndRecoveryWorkInProgressSubCauseCode.c" />
     <ClCompile Include="RoadSectionId.c" />
     <ClCompile Include="RoadType.c" />
     <ClCompile Include="RoadworksSubCauseCode.c" />
@@ -226,7 +266,6 @@
     <ClCompile Include="StationarySince.c" />
     <ClCompile Include="StationaryVehicleSubCauseCode.c" />
     <ClCompile Include="StationId.c" />
-    <ClCompile Include="StationID-old.c" />
     <ClCompile Include="StationType.c" />
     <ClCompile Include="SteeringWheelAngleConfidence.c" />
     <ClCompile Include="SteeringWheelAngleValue.c" />
@@ -271,6 +310,9 @@
     <ClCompile Include="WiperStatus.c" />
     <ClCompile Include="WMInumber.c" />
     <ClCompile Include="WrongWayDrivingSubCauseCode.c" />
+    <ClCompile Include="xer_decoder.c" />
+    <ClCompile Include="xer_encoder.c" />
+    <ClCompile Include="xer_support.c" />
     <ClCompile Include="YawRateConfidence.c" />
     <ClCompile Include="YawRateValue.c" />
     <ClCompile Include="Acceleration3dWithConfidence.c" />
@@ -280,7 +322,6 @@
     <ClCompile Include="AccelerationChangeIndication.c" />
     <ClCompile Include="AccelerationMagnitude.c" />
     <ClCompile Include="ActionId.c" />
-    <ClCompile Include="ActionID-old.c" />
     <ClCompile Include="ActionIdList.c" />
     <ClCompile Include="Altitude.c" />
     <ClCompile Include="BasicContainer.c" />
@@ -486,11 +527,38 @@
     <ClCompile Include="constr_SET_OF_uper.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AdhesionSubCauseCode.h" />
+    <ClInclude Include="AdverseWeatherCondition-WindSubCauseCode.h" />
+    <ClInclude Include="asn_config.h" />
+    <ClInclude Include="asn_constant.h" />
+    <ClInclude Include="ber_tlv_length.h" />
+    <ClInclude Include="ber_tlv_tag.h" />
     <ClInclude Include="CAM.h" />
     <ClInclude Include="CamPayload.h" />
     <ClInclude Include="CamParameters.h" />
+    <ClInclude Include="CollectivePerceptionMessage.h" />
+    <ClInclude Include="CPM-PDU-Descriptions_ManagementContainer.h" />
+    <ClInclude Include="CpmContainerId.h" />
+    <ClInclude Include="CpmPayload.h" />
+    <ClInclude Include="DENM-PDU-Description_ManagementContainer.h" />
+    <ClInclude Include="ENUMERATED.h" />
     <ClInclude Include="HighFrequencyContainer.h" />
     <ClInclude Include="LowFrequencyContainer.h" />
+    <ClInclude Include="MessageRateRange.h" />
+    <ClInclude Include="MultiplicativeFactor.h" />
+    <ClInclude Include="OriginatingRsuContainer.h" />
+    <ClInclude Include="OriginatingVehicleContainer.h" />
+    <ClInclude Include="PerceivedEvent.h" />
+    <ClInclude Include="PerceivedObjectContainer.h" />
+    <ClInclude Include="PerceivedObjectIds.h" />
+    <ClInclude Include="PerceivedObjects.h" />
+    <ClInclude Include="PerceptionRegion.h" />
+    <ClInclude Include="PerceptionRegionContainer.h" />
+    <ClInclude Include="Ratio.h" />
+    <ClInclude Include="ReportingType.h" />
+    <ClInclude Include="RescueRecoveryAndMaintenanceWorkInProgressSubCauseCode.h" />
+    <ClInclude Include="SensorInformation.h" />
+    <ClInclude Include="SensorInformationContainer.h" />
     <ClInclude Include="SpecialVehicleContainer.h" />
     <ClInclude Include="BasicVehicleContainerHighFrequency.h" />
     <ClInclude Include="BasicVehicleContainerLowFrequency.h" />
@@ -503,6 +571,9 @@
     <ClInclude Include="SafetyCarContainer.h" />
     <ClInclude Include="RSUContainerHighFrequency.h" />
     <ClInclude Include="ExtensionContainerId.h" />
+    <ClInclude Include="TrailerDataSet.h" />
+    <ClInclude Include="WrappedCpmContainer.h" />
+    <ClInclude Include="WrappedCpmContainers.h" />
     <ClInclude Include="WrappedExtensionContainer.h" />
     <ClInclude Include="WrappedExtensionContainers.h" />
     <ClInclude Include="TwoWheelerContainer.h" />
@@ -515,7 +586,6 @@
     <ClInclude Include="VehicleMovementControlContainer.h" />
     <ClInclude Include="DENM.h" />
     <ClInclude Include="DenmPayload.h" />
-    <ClInclude Include="ManagementContainer.h" />
     <ClInclude Include="SituationContainer.h" />
     <ClInclude Include="LocationContainer.h" />
     <ClInclude Include="ImpactReductionContainer.h" />
@@ -542,8 +612,6 @@
     <ClInclude Include="AccelerationValue.h" />
     <ClInclude Include="AccessTechnologyClass.h" />
     <ClInclude Include="AccidentSubCauseCode.h" />
-    <ClInclude Include="AdverseWeatherCondition-AdhesionSubCauseCode.h" />
-    <ClInclude Include="AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.h" />
     <ClInclude Include="AdverseWeatherCondition-PrecipitationSubCauseCode.h" />
     <ClInclude Include="AdverseWeatherCondition-VisibilitySubCauseCode.h" />
     <ClInclude Include="AirHumidity.h" />
@@ -666,7 +734,6 @@
     <ClInclude Include="RelevanceDistance.h" />
     <ClInclude Include="RelevanceTrafficDirection.h" />
     <ClInclude Include="RequestResponseIndication.h" />
-    <ClInclude Include="RescueAndRecoveryWorkInProgressSubCauseCode.h" />
     <ClInclude Include="RoadSectionId.h" />
     <ClInclude Include="RoadType.h" />
     <ClInclude Include="RoadworksSubCauseCode.h" />
@@ -693,7 +760,6 @@
     <ClInclude Include="StationarySince.h" />
     <ClInclude Include="StationaryVehicleSubCauseCode.h" />
     <ClInclude Include="StationId.h" />
-    <ClInclude Include="StationID-old.h" />
     <ClInclude Include="StationType.h" />
     <ClInclude Include="SteeringWheelAngleConfidence.h" />
     <ClInclude Include="SteeringWheelAngleValue.h" />
@@ -738,6 +804,9 @@
     <ClInclude Include="WiperStatus.h" />
     <ClInclude Include="WMInumber.h" />
     <ClInclude Include="WrongWayDrivingSubCauseCode.h" />
+    <ClInclude Include="xer_decoder.h" />
+    <ClInclude Include="xer_encoder.h" />
+    <ClInclude Include="xer_support.h" />
     <ClInclude Include="YawRateConfidence.h" />
     <ClInclude Include="YawRateValue.h" />
     <ClInclude Include="Acceleration3dWithConfidence.h" />
@@ -747,7 +816,6 @@
     <ClInclude Include="AccelerationChangeIndication.h" />
     <ClInclude Include="AccelerationMagnitude.h" />
     <ClInclude Include="ActionId.h" />
-    <ClInclude Include="ActionID-old.h" />
     <ClInclude Include="ActionIdList.h" />
     <ClInclude Include="Altitude.h" />
     <ClInclude Include="BasicContainer.h" />

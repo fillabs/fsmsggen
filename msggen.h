@@ -4,6 +4,11 @@
 #include "cstr.h"
 #include "../uppertester/uppertester.h"
 
+#define DEFAULT_STATION_ID 0x10101010
+#ifndef FSMSGGEN_C
+extern const char* _o_stationTypes[];
+#endif
+
 enum {
     MsgGenApp_DefaultApp = 1
 };

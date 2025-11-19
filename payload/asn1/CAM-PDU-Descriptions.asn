@@ -1,29 +1,23 @@
-/** CAM module for TS 103 900 V2.2.1 (0.0.5) integrating:
-- ITSWG1(24)000011r8 containing the following:
-	- ExtensionContainers 
-	- GeneralizedLanePositionsContainer
-	- LocationSharingContainer
-	- PathPredictionContainer
-	- TwoWheelerContainer
-- ITSWG1(24)000002r1 containing the Very Low Frequency Container
-- ITSWG1(24)000163r1 VehicleMovementControlContainer
-*/
+--! @options: no-fields-header
 
-CAM-PDU-Descriptions  {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) camPduRelease2 (103900) major-version-2 (2) minor-version-1 (1)} 
+CAM-PDU-Descriptions  {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) camPduRelease2 (103900) 
+                       major-version-2 (2) minor-version-1 (1)} 
 
 DEFINITIONS AUTOMATIC TAGS ::=
 
 BEGIN
 
 IMPORTS 
-ItsPduHeader, CauseCodeV2, ReferencePosition, AccelerationControl, Curvature, CurvatureCalculationMode, Heading, LanePosition, EmergencyPriority, EmbarkationStatus, Speed, 
-DriveDirection, AccelerationComponent, StationType, ExteriorLights, DangerousGoodsBasic, SpecialTransportType, LightBarSirenInUse, 
-VehicleRole, VehicleLength, VehicleWidth, Path, RoadworksSubCauseCode, ClosedLanes, TrafficRule, SpeedLimit, SteeringWheelAngle, PerformanceClass, YawRate, 
-PtActivation, ProtectedCommunicationZonesRSU, CenDsrcTollingZone, GenerationDeltaTime, BasicContainer, BrakeControl, VehicleHeight2, WiperStatus,
-GeneralizedLanePositions, PathPredictedList, CartesianAngle, Wgs84Angle, StabilityChangeIndication, VruSubProfileBicyclist, VruMovementControl,
+ItsPduHeader, CauseCodeV2, ReferencePosition, AccelerationControl, Curvature, CurvatureCalculationMode, Heading, LanePosition, 
+EmergencyPriority, EmbarkationStatus, Speed, DriveDirection, AccelerationComponent, StationType, ExteriorLights, DangerousGoodsBasic, 
+SpecialTransportType, LightBarSirenInUse, VehicleRole, VehicleLength, VehicleWidth, Path, RoadworksSubCauseCode, ClosedLanes, 
+TrafficRule, SpeedLimit, SteeringWheelAngle, PerformanceClass, YawRate, PtActivation, ProtectedCommunicationZonesRSU, 
+CenDsrcTollingZone, GenerationDeltaTime, BasicContainer, BrakeControl, VehicleHeight2, WiperStatus, GeneralizedLanePositions, 
+PathPredictedList, CartesianAngle, Wgs84Angle, StabilityChangeIndication, VruSubProfileBicyclist, VruMovementControl,
 BasicLaneConfiguration, PolygonalLine, MetaInformation, ConfidenceLevels, VehicleMovementControl
 
-FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) 102894 cdd (2) major-version-4 (4) minor-version-2 (2)} WITH SUCCESSORS
+FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) 102894 cdd (2) 
+                   major-version-4 (4) minor-version-2 (2)} WITH SUCCESSORS
 ;
 
 
@@ -278,7 +272,7 @@ SpecialTransportContainer ::= SEQUENCE {
 * @field lightBarSirenInUse: it indicates whether light-bar or a siren is in use by the vehicle originating the CAM.
 *
 * @field closedLanes: an optional component which provides information about the opening/closure status of the lanes ahead. Lanes are counted from
-* the outside boarder of the road. If a lane is closed to traffic, the corresponding bit shall be set to 1.
+* the inside boarder of the road. If a lane is closed to traffic, the corresponding bit shall be set to 1.
 */
  RoadWorksContainerBasic ::= SEQUENCE {
   roadworksSubCauseCode RoadworksSubCauseCode OPTIONAL,
@@ -465,7 +459,7 @@ CyclistTypeSpecificInformation ::= SEQUENCE {
 
 /**
 * This type contains contextual, map-based location information.
-* eHorizon is defined as a tool to convey the part of the road network and its characteristics derived from map data located in front of or behind the vehicle along the road.
+* eHorizon is defined as a tool to convey the part of the road network and its characteristics derived from map data located in front of and behind the vehicle along the road.
 *
 * It shall include the following components:
 *
@@ -515,14 +509,20 @@ VeryLowFrequencyContainer ::= SEQUENCE {
 *
 * Contains information about the possible future paths of ITS station.
 */
-PathPredictionContainer ::= PathPredictedList
+PathPredictionContainer ::= SEQUENCE {   
+	pathPredictedList	PathPredictedList,
+	...
+}
 
 /**
 * This type represents the generalized lane positions container.
 *
-* Contains detailed information about the road layout that the ITS station is currently using.
+* Contains detailed information about the transversal position of the ITS station with respect to the road and potentially about the lane type.
 */
-GeneralizedLanePositionsContainer ::= GeneralizedLanePositions
+GeneralizedLanePositionsContainer ::= SEQUENCE {   
+	generalizedLanePositions	GeneralizedLanePositions,
+	...
+}
 
 /**
 * This type represents the vehicle movement control container.
@@ -539,48 +539,4 @@ VehicleMovementControlContainer ::= SEQUENCE {
 	...
 }
 
-
 END
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

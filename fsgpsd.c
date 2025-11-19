@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "cmem.h"
 #include "clog.h"
+#include "citstime.h"
 #include "fitsec.h"
 #include "fsgpsd.h"
 
@@ -35,7 +36,7 @@ int libgps_get_data(int ch, FSGpsData * data)
                     data->position.latitude  = (int32_t)floor(_gps[ch].fix.latitude * 10000000.0);
                     data->position.longitude = (int32_t)floor(_gps[ch].fix.longitude * 10000000.0);
                 }
-                data->time = FSTime64from32(_gps[ch].fix.time.tv_sec) + (_gps[ch].fix.time.tv_sec/1000);
+                data->time = timespec2itstime64(&_gps[ch].fix.time);
                 if(isfinite(_gps[ch].fix.speed)){
                     data->speed = (long)floor(_gps[ch].fix.speed * 100.0); // in cm/s
                 }else{
@@ -66,9 +67,10 @@ static void* gps_thread(char* p)
     while(1){
         FD_ZERO(&rset);
 //        FD_ZERO(&eset);
-        int maxfd = 0;
+        int maxfd = -1;
+        int ch;
         pthread_mutex_lock(&_mtx);
-        for(int ch; ch < _gps_cnt; ch++){
+        for(ch=0; ch < _gps_cnt; ch++){
             if(_gps[ch].gps_fd > 0){
                 FD_SET(_gps[ch].gps_fd, &rset);
 //                FD_SET(_gps[ch].gps_fd, &eset);
@@ -78,13 +80,13 @@ static void* gps_thread(char* p)
             }
         }
         pthread_mutex_unlock(&_mtx);
-        struct timeval tv = {0, 100000};
+        struct timeval tv = {0, 1000000};
         int n = select(maxfd + 1, &rset, NULL, NULL, &tv);
         pthread_testcancel ();
-        for(int ch = 0; n && ch < _gps_cnt; ch++){
-            if(FD_ISSET(_gps[ch].gps_fd, &rset)){
+        for(int i = 0; n && (i < ch); i++){
+            if(FD_ISSET(_gps[i].gps_fd, &rset)){
                 pthread_mutex_lock(&_mtx);
-                gps_read(&_gps[ch], NULL, 0);
+                gps_read(&_gps[i], NULL, 0);
                 pthread_mutex_unlock(&_mtx);
                 n--;
             }
@@ -97,6 +99,7 @@ void libgps_stop( int ch)
 {
     int stop = 1;
     pthread_mutex_lock(&_mtx);
+    gps_stream(&_gps[ch], WATCH_DISABLE, NULL);
     gps_close(&_gps[ch]);
     _gps[ch].gps_fd = 0;
     for(int ch = 0; ch < _gps_cnt; ch++){
@@ -125,7 +128,9 @@ int libgps_start(char * url )
     // select fd
     int rc = gps_open(url, port, &_gps[_gps_cnt]);
     if(rc == 0){
-        if(0 == cfetch_and_inc(&_gps_cnt)){
+        gps_stream(&_gps[_gps_cnt], WATCH_ENABLE | WATCH_JSON, NULL);
+        rc = cfetch_and_inc(&_gps_cnt);
+        if(0 == rc){
             // 1st
             pthread_create(&_thr, NULL, (void*(*)(void*))gps_thread, NULL);
         }

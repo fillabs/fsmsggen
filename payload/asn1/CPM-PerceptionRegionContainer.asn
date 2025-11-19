@@ -1,4 +1,4 @@
-CPM-PerceptionRegionContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) perceptionRegionContainer (5) major-version-1 (1) minor-version-1(1)}
+CPM-PerceptionRegionContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) perceptionRegionContainer (5) major-version-2 (2) minor-version-1(1)}
 
 DEFINITIONS AUTOMATIC TAGS ::=
 
@@ -6,8 +6,9 @@ BEGIN
 
 IMPORTS
 
-CardinalNumber1B, DeltaTimeMilliSecondSigned, Identifier2B, Shape, ConfidenceLevel, SensorType, SequenceOfIdentifier1B
-FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (102894) cdd (2) major-version-4 (4) minor-version-2 (2)}
+CardinalNumber1B, DeltaTimeMilliSecondSigned, Identifier2B, Shape, SequenceOfIdentifier1B
+FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (102894) cdd (2) major-version-4 (4) minor-version-3 (3)}
+WITH SUCCESSORS
 ;
 
 /**
@@ -22,7 +23,7 @@ PerceptionRegionContainer ::= SEQUENCE SIZE(1..256, ...) OF PerceptionRegion
 
  * @field measurementDeltaTime: difference between the time of estimation of the perception region and the reference time. Positive values indicates that the provided information refers to a point in time after the reference time.
  *
- * @field perceptionRegionConfidence: the perception confidence.
+ * @field perceivedObjectFalseNegativesRate: estimated rate of false negative object detections in the perception region, i.e. the proportion of objects that are not suvvesfully detected.
  *
  * @field perceptionRegionShape: specification of the shape of the perception region.
  *
@@ -36,13 +37,14 @@ PerceptionRegionContainer ::= SEQUENCE SIZE(1..256, ...) OF PerceptionRegion
  *
 */
 PerceptionRegion ::= SEQUENCE {
-    measurementDeltaTime         DeltaTimeMilliSecondSigned,     
-    perceptionRegionConfidence   ConfidenceLevel,
-    perceptionRegionShape        Shape, 
-    shadowingApplies             BOOLEAN,
-    sensorIdList                 SequenceOfIdentifier1B OPTIONAL,
-    numberOfPerceivedObjects     CardinalNumber1B OPTIONAL,
-    perceivedObjectIds           PerceivedObjectIds OPTIONAL,
+    measurementDeltaTime               DeltaTimeMilliSecondSigned,     
+    perceivedObjectFalseNegativesRate  Ratio,
+    perceptionRegionType               ReportingType,
+    perceptionRegionShape              Shape, 
+    shadowingApplies                   BOOLEAN,
+    sensorIdList                       SequenceOfIdentifier1B OPTIONAL,
+    numberOfPerceivedObjects           CardinalNumber1B OPTIONAL,
+    perceivedObjectIds                 PerceivedObjectIds OPTIONAL,
 	...
 }
 
@@ -50,5 +52,38 @@ PerceptionRegion ::= SEQUENCE {
  * This DF  represents a list of identifiers of perceived objects. 
 */
 PerceivedObjectIds::= SEQUENCE SIZE(0..255, ...) OF Identifier2B
+
+/**
+ * This DF indicates the type of objects that are reported by the perception region along with their characteristics.
+ *
+ *
+ * The following options are available:
+ *
+ * @field reportingAllObjects              - in case all objects of the indicated minimum size are reported
+ *
+ * @field reportingAllNonPermanentObjects  - in case all objects that are not permanently static (i.e. generally dynamic) of the indicated minimum size are reported
+ *
+*/
+ 
+ReportingType::= CHOICE{
+   reportingAllObjects                 Shape,
+   reportingAllNonPermanentObjects     Shape,
+   ...   
+}
+
+/**
+ * This DF indicates a ratio.
+ *
+ * @field mantissa: indicates the mantissa.
+ *
+ * @field exponent: indicates the exponent.
+ *
+ * The specified rate is: mantissa*(10^exponent) 
+*/
+
+Ratio::= SEQUENCE {
+    mantissa    INTEGER (1..100),
+    exponent    INTEGER (-10..-3)
+}
 
 END

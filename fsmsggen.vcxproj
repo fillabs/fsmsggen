@@ -163,11 +163,12 @@
   <ItemGroup>
     <ClCompile Include="fsmsggen.c" />
     <ClCompile Include="load_data.c" />
+    <ClCompile Include="msggen_cpm.c" />
     <ClCompile Include="msggen_denm.c" />
     <ClCompile Include="msggen_pki.c" />
     <ClCompile Include="msggen_vam.c" />
     <ClCompile Include="utils.c" />
-    <ClCompile Include="msggen_beacon.c" />
+    <ClCompile Include="msggen_gn.c" />
     <ClCompile Include="msggen_cam.c" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,4 @@
-CPM-SensorInformationContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) sensorInformationContainer (3) major-version-1 (1) minor-version-1(1)}
+CPM-SensorInformationContainer {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (103324) sensorInformationContainer (3) major-version-2 (2) minor-version-1(1)}
 
 DEFINITIONS AUTOMATIC TAGS ::=
 
@@ -6,8 +6,9 @@ BEGIN
 
 IMPORTS
 
-Shape, ConfidenceLevel, Identifier1B, SensorType
-FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (102894) cdd (2) major-version-4 (4) minor-version-2 (2) }
+Identifier1B, SensorType, SequenceOfIdentifier1B
+FROM ETSI-ITS-CDD {itu-t (0) identified-organization (4) etsi (0) itsDomain (5) wg1 (1) ts (102894) cdd (2) major-version-4 (4) minor-version-3 (3)}
+WITH SUCCESSORS
 ;
 
 /**
@@ -17,7 +18,7 @@ SensorInformationContainer ::= SEQUENCE SIZE(1..128, ...) OF SensorInformation
 
 
 /**
- * This DF  represents the characteristics of a single sensor or data fusion system.
+ * This DF  represents the characteristics of a single sensor or sensor system.
  *
  * It shall include the following components: 
  *
@@ -26,20 +27,16 @@ SensorInformationContainer ::= SEQUENCE SIZE(1..128, ...) OF SensorInformation
  *
  * @field sensorType: the type of the sensor.
  *
- * @field perceptionRegionShape: the perception region of the sensor.
- *
- * @field perceptionRegionConfidence: the homogeneous perception region confidence that can be assumed for the entire perception region shape of this sensor. 
- *
- * @field shadowingApplies: indicates if the standard shadowing approach applies to the described perception region.
+ * @field sensorIdList: the optional list of identifiers of the single sensors which are involved in case of a sensor system.
  *
 */
 
 SensorInformation ::= SEQUENCE {
     sensorId          		    Identifier1B,
     sensorType        		    SensorType,
-    perceptionRegionShape		Shape OPTIONAL,
-    perceptionRegionConfidence  ConfidenceLevel OPTIONAL,
-    shadowingApplies            BOOLEAN,
+    sensorIdList                SequenceOfIdentifier1B OPTIONAL, -- comment: if sensor systems are declared in the SIC, it is more difficult to know if domination between regions 
+                                                                 --          is applicable because it is not explicitly visible in the PRC that they involve the same sensor            
+                                                                 --           since sensor system have a different Id than the single sensor involved. 
    ...
 }
 

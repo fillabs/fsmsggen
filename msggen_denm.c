@@ -22,27 +22,6 @@ __INITIALIZER__(initializer_denm) {
      MsgGenApp_Register(&_denm);
 }
 
-static const char* _o_stationTypes[] = {
-    "",
-    "unknown",      // 0
-    "pedestrian",   // 1
-    "cyclist",      // 2
-    "moped",        // 3
-    "motorcycle",   // 4
-    "passengerCar", // 5
-    "bus",          // 6
-    "lightTruck",   // 7
-    "heavyTruck",   // 8
-    "trailer",         // 9
-    "special", // 10
-    "tram",            // 11
-    "",                // 12
-    "",                // 13
-    "",                // 14
-    "rsu",            // 15
-    NULL
-};
-
 static const char * _o_btpTypes[] = {
     "NONE", "any", "btpA", "btpB", NULL
 };
@@ -52,7 +31,7 @@ static int _o_secured = 1;
 #endif
 static DENM_t denm = {
     // ItsPduHeader
-    { 2, MessageId_denm, 0x10101010 },
+    { 2, MessageId_denm, DEFAULT_STATION_ID },
     // DecentralizedEnvironmentalNotificationMessage
     {
         // ManagementContainer
@@ -66,17 +45,19 @@ static DENM_t denm = {
 static int copt_on_termination(const copt_t* opt, const char* option, const copt_value_t* value);
 
 static copt_t options[] = {
-    { "I",  "station-id",       COPT_UINT ,     &denm.header.stationId, "Originating Station ID" },
-    { "S",  "denm-action-sn",   COPT_UINT ,     &denm.denm.management.actionId.sequenceNumber, "Action Sequence number" },
-    { NULL, "station-type",     COPT_STRENUM ,  _o_stationTypes,         "Station Type [unknown]" },
-    { NULL, "denm-cancelation", COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate cancelation message" },
-    { NULL, "denm-negation",    COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate negation message" },
+    { NULL, "denm-station-id",   COPT_UINT ,     &denm.header.stationId, "Originating Station ID" },
+    { "S",  "denm-action-sn",    COPT_UINT ,     &denm.denm.management.actionId.sequenceNumber, "Action Sequence number" },
+    { NULL, "denm-station-type", COPT_STRENUM ,  _o_stationTypes,         "DENM specific station type [unknown]" },
+    { NULL, "denm-cancelation",  COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate cancelation message" },
+    { NULL, "denm-negation",     COPT_BOOL | COPT_CALLBACK , copt_on_termination , "Generate negation message" },
 
-    { "B",  "denm-btp-type",    COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [default]" },
+    { "B",  "denm-btp-type",     COPT_STRENUM ,  _o_btpTypes, "BTP type (any|btpA|btpB) [default]" },
 #ifndef NO_SECURITY
     { NULL, "denm-no-sec",      COPT_IBOOL ,   &_o_secured, "Send non-secured messages" },
     { NULL, "no-sec",           COPT_IBOOL ,   &_o_secured, NULL },
 #endif
+    { "I",  "station-id",        COPT_UINT|COPT_NOHELP ,     &denm.header.stationId, NULL },
+    { NULL, "station-type",      COPT_STRENUM|COPT_NOHELP ,  _o_stationTypes, NULL},
     { NULL, NULL, COPT_END, NULL, NULL }
 };
 
