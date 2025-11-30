@@ -207,7 +207,7 @@ static DeltaTimeMilliSecondPositive_t _v_transmissionInterval = 0;
 static DeltaTimeSecond_t _v_validityDuration = 0;
 static TrafficDirection_t _v_trafficDirection = TrafficDirection_allTrafficDirections;
 static StandardLength3b_t _v_awarenessDiscance = StandardLength3b_lessThan50m;
-static SituationContainer_t _v_situationContainer = {};
+static SituationContainer_t _v_situationContainer = {0};
 
 static int  denm_ut_handler(FSUT* ut, void* ptr, FSUT_Message* m, int * psize)
 {

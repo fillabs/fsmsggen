@@ -3,7 +3,7 @@
 #include "cmem.h"
 #include "copts.h"
 #include "clog.h"
-#include "fitsec_time.h"
+#include "citstime.h"
 
 #include "payload/VAM.h"
 #include "gn_types.h"
@@ -440,7 +440,8 @@ static void _receive (MsgGenApp * app, FitSec* e, FSMessageInfo * m, uint16_t bt
         if(_o_join){
             if(_o_cluster_id == 0){
                 // decode VAM
-                VAM_t rvam = {}, *prvam = &rvam;
+                VAM_t rvam = {};
+                VAM_t *prvam = &rvam;
                 
                 asn_dec_rval_t rc_d = asn_decode(NULL, ATS_UNALIGNED_BASIC_PER, &asn_DEF_VAM, (void**)&prvam, m->payload, m->payloadSize);
                 if(rc_d.code == RC_OK){

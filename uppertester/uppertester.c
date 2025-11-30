@@ -311,8 +311,6 @@ int   FSUT_Proceed(FSUT* ut, FSUT_Message * m, struct timeval* ptv)
     return _FSUT_Proceed(ut, &tv);
 }
 
-unsigned long long unix2itstime64(time_t t);
-
 int   FSUT_onUTMessage(FSUT* ut, const char* buf, size_t size)
 {
     if (ut) {

@@ -4,7 +4,7 @@
 #include "cmem.h"
 #include "copts.h"
 #include "clog.h"
-#include "fitsec_time.h"
+#include "citstime.h"
 
 #include "payload/CollectivePerceptionMessage.h"
 #include "gn_types.h"
@@ -58,8 +58,7 @@ static copt_t options[] = {
     { NULL, "no-sec",          COPT_IBOOL|COPT_NOHELP,    &_o_secured,      NULL },
 #endif    
     { "I",  "station-id",      COPT_UINT|COPT_NOHELP,     &_o_stationId, NULL },
-    { NULL, NULL, COPT_END, NULL, NULL },
-    { "r", "rate",             COPT_INT|COPT_NOHELP ,     &_o_rate, NULL}
+    { NULL, NULL, COPT_END, NULL, NULL }
 };
 
 static CollectivePerceptionMessage_t * _cpms [10] = {};
