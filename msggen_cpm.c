@@ -36,12 +36,14 @@ static int _o_stationId = DEFAULT_STATION_ID;
 static int _o_rate = 1; // 1Hz
 static const char * _o_export = NULL;
 
+static int  _o_cpm_new(const copt_t * opt, const char * option, const copt_value_t * value);
 static int  _o_cpm_xer(const copt_t * opt, const char * option, const copt_value_t * value);
 static int  _o_cpm_object(const copt_t * opt, const char * option, const copt_value_t * value);
 static int  _o_cpm_position(const copt_t * opt, const char * option, const copt_value_t * value);
 
 static copt_t options[] = {
-    { NULL, "cpm-xer",           COPT_STR|COPT_CALLBACK,    &_o_cpm_xer, "Set the path to the main CPM XER template"},
+    { NULL, "cpm-new",           COPT_BOOL|COPT_CALLBACK,   &_o_cpm_new,             "Add new default CPM message to the message set"},
+    { NULL, "cpm-xer",           COPT_STR|COPT_CALLBACK,    &_o_cpm_xer,      "Set the path to the main CPM XER template"},
     { NULL, "cpm-obj",           COPT_STR|COPT_CALLBACK,    &_o_cpm_object,   "Add CPM object = N:<objtype|path to XER of PerceivedObject>[:position]"},
     { NULL, "cpm-pos",           COPT_STR|COPT_CALLBACK,    &_o_cpm_position, "Set CPM object position = N:lat:lon"
 #ifdef USE_LIBGPS
@@ -53,10 +55,11 @@ static copt_t options[] = {
     
 #ifndef NO_SECURITY
     { NULL, "cpm-no-sec",      COPT_IBOOL ,               &_o_secured,      "Send non-secured cam"   },
-    { NULL, "no-sec",          COPT_IBOOL|COPT_NOHELP ,   &_o_secured,      NULL },
+    { NULL, "no-sec",          COPT_IBOOL|COPT_NOHELP,    &_o_secured,      NULL },
 #endif    
-    { "I",  "station-id",        COPT_UINT|COPT_NOHELP ,     &_o_stationId, NULL },
-    { NULL, NULL, COPT_END, NULL, NULL }
+    { "I",  "station-id",      COPT_UINT|COPT_NOHELP,     &_o_stationId, NULL },
+    { NULL, NULL, COPT_END, NULL, NULL },
+    { "r", "rate",             COPT_INT|COPT_NOHELP ,     &_o_rate, NULL}
 };
 
 static CollectivePerceptionMessage_t * _cpms [10] = {};
@@ -347,6 +350,12 @@ static PerceivedObject_t *             _cpm_po_new(Identifier2B_t id);
 static SensorInformation_t *           _cpm_add_sensor(CollectivePerceptionMessage_t * cpm, Identifier1B_t sensorId, SensorType_t type);
 static void                            _cpm_add_object(CollectivePerceptionMessage_t * cpm, PerceivedObject_t * po);
 
+static int  _o_cpm_new(const copt_t * opt, const char * option, const copt_value_t * value)
+{
+    _cpms[_cpms_count++] = _cpm_create_default();
+    return 0;
+}
+
 static int _o_cpm_xer(const copt_t * opt, const char * option, const copt_value_t * value)
 {
     // load from template
@@ -466,7 +475,7 @@ static void _cpm_po_update_sensors(PerceivedObject_t * po, CollectivePerceptionM
             // get the 1st sensor
             si = wc->containerData.choice.SensorInformationContainer.list.array[0];
         }
-        Identifier1B_t * sensorId = malloc(1);
+        Identifier1B_t * sensorId = malloc(sizeof(Identifier1B_t));
         *sensorId = si->sensorId;
         ASN_SEQUENCE_ADD(&po->sensorIdList->list, sensorId);
     }
@@ -547,42 +556,44 @@ static int  _o_cpm_object(const copt_t * opt, const char * option, const copt_va
     return 0;
 }
 
-typedef struct GpsdPOTrack_t GpsdPOTrack_t;
-struct GpsdPOTrack_t{
-    GpsdPOTrack_t * next;
+typedef struct POPositionTrack POPositionTrack;
+struct POPositionTrack{
+    POPositionTrack * next;
     PerceivedObject_t *po;
     const char* url;
     int ch;
     FS3DLocation  pos;
+    int relative;
 };
-static GpsdPOTrack_t * _positionTracks = NULL;
+static POPositionTrack * _positionTracks = NULL;
 
 static void _cpm_po_update_position(PerceivedObject_t *po, const FS3DLocation * base){
-    GpsdPOTrack_t * tr = _positionTracks;
+    POPositionTrack * tr = _positionTracks;
     for(;tr; tr=tr->next){
         if(po == tr->po){
             po->position.yCoordinate.confidence = CoordinateConfidence_unavailable;
             po->position.xCoordinate.confidence = CoordinateConfidence_unavailable;
+            po->position.xCoordinate.value = tr->pos.longitude - base->longitude;
+            po->position.yCoordinate.value = tr->pos.latitude - base->latitude;
 #ifdef USE_LIBGPS
             FSGpsData g;
             if(tr->ch >= 0){
-                if(0 >= libgps_get_data(tr->ch, &g)){
-                    g.position.longitude = base->longitude;
-                    g.position.latitude = base->latitude;
+                if(0 < libgps_get_data(tr->ch, &g)){
                     if(isfinite(g.dx) && isfinite(g.dy)){
                         po->position.yCoordinate.confidence = abs(floor(g.dy * 10.0));
                         po->position.xCoordinate.confidence = abs(floor(g.dx * 10.0));
                     }
+                    po->position.xCoordinate.value = g.position.longitude - base->longitude;
+                    po->position.yCoordinate.value = g.position.latitude - base->latitude;
                 }
-            }else{
-                g.position = tr->pos;
-            }
-            po->position.xCoordinate.value = g.position.longitude - base->longitude;
-            po->position.yCoordinate.value = g.position.latitude - base->latitude;
-#else
-            po->position.xCoordinate.value = tr->pos.longitude - base->longitude;
-            po->position.yCoordinate.value = tr->pos.latitude - base->latitude;
+            }else
 #endif
+            {
+                if(tr->relative){
+                    po->position.xCoordinate.value = tr->pos.longitude;
+                    po->position.yCoordinate.value = tr->pos.latitude;
+                }
+            }
             if(po->position.xCoordinate.value > CartesianCoordinateLarge_positiveOutOfRange) po->position.xCoordinate.value = CartesianCoordinateLarge_positiveOutOfRange;
             if(po->position.xCoordinate.value < CartesianCoordinateLarge_negativeOutOfRange) po->position.xCoordinate.value = CartesianCoordinateLarge_negativeOutOfRange;
         
@@ -594,7 +605,7 @@ static void _cpm_po_update_position(PerceivedObject_t *po, const FS3DLocation * 
 }
 
 static int _cpm_po_set_position(PerceivedObject_t *po, char * pos){
-    GpsdPOTrack_t * tr;
+    POPositionTrack * tr;
 #ifdef USE_LIBGPS
     if(cstrnequal("gpsd://", pos, 7)){
         int ch;
@@ -614,13 +625,17 @@ static int _cpm_po_set_position(PerceivedObject_t *po, char * pos){
             return -1;
         }
 add_tr:
-        tr = cnew(GpsdPOTrack_t);
+        tr = cnew(POPositionTrack);
         tr->ch = ch;
     }else
 #endif
     {
-        tr = cnew(GpsdPOTrack_t);
+        tr = cnew0(POPositionTrack);
         tr->ch = -1;
+        if((*pos == 'R' || *pos == 'r') && pos[1] == ':' ){
+            pos += 2;
+            tr->relative = 1;
+        }
         if(!FS3DPositionFromString(&tr->pos, pos)){
             fprintf(stderr, "%s: Position error", pos);
             free(tr);
@@ -663,14 +678,22 @@ static int  _o_cpm_position(const copt_t * opt, const char * option, const copt_
     fprintf(stderr, "CPM object %d not found\n", id);
     return -1;
 }
+
 /*
-static asn_TYPE_operation_t _op_PerceivedObjects;
+static asn_TYPE_operation_t _op_debug;
 static asn_enc_rval_t SEQUENCE_encode_uper_debug(
     const struct asn_TYPE_descriptor_s *type_descriptor,
     const asn_per_constraints_t *constraints, const void *struct_ptr,
     asn_per_outp_t *per_output
 ){
     return SEQUENCE_encode_uper(type_descriptor, constraints, struct_ptr, per_output);
+}
+static asn_enc_rval_t INTEGER_encode_uper_debug(
+    const struct asn_TYPE_descriptor_s *type_descriptor,
+    const asn_per_constraints_t *constraints, const void *struct_ptr,
+    asn_per_outp_t *per_output
+){
+    return INTEGER_encode_uper(type_descriptor, constraints, struct_ptr, per_output);
 }
 */
 
@@ -687,11 +710,13 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
             return rc;
         }
         // create CPM if not yet created
+/*        
         if(_cpms_count == 0){
             // no objects and no perception regions
             _cpms[_cpms_count++] = _cpm_create_default();
         }
         _cpms[0]->header.stationId = _o_stationId;
+*/
         if(_cpms_count > 1){
             // postprocess CPM messages
             for(size_t i=0; i<_cpms_count; i++){
@@ -702,6 +727,11 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
             }
         }
         if(_o_export){
+            if(_cpms_count == 0){
+                // no objects and no perception regions
+                _cpms[_cpms_count++] = _cpm_create_default();
+            }
+            _cpms[0]->header.stationId = _o_stationId;
             // add test perceived object and perception region in the CPM
             CollectivePerceptionMessage_t * cpm = _cpms[0];
             PerceivedObject_t * po = _cpm_po_new(0);
@@ -795,9 +825,9 @@ static int _options(MsgGenApp* app, int argc, char* argv[])
             return COPT_ERROR;
         }
 /*        
-        _op_PerceivedObjects = asn_OP_SEQUENCE;
-        _op_PerceivedObjects.uper_encoder = SEQUENCE_encode_uper_debug;
-        asn_DEF_PerceivedObject.op = &_op_PerceivedObjects;
+        _op_debug = asn_OP_INTEGER;
+        _op_debug.uper_encoder = INTEGER_encode_uper_debug;
+        asn_DEF_TimestampIts.op = &_op_debug;
 */        
     }
 
@@ -835,14 +865,16 @@ static size_t _fill_cpm(MsgGenApp* app, FitSec * e, FSMessageInfo* m, Collective
 static FSTime64 _lastSent = 0;
 static void _process (MsgGenApp * app, FitSec * e)
 {
-    FSMessageInfo m = {0};
-    GN_PrepareMessage(&m);
-    uint64_t tdif = m.generationTime - _lastSent;
-    if(tdif >= floor(1000000.0/_o_rate)){
-        _lastSent = m.generationTime;
-        for(size_t i=0; i< _cpms_count; i++){
-            _fill_cpm(app, e, &m, _cpms[i]);
-            GN_SendMessage(app, &m);
+    if(_cpms_count > 0){
+        FSMessageInfo m = {0};
+        GN_PrepareMessage(&m);
+        uint64_t tdif = m.generationTime - _lastSent;
+        if(tdif > floor(1000000.0/_o_rate)){
+            _lastSent = m.generationTime;
+            for(size_t i=0; i< _cpms_count; i++){
+                _fill_cpm(app, e, &m, _cpms[i]);
+                GN_SendMessage(app, &m);
+            }
         }
     }
 }
