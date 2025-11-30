@@ -19,35 +19,35 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B51474B6-2547-4AAF-A038-796A359D6327}</ProjectGuid>
+    <ProjectGuid>{B51474B6-2547-4AAF-A038-79656F9D6327}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>fsmsggen</RootNamespace>
+    <RootNamespace>itsut</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -93,14 +93,13 @@
       </PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;./payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../cshared;..;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>fitsec2-rel\lib\MSVC-$(Platform);$(NPCAP_SDK)\Lib;C:\Tools\VCPkg\installed\$(Platform)-windows\lib;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -109,15 +108,14 @@
       </PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;./payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../cshared;..;</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>fitsec2.lib;fspki.lib;fscrypt.lib;wpcap.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>fitsec2-rel\lib\MSVC-$(Platform);$(NPCAP_SDK)\Lib\$(Platform);C:\Tools\VCPkg\installed\$(Platform)-windows\lib;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>uppertester.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -128,16 +126,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../cshared;..;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>fitsec2-rel\lib\MSVC-$(Platform);$(NPCAP_SDK)\Lib;C:\Tools\VCPkg\installed\$(Platform)-windows\lib;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,46 +145,27 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./cshared;./uppertester;./fscrypt;./fitsec2;./fspki;./fitsec2-rel;payload;$(ProgramW6432)\npcap\sdk\Include;c:\Tools\VCPkg\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../cshared;..;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fitsec2.lib;fspki.lib;wpcap.lib;libcurl.lib;libItsPayload.lib;uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>wpcap.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>fitsec2-rel\lib\MSVC-$(Platform);$(NPCAP_SDK)\Lib\$(Platform);C:\Tools\VCPkg\installed\$(Platform)-windows\lib;$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>uppertester.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="fsmsggen.c" />
-    <ClCompile Include="load_data.c" />
-    <ClCompile Include="msggen_cpm.c" />
-    <ClCompile Include="msggen_denm.c" />
-    <ClCompile Include="msggen_pki.c" />
-    <ClCompile Include="msggen_vam.c" />
-    <ClCompile Include="utils.c" />
-    <ClCompile Include="msggen_gn.c" />
-    <ClCompile Include="msggen_cam.c" />
+    <ClCompile Include="itsut.c" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="cshared\cshared.vcxproj">
+    <ProjectReference Include="..\..\cshared\cshared.vcxproj">
       <Project>{d5918b85-fa45-4f75-9b50-c2d3e34aba17}</Project>
     </ProjectReference>
-    <ProjectReference Include="fitsec2-rel/fitsec2-rel.vcxproj">
-      <Project>{B05CED85-91CD-4ABE-B737-B5AAAC29F4DD}</Project>
-    </ProjectReference>
-    <ProjectReference Include="payload\libItsPayload.vcxproj">
-      <Project>{92294cf2-3436-4f10-93b1-b4fa4977c253}</Project>
-    </ProjectReference>
-    <ProjectReference Include="uppertester\uppertester.vcxproj">
+    <ProjectReference Include="..\uppertester.vcxproj">
       <Project>{D5918B85-FA45-4F75-9B50-6783E34ABA17}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="gn_types.h" />
-    <ClInclude Include="msggen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
