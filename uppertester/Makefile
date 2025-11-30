@@ -1,8 +1,11 @@
 PROJECTROOT  = ..
 CSHAREDDIR   = $(PROJECTROOT)/cshared
+ifeq (no,$(SECURITY))
+PROJECT      = uppertester-nosec
+defines     += NO_SECURITY
+else
 PROJECT      = uppertester
-DEBUG        = yes
-testdir      = tests
+endif
 
 alibs        = $(PROJECT)
 solibs       = $(PROJECT)

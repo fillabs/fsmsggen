@@ -1,8 +1,11 @@
 PROJECTROOT    ?= .
 BUILDROOT      ?= $(PROJECTROOT)/build
 CSHAREDDIR     ?= $(PROJECTROOT)/cshared
+ifneq ($(SECURITY), no)
 PROJECT        := fsmsggen
-DEBUG          ?= yes
+else
+PROJECT        := fsmsggen-nosec
+endif
 FSCRYPTDIR     ?= $(PROJECTROOT)/fscrypt
 
 export GPSD_SDK := C:/Users/filatov/Work/ITS/gpsd-3.25/gpsd-3.25
@@ -16,25 +19,26 @@ ifeq (,$(FITSEC_SRC))
   endif
 endif
 
-bins          := fsmsggen
+bins          = $(PROJECT)
 sources       := msggen_cam.c msggen_denm.c msggen_gn.c msggen_vam.c msggen_cpm.c utils.c fsmsggen.c 
 sources_libgps:= fsgpsd.c
-packages      := libgps cshared pcap thread curl
+packages      := libgps cshared pcap thread
 includes      := $(FITSEC_SRC) $(FSPKI_SRC) $(FSCRYPTDIR) payload uppertester
 predirs       := payload uppertester
 
 ifneq ($(SECURITY), no)
  sources  +=  load_data.c msggen_pki.c
- packages += openssl
+ packages += openssl curl
  deps     = $(outdir)/libuppertester.a $(outdir)/libitspayload.a $(outdir)/libfspki.a $(outdir)/libfitsec2.a $(outdir)/libfscrypt.a $(outdir)/libuppertester.a $(outdir)/libitspayload.a
  libs     = $(outdir)/libuppertester.a $(outdir)/libitspayload.a $(outdir)/libfspki.a $(outdir)/libfitsec2.a -lm -Wl,--whole-archive $(outdir)/libfscrypt.a -Wl,--no-whole-archive $(outdir)/libuppertester.a $(outdir)/libitspayload.a -lm
  predirs  += $(FSCRYPTDIR) $(sort $(FITSEC_SRC) $(FSPKI_SRC))
 else
- deps          = $(outdir)/libuppertester.a $(outdir)/libitspayload.a
- libs          = $(outdir)/libuppertester.a $(outdir)/libitspayload.a -lm 
+ deps      = $(outdir)/libuppertester-nosec.a $(outdir)/libitspayload.a
+ libs      = $(outdir)/libuppertester-nosec.a $(outdir)/libitspayload.a -lm 
  defines  += NO_SECURITY
 endif
 post := setcap
+export SECURITY
 include $(CSHAREDDIR)/common.mk
 
 setcap:

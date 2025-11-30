@@ -17,7 +17,6 @@ PROJECTROOT  = ..
 BUILDROOT    = $(PROJECTROOT)/build
 CSHAREDDIR   = $(PROJECTROOT)/cshared
 PROJECT      = itspayload
-DEBUG        = yes
 #ASN1CDIR    ?= ../../../../asn1c-fillabs
 
 ASN1C_OPTS := -no-gen-example -no-gen-BER -no-gen-APER -no-gen-OER -no-gen-JER -no-gen-random-fill -no-gen-print -fcompound-names
