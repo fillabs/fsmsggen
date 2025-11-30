@@ -146,8 +146,8 @@ static copt_t options [] = {
     { "n",  "count",    COPT_LONG,     &_msg_count,   "Message count" },
     { "i",  "iface",    COPT_STR,      &_iface,       "Network interface to send messages" },
     { "D",  "iface-list", COPT_BOOL,   &_iface_list,  "List network interfaces"},
-    { "I",  "in",       COPT_PATH,     &_in,          "Input PCAP file name" },
-    { "O",  "out",      COPT_PATH,     &_out,         "Output PCAP file name, 'none' for disable, (udp|tcp)://host:port for network stream" },
+    { NULL, "in",       COPT_PATH,     &_in,          "Input PCAP file name" },
+    { NULL, "out",      COPT_PATH,     &_out,         "Output PCAP file name, 'none' for disable, (udp|tcp)://host:port for network stream" },
     { NULL, "out-payload", COPT_STRENUM,     &_out_payload,         "Output payload type for network stream: raw,gn. Default is raw" },
 #define OPT_IDX_OUT_PAYLOAD 7
     { "r",  "rate",     COPT_FLOAT,    &_rate,        "Default message rate in Hz" },
