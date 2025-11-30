@@ -414,7 +414,7 @@ asn_long2INTEGER(INTEGER_t *st, long value) {
 
 int
 asn_ulong2INTEGER(INTEGER_t *st, unsigned long value) {
-    return asn_imax2INTEGER(st, value);
+    return asn_umax2INTEGER(st, value);
 }
 
 int asn_INTEGER2int64(const INTEGER_t *st, int64_t *value) {
