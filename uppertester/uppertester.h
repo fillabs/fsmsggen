@@ -3,6 +3,7 @@
 
 #include "cmem.h"
 #include <inttypes.h>
+#include <sys/time.h>
 typedef struct FSUT FSUT;
 #define FSUT_MAX_MSG_SIZE 128
 #define FSUT_DEFAULT_PORT 12345

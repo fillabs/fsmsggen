@@ -41,18 +41,20 @@ int _FSUT_ExecCommandSet(FSUT_Message ** pmsg, const UTHandlerRecord * cmds, siz
 
 static int _cmd_UtInitialize(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtChangePosition(FSUT_Message ** pmsg, int argc, char ** argv);
-static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtCam(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtDenmTrigger(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtDenmUpdate(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtDenmTerminate(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtDenm(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtGnTrigger(FSUT_Message ** pmsg, int argc, char ** argv);
+#ifndef NO_SECURITY
+static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtEnroll(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtAuth(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtCrl(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtCtl(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv);
+#endif
 static int _cmd_UtVam(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtBeacon(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtGUC(FSUT_Message ** pmsg, int argc, char ** argv);
@@ -76,20 +78,26 @@ static int _cmd_UtDangerousGoods(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtLightbar(FSUT_Message ** pmsg, int argc, char ** argv);
 static int _cmd_UtSiren(FSUT_Message ** pmsg, int argc, char ** argv);
 
+static int _cmd_UtCpm(FSUT_Message ** pmsg, int argc, char ** argv);
+
 static const UTHandlerRecord _msgnames[] = {
     {"initialize", _cmd_UtInitialize,     "<hex digest|0> - initialize IUT with given AT certificate or with any certificate if zero given"},
     {"position", _cmd_UtChangePosition,   "<latitude delta> <longitude delta> - change IUT position by given deltas"},
-    {"pseudonym", _cmd_UtChangePseudonym, "change IUT AT certificate to any available"},
+#ifndef NO_SECURITY
+    {"pseudonym", _cmd_UtChangePseudonym, "change IUT AT certificate to any other available"},
+#endif
     {"cam", _cmd_UtCam,                   "<start|stop|rate <Hz> > - start/stop CAM generation or change CAM rate"},
     {"denm", _cmd_UtDenm,                 "<send|update|stop|terminate - unsupported yet"},
     {"vam", _cmd_UtVam,                   "<start|stop|join|lead|leader>"},
+    {"cpm", _cmd_UtCpm,                   "<start|stop|send>"},
     {"gn", _cmd_UtGnTrigger,              "<beacon|guc|gbc|gac|shb|tsb>"},
+#ifndef NO_SECURITY
     {"enrol" , _cmd_UtEnroll,             ""},
     {"auth" , _cmd_UtAuth,                ""},
     {"crl" , _cmd_UtCrl,                  ""},
     {"ctl" , _cmd_UtCtl,                  ""},
     {"ectl" , _cmd_UtECtl,                ""},
-    
+#endif    
     {"beacon" , _cmd_UtBeacon,            "<start|stop>"},
     {"guc" , _cmd_UtGUC,                  "<addr> [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]"},
     {"gbc" , _cmd_UtGBC,                  "<circle|rect|ellipse> <latitude:longitude> <a> [b] [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]"},
@@ -118,7 +126,9 @@ static const char * _help =
     "initialize <hex digest|0>                     - initialize IUT with given AT certificate or with any certificate if zero given\n"
     "position   <latitude delta> <longitude delta> [altitude delta]\n"
     "                                              - change IUT position by given deltas\n"
+#ifndef NO_SECURITY
     "pseudonym                                     - change IUT AT certificate to any available\n"
+#endif
     "cam start                                     - start CA service\n"
     "cam stop                                      - stop CA service\n"
     "cam rate <Hz>                                 - change CA rate\n"
@@ -128,9 +138,11 @@ static const char * _help =
     "vam join                                      - activate VRU join claster\n"
     "vam lead|leader                               - operate as VRU cluster leader\n"
     "gn <beacon|guc|gbc|gac|shb|tsb> [params...]   - send geonetworking packed with given params. See below for possible parameters\n"
+#ifndef NO_SECURITY
     "enrol [EA hex digest|EA name]                 - start enrolment process with given EA or any available if EA not given\n"
     "auth  [AA hex digest|AA name]                 - start authorization process with given AA or any available if AA not given\n"
     "crl|ctl|ectl [url]                            - download CRL/CTL/ECTL\n"
+#endif
     "beacon <start|stop|send>                      - start/stop beacon sending or send 1 beacon packet\n"
     "guc <addr> [lf <lifetime>] [tc <trafficClass>] [pl <hex payload>]\n"
     "                                              - send GeoUniCast packet to given address [LS is not working yet]\n"
@@ -140,6 +152,7 @@ static const char * _help =
     "                                              - send GeoAnycast packet to given area\n"
     "shb [tc <trafficClass>] [pl <hex payload>]    - send Single Hop Broadcast packet\n"
     "tsb [lf <lifetime>] [nh <hop number>] [tc <trafficClass>] [pl <hex payload>] - send TSB packet\n"
+    "cpm start|stop                                - start / stop CPS service\n"
 ;
 
 const char * FSUT_CommandHelp(const char * cmd)
@@ -287,10 +300,10 @@ static int _cmd_UtChangePosition(FSUT_Message ** pmsg, int argc, char ** argv)
             }
         }
     }
-err:
     return -255;
 }
 
+#ifndef NO_SECURITY
 static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     FSUT_Message * m = malloc(sizeof(m->changePseudonym));
@@ -298,6 +311,7 @@ static int _cmd_UtChangePseudonym(FSUT_Message ** pmsg, int argc, char ** argv)
     *pmsg = m;
     return 1;
 }
+#endif
 
 static int _cmd_UtCamStatus(FSUT_Message ** pmsg, int argc, char ** argv, uint8_t code, uint8_t state) {
     FSUT_Message * m = malloc(sizeof(m->camState));
@@ -363,6 +377,7 @@ static int _cmd_UtSimpleMessage(FSUT_Message ** pmsg, uint8_t code)
     return 1;
 }
 
+#ifndef NO_SECURITY
 static int _cmd_UtEnroll(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     return _cmd_UtSimpleMessage(pmsg, FS_UtGenerateInnerEcRequest);
@@ -387,6 +402,7 @@ static int _cmd_UtECtl(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     return _cmd_UtSimpleMessage(pmsg, FS_UtPkiTriggerTlmCtlRequest);
 }
+#endif
 
 static int _cmd_UtVamStart(FSUT_Message ** pmsg, int argc, char ** argv)
 {
@@ -738,4 +754,9 @@ static int _cmd_UtLightbar(FSUT_Message ** pmsg, int argc, char ** argv)
 static int _cmd_UtSiren(FSUT_Message ** pmsg, int argc, char ** argv)
 {
     return -255;
+}
+static int _cmd_UtCpm(FSUT_Message ** pmsg, int argc, char ** argv)
+{
+    return -255;
+
 }
